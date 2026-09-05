@@ -40,6 +40,75 @@ const nextConfig = {
       },
     ];
   },
+  async redirects() {
+    return [
+      {
+        source: '/shop',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/shop/:path*',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/product/:path*',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/products/:path*',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/product-category/:path*',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/store',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/store/:path*',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/cart',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/cart/:path*',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/checkout',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/checkout/:path*',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/my-account',
+        destination: '/',
+        permanent: true,
+      },
+      {
+        source: '/my-account/:path*',
+        destination: '/',
+        permanent: true,
+      },
+    ];
+  },
 };
 
 module.exports = nextConfig;

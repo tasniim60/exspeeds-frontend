@@ -4,6 +4,28 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
+  // 0. Permanent 301 Redirect for Legacy E-commerce Routes (SEO preservation)
+  const lowerPath = pathname.toLowerCase();
+  const legacyShopPrefixes = [
+    "/shop",
+    "/product",
+    "/products",
+    "/product-category",
+    "/store",
+    "/cart",
+    "/checkout",
+    "/my-account",
+  ];
+
+  if (
+    legacyShopPrefixes.some(
+      (prefix) => lowerPath === prefix || lowerPath.startsWith(`${prefix}/`)
+    )
+  ) {
+    const rootUrl = new URL("/", request.url);
+    return NextResponse.redirect(rootUrl, { status: 301 });
+  }
+
   // 1. Guard Administrative Pages (/admin and subpaths)
   if (pathname.startsWith("/admin")) {
     const adminCookie = request.cookies.get("xspeed_admin_auth")?.value;
@@ -63,5 +85,18 @@ export const config = {
     "/api/invoices/:path*",
     "/api/orders/:path*",
     "/api/warehouse/:path*",
+    "/shop",
+    "/shop/:path*",
+    "/product/:path*",
+    "/products/:path*",
+    "/product-category/:path*",
+    "/store",
+    "/store/:path*",
+    "/cart",
+    "/cart/:path*",
+    "/checkout",
+    "/checkout/:path*",
+    "/my-account",
+    "/my-account/:path*",
   ],
 };
