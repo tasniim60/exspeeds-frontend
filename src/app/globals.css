@@ -305,6 +305,10 @@ body {
   border-collapse: collapse;
   font-size: 0.95rem;
   text-align: start;
+  display: block;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .prose-xspeed th,

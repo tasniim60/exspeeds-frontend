@@ -37,6 +37,7 @@ export const FALLBACK_POSTS: WPPost[] = [
   {
     id: 101,
     date: "2026-08-10T10:00:00Z",
+    modified: "2026-08-28T16:20:00Z",
     slug: "automated-courier-dispatching-speed",
     status: "publish",
     title: {
@@ -82,11 +83,14 @@ export const FALLBACK_POSTS: WPPost[] = [
       twitter_title: "How Automated Courier Dispatching Halves Regional Delivery Times",
       twitter_description: "Learn how automated dispatching, predictive AI routing, and real-time AWB scanning halve delivery turnaround times.",
       twitter_image: "/assets/Home-pic1-C9kYJzAW.jpg",
+      seo_score: 96,
+      robots: ["index", "follow", "max-image-preview:large"],
     },
   },
   {
     id: 102,
     date: "2026-08-04T14:30:00Z",
+    modified: "2026-08-22T09:45:00Z",
     slug: "cold-chain-pharma-logistics-telemetry",
     status: "publish",
     title: {
@@ -127,11 +131,14 @@ export const FALLBACK_POSTS: WPPost[] = [
       twitter_title: "Cold-Chain Pharma Logistics: Real-Time Telemetry Best Practices",
       twitter_description: "Best practices for maintaining unbroken 2-8°C cold chain logistics with live IoT sensors and GDP compliance.",
       twitter_image: "/assets/plane-pic-7WwFXnsZ.jpg",
+      seo_score: 94,
+      robots: ["index", "follow", "max-image-preview:large"],
     },
   },
   {
     id: 103,
     date: "2026-07-28T09:15:00Z",
+    modified: "2026-08-15T11:30:00Z",
     slug: "egypt-gcc-freight-customs-optimization",
     status: "publish",
     title: {
@@ -170,11 +177,14 @@ export const FALLBACK_POSTS: WPPost[] = [
       twitter_title: "Egypt-GCC Freight Corridors: Customs Clearance Optimization",
       twitter_description: "How to optimize customs clearance and speed up cross-border trade between Egypt and GCC markets in 2026.",
       twitter_image: "/assets/Home-pic2-YnTeaRfL.jpg",
+      seo_score: 93,
+      robots: ["index", "follow", "max-image-preview:large"],
     },
   },
   {
     id: 104,
     date: "2026-07-15T11:00:00Z",
+    modified: "2026-08-02T13:00:00Z",
     slug: "smart-warehousing-dwell-time-reduction",
     status: "publish",
     title: {
@@ -208,6 +218,8 @@ export const FALLBACK_POSTS: WPPost[] = [
       twitter_title: "Smart Warehousing: Minimizing Dwell Time with Cross-Docking",
       twitter_description: "Reduce inventory dwell time and speed up fulfillment with automated cross-docking and RF bin allocation.",
       twitter_image: "/assets/bg-home-BYMxMBP3.jpg",
+      seo_score: 95,
+      robots: ["index", "follow", "max-image-preview:large"],
     },
   },
 ];
@@ -219,6 +231,10 @@ const getCandidateUrls = (): string[] => {
   const candidates: string[] = [];
   if (envInternal && envInternal.startsWith("http")) candidates.push(envInternal);
   if (envPublic && envPublic.startsWith("http")) candidates.push(envPublic);
+
+  // Standard WordPress endpoints fallback
+  candidates.push("https://exspeeds.com/wp-json");
+  candidates.push("https://exspeeds.com/wordpress/wp-json");
 
   return Array.from(new Set(candidates));
 };

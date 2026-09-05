@@ -1,9 +1,26 @@
-﻿User-agent: *
+# robots.txt for XSPEED
+User-agent: *
 Allow: /
 Disallow: /admin
+Disallow: /admin/*
 Disallow: /dashboard
+Disallow: /dashboard/*
 Disallow: /client
+Disallow: /client/*
 Disallow: /api/auth
+Disallow: /api/auth/*
 
-Sitemap: https://exspeeds.com/sitemap.xml
+User-agent: Googlebot
+Allow: /
+Disallow: /admin
+Disallow: /admin/*
+Disallow: /dashboard
+Disallow: /dashboard/*
+Disallow: /client
+Disallow: /client/*
+Disallow: /api/auth
+Disallow: /api/auth/*
+
 Host: https://exspeeds.com
+Sitemap: https://exspeeds.com/sitemap.xml
+
