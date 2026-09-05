@@ -1,0 +1,399 @@
+@import url('/assets/index-BJSp6Py6.css');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ── XSPEED Design Tokens (Exspeeds Original Light Palette) ── */
+:root {
+  --xspeed-900: #FFFFFF;
+  --xspeed-800: #F9FAFB;
+  --xspeed-700: #F3F4F6;
+  --xspeed-600: #E5E7EB;
+  --xspeed-500: #9CA3AF;
+  --xspeed-400: #6B7280;
+  --xspeed-dark: #251516;
+  --xspeed-orange: #C45B2A;
+  --xspeed-orange-light: #D4723F;
+  --xspeed-orange-deep: #A34920;
+  --xspeed-cream: #251516;
+  --xspeed-cream-dim: #4B5563;
+  --radius-card: 14px;
+  --radius-button: 10px;
+}
+
+/* ── Base ── */
+body {
+  background-color: var(--xspeed-900);
+  color: var(--xspeed-cream);
+  font-family: "General Sans", var(--font-inter, 'Inter', sans-serif), system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ── Elevated Card ── */
+.card-elevated {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: var(--radius-card);
+  box-shadow: 0 4px 20px rgba(37, 21, 22, 0.05);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.card-elevated:hover {
+  border-color: rgba(196, 91, 42, 0.35);
+  box-shadow: 0 8px 30px rgba(196, 91, 42, 0.12);
+}
+
+/* ── Buttons ── */
+.btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: var(--xspeed-orange);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.875rem;
+  padding: 0.75rem 1.75rem;
+  border-radius: var(--radius-button);
+  transition: background 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+  box-shadow: 0 2px 12px rgba(196, 91, 42, 0.25);
+}
+
+.btn-primary:hover {
+  background: var(--xspeed-orange-deep);
+  box-shadow: 0 4px 20px rgba(196, 91, 42, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #FFFFFF;
+  color: var(--xspeed-dark);
+  font-weight: 700;
+  font-size: 0.875rem;
+  padding: 0.75rem 1.75rem;
+  border-radius: var(--radius-button);
+  border: 1px solid #E5E7EB;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
+}
+
+.btn-secondary:hover {
+  border-color: var(--xspeed-orange);
+  color: var(--xspeed-orange);
+  background: rgba(196, 91, 42, 0.05);
+}
+
+/* ── Form Inputs ── */
+.input-field {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: var(--radius-button);
+  color: var(--xspeed-dark);
+  font-size: 0.875rem;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  outline: none;
+}
+
+.input-field::placeholder {
+  color: #9CA3AF;
+}
+
+.input-field:focus {
+  background: #FFFFFF;
+  border-color: var(--xspeed-orange);
+  box-shadow: 0 0 0 3px rgba(196, 91, 42, 0.12);
+}
+
+/* ── Section Spacing ── */
+.section-spacing {
+  padding-top: 6rem;
+  padding-bottom: 6rem;
+}
+
+/* ── Modern Glassmorphism & Hero Overlay Classes ── */
+.glass-card-dark {
+  background: rgba(37, 21, 22, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
+.glass-card-light {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(229, 231, 235, 0.8);
+  box-shadow: 0 10px 30px rgba(37, 21, 22, 0.08);
+}
+
+.glow-orange {
+  box-shadow: 0 0 25px rgba(196, 91, 42, 0.35);
+}
+
+/* ── Premium Biophilic & Soft Organic Design System ── */
+.biophilic-card-dark {
+  background: rgba(37, 21, 22, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 2rem;
+  box-shadow: 0 24px 48px -12px rgba(0, 0, 0, 0.35);
+}
+
+.biophilic-card-light {
+  background: rgba(255, 255, 255, 0.94);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(196, 91, 42, 0.15);
+  border-radius: 2rem;
+  box-shadow: 0 20px 40px -15px rgba(37, 21, 22, 0.08);
+}
+
+.biophilic-pill {
+  border-radius: 9999px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.organic-glow {
+  box-shadow: 0 0 35px -5px rgba(196, 91, 42, 0.3);
+}
+
+.hero-dark-overlay {
+  background: linear-gradient(
+    135deg,
+    rgba(23, 13, 14, 0.94) 0%,
+    rgba(37, 21, 22, 0.88) 50%,
+    rgba(18, 9, 10, 0.82) 100%
+  );
+}
+
+
+/* ── Prose overrides for blog content ── */
+.prose-xspeed {
+  color: #374151;
+  line-height: 1.85;
+  font-size: 1.05rem;
+}
+
+.prose-xspeed p {
+  margin-bottom: 1.5rem;
+}
+
+.prose-xspeed .lead {
+  font-size: 1.25rem;
+  font-weight: 500;
+  line-height: 1.7;
+  color: #1f2937;
+  border-left: 3px solid var(--xspeed-orange);
+  padding-left: 1rem;
+  margin-bottom: 2rem;
+}
+
+.prose-xspeed h1 {
+  font-size: 2.25rem;
+  margin-top: 2.5rem;
+  margin-bottom: 1.25rem;
+}
+
+.prose-xspeed h2 {
+  font-size: 1.75rem;
+  margin-top: 2.25rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.prose-xspeed h3 {
+  font-size: 1.35rem;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+}
+
+.prose-xspeed h1,
+.prose-xspeed h2,
+.prose-xspeed h3,
+.prose-xspeed h4 {
+  color: #251516;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.prose-xspeed ul {
+  list-style-type: disc;
+  padding-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.prose-xspeed ol {
+  list-style-type: decimal;
+  padding-left: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.prose-xspeed li {
+  margin-bottom: 0.5rem;
+}
+
+.prose-xspeed a {
+  color: var(--xspeed-orange);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 600;
+}
+
+.prose-xspeed a:hover {
+  color: var(--xspeed-orange-deep);
+}
+
+.prose-xspeed img {
+  border-radius: var(--radius-card);
+  margin-top: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+.prose-xspeed blockquote {
+  border-left: 4px solid var(--xspeed-orange);
+  padding: 1rem 1.5rem;
+  background-color: #fff9f6;
+  border-radius: 0 12px 12px 0;
+  color: #4b5563;
+  font-style: italic;
+  font-size: 1.1rem;
+  margin: 2rem 0;
+}
+
+/* ── Label / Badge ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  background: rgba(196, 91, 42, 0.12);
+  color: var(--xspeed-orange);
+}
+
+/* ── Status badges ── */
+.status-active {
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+}
+
+.status-pending {
+  background: rgba(234, 179, 8, 0.12);
+  color: #ca8a04;
+}
+
+/* ── Scrollbar ── */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #F9FAFB;
+}
+::-webkit-scrollbar-thumb {
+  background: #D1D5DB;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9CA3AF;
+}
+
+/* ── Selection ── */
+::selection {
+  background: rgba(196, 91, 42, 0.2);
+  color: var(--xspeed-dark);
+}
+
+/* ── RTL & Arabic Typography Master Engine ── */
+html[dir="rtl"],
+html[lang="ar"],
+[dir="rtl"] {
+  font-family: var(--font-cairo), Cairo, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+  text-align: start;
+}
+
+/* Enforce Cairo & disable letter-spacing for all Arabic text */
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] h4,
+[dir="rtl"] h5,
+[dir="rtl"] h6,
+[dir="rtl"] p,
+[dir="rtl"] span,
+[dir="rtl"] button,
+[dir="rtl"] input,
+[dir="rtl"] select,
+[dir="rtl"] textarea,
+[dir="rtl"] table,
+[dir="rtl"] th,
+[dir="rtl"] td,
+[dir="rtl"] a,
+[dir="rtl"] label,
+[dir="rtl"] nav,
+[dir="rtl"] .font-display,
+[dir="rtl"] .font-body,
+[dir="rtl"] .font-sans {
+  font-family: var(--font-cairo), Cairo, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: normal !important;
+}
+
+/* Headings in Arabic: comfortable leading and bold appearance */
+[dir="rtl"] h1,
+[dir="rtl"] h2,
+[dir="rtl"] h3,
+[dir="rtl"] .font-display {
+  line-height: 1.35 !important;
+  letter-spacing: normal !important;
+}
+
+[dir="rtl"] p,
+[dir="rtl"] .font-body {
+  line-height: 1.75;
+}
+
+/* Preserve strictly LTR for tracking numbers, waybills, phone numbers, and codes */
+[dir="rtl"] .font-mono,
+[dir="rtl"] [data-ltr],
+[dir="rtl"] .ltr-preserve {
+  direction: ltr !important;
+  unicode-bidi: isolate !important;
+  display: inline-block;
+}
+
+/* Directional Icon Flipping */
+[dir="rtl"] .rtl-mirror,
+[dir="rtl"] .rtl-flip {
+  transform: scaleX(-1);
+}
+
+/* Logical Alignment Utilities */
+[dir="rtl"] .text-start {
+  text-align: right !important;
+}
+
+[dir="rtl"] .text-end {
+  text-align: left !important;
+}
+
+[dir="rtl"] .input-field {
+  text-align: right;
+}
+
+/* Custom scrollbar in RTL */
+[dir="rtl"] ::-webkit-scrollbar-track {
+  background: #F9FAFB;
+}

@@ -1,0 +1,49 @@
+# ==============================================================================
+# XSPEED Next.js - .gitignore Configuration
+# ==============================================================================
+
+# Dependencies
+/node_modules
+/.pnp
+.pnp.js
+.yarn/install-state.gz
+
+# Next.js Build Output & Standalone Cache
+/.next/
+/out/
+/build
+dist/
+
+# TypeScript Cache
+*.tsbuildinfo
+next-env.d.ts
+
+# Environment & Sensitive Credentials
+.env
+.env*.local
+.env.production
+
+# Local Data / JSON Database (Preserve server runtime state)
+/.data/*
+!/.data/.gitkeep
+
+# Temporary Test Files & Screenshots
+test_*.js
+arabic_*.png
+/coverage
+
+# Logs & Debugging
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
