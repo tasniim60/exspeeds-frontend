@@ -270,7 +270,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
         slug: finalSlug,
         author: author,
         category: category,
-        date: new Date().toISOString().split("T")[0],
+        date: new Date().toISOString(),
         status: "published",
         views: 1,
         seoScore: seoAudit.score,
@@ -291,7 +291,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
         slug: finalSlug,
         author: author,
         category: category,
-        date: new Date().toISOString().split("T")[0],
+        date: new Date().toISOString(),
         status: "published",
         views: 1,
         seoScore: seoAudit.score,
@@ -569,8 +569,31 @@ export const PostsView: React.FC<PostsViewProps> = ({
                       {post.views.toLocaleString()}
                     </TableCell>
 
-                    <TableCell className="text-xs text-gray-500 font-medium py-3 px-4">
-                      {post.date}
+                    <TableCell className="text-xs text-gray-500 font-medium py-3 px-4 whitespace-nowrap">
+                      {(() => {
+                        const d = new Date(post.date);
+                        if (!isNaN(d.getTime())) {
+                          return (
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-gray-800">
+                                {d.toLocaleDateString(isRTL ? "ar-EG" : "en-US", {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                })}
+                              </span>
+                              <span className="text-[10px] text-gray-500 font-mono flex items-center gap-1">
+                                <Clock className="w-2.5 h-2.5 text-orange-400" />
+                                {d.toLocaleTimeString(isRTL ? "ar-EG" : "en-US", {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </span>
+                            </div>
+                          );
+                        }
+                        return post.date;
+                      })()}
                     </TableCell>
 
                     <TableCell className="text-end py-3 px-4">

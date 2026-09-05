@@ -216,33 +216,62 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
     : 800;
   const readTimeMinutes = Math.max(2, Math.ceil(wordCount / 200));
 
-  // Upload / Publish Date
+  // Upload / Publish Date & Time
   const publishDateObj = post.date ? new Date(post.date) : null;
-  const formattedPublishDate =
-    publishDateObj && !isNaN(publishDateObj.getTime())
-      ? publishDateObj.toLocaleDateString(isRTL ? "ar-EG" : "en-US", {
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        })
-      : isRTL
-      ? "تاريخ النشر غير متوفر"
-      : "Recently Published";
+  const hasValidPublishDate = Boolean(publishDateObj && !isNaN(publishDateObj.getTime()));
 
-  // Modified / Updated Date
+  const formattedPublishDate = hasValidPublishDate && publishDateObj
+    ? publishDateObj.toLocaleDateString(isRTL ? "ar-EG" : "en-US", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : isRTL
+    ? "تاريخ النشر غير متوفر"
+    : "Recently Published";
+
+  const formattedPublishTime = hasValidPublishDate && publishDateObj
+    ? publishDateObj.toLocaleTimeString(isRTL ? "ar-EG" : "en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
+
+  const fullPublishDateTimeStr = hasValidPublishDate
+    ? isRTL
+      ? `${formattedPublishDate} ${t("blogPage.atTime") || "الساعة"} ${formattedPublishTime}`
+      : `${formattedPublishDate} ${t("blogPage.atTime") || "at"} ${formattedPublishTime}`
+    : formattedPublishDate;
+
+  // Modified / Updated Date & Time
   const modifiedDateObj = post.modified ? new Date(post.modified) : null;
+  const hasValidModifiedDate = Boolean(modifiedDateObj && !isNaN(modifiedDateObj.getTime()));
   const hasModifiedDiff =
+    hasValidModifiedDate &&
+    hasValidPublishDate &&
     modifiedDateObj &&
     publishDateObj &&
-    !isNaN(modifiedDateObj.getTime()) &&
-    Math.abs(modifiedDateObj.getTime() - publishDateObj.getTime()) > 86400000;
+    Math.abs(modifiedDateObj.getTime() - publishDateObj.getTime()) > 3600000;
 
-  const formattedModifiedDate = hasModifiedDiff
+  const formattedModifiedDate = hasModifiedDiff && modifiedDateObj
     ? modifiedDateObj.toLocaleDateString(isRTL ? "ar-EG" : "en-US", {
         day: "numeric",
         month: "long",
         year: "numeric",
       })
+    : null;
+
+  const formattedModifiedTime = hasModifiedDiff && modifiedDateObj
+    ? modifiedDateObj.toLocaleTimeString(isRTL ? "ar-EG" : "en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
+
+  const fullModifiedDateTimeStr = hasModifiedDiff
+    ? isRTL
+      ? `${formattedModifiedDate} ${t("blogPage.atTime") || "الساعة"} ${formattedModifiedTime}`
+      : `${formattedModifiedDate} ${t("blogPage.atTime") || "at"} ${formattedModifiedTime}`
     : null;
 
   const seoScore = post.rank_math_seo?.seo_score || 95;
@@ -329,35 +358,52 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
 
               <span className="text-gray-300">•</span>
 
-              {/* Upload Date (Prominently Formatted) */}
+              {/* Upload Date & Time of Publishing (Prominently Formatted) */}
               <time
                 dateTime={post.date || new Date().toISOString()}
                 itemProp="datePublished"
-                className="flex items-center gap-1.5 font-semibold text-gray-800 bg-orange-50/70 px-2.5 py-1 rounded-full border border-orange-200/60"
-                title={isRTL ? `تاريخ الرفع: ${formattedPublishDate}` : `Upload Date: ${formattedPublishDate}`}
+                className="flex items-center gap-1.5 font-semibold text-gray-800 bg-orange-50/80 px-3 py-1 rounded-full border border-orange-200/70 shadow-2xs"
+                title={fullPublishDateTimeStr}
               >
                 <Calendar className="w-3.5 h-3.5 text-[#C45B2A] shrink-0" />
                 <span>
-                  {t("blogPage.uploadDate") || (isRTL ? "تاريخ الرفع:" : "Upload Date:")}{" "}
+                  {t("blogPage.publishedOn") || (isRTL ? "نُشر بتاريخ:" : "Published on:")}{" "}
                   <strong className="text-gray-900">{formattedPublishDate}</strong>
                 </span>
+                {formattedPublishTime && (
+                  <>
+                    <span className="text-orange-300">•</span>
+                    <span className="flex items-center gap-1 font-mono text-gray-700 text-[11px] bg-white/80 px-2 py-0.5 rounded-full border border-orange-100">
+                      <Clock className="w-3 h-3 text-[#C45B2A] shrink-0" />
+                      <span>{formattedPublishTime}</span>
+                    </span>
+                  </>
+                )}
               </time>
 
-              {/* Last Modified Date (if different from publish date) */}
-              {formattedModifiedDate && (
+              {/* Last Modified Date & Time (if different from publish date) */}
+              {fullModifiedDateTimeStr && (
                 <>
                   <span className="text-gray-300">•</span>
                   <time
                     dateTime={post.modified}
                     itemProp="dateModified"
-                    className="flex items-center gap-1.5 font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/80"
-                    title={isRTL ? `تاريخ التعديل الأخير: ${formattedModifiedDate}` : `Last Modified: ${formattedModifiedDate}`}
+                    className="flex items-center gap-1.5 font-semibold text-emerald-800 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200/80 shadow-2xs"
+                    title={fullModifiedDateTimeStr}
                   >
                     <Clock className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span>
                       {t("blogPage.lastUpdated") || (isRTL ? "آخر تحديث:" : "Last Updated:")}{" "}
                       <strong className="text-emerald-950">{formattedModifiedDate}</strong>
                     </span>
+                    {formattedModifiedTime && (
+                      <>
+                        <span className="text-emerald-300">•</span>
+                        <span className="font-mono text-emerald-800 text-[11px] bg-white/80 px-2 py-0.5 rounded-full border border-emerald-100">
+                          {formattedModifiedTime}
+                        </span>
+                      </>
+                    )}
                   </time>
                 </>
               )}
@@ -627,14 +673,20 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               {relatedPosts.map((related) => {
                 const relDateObj = related.date ? new Date(related.date) : null;
-                const relFormattedDate =
-                  relDateObj && !isNaN(relDateObj.getTime())
-                    ? relDateObj.toLocaleDateString(isRTL ? "ar-EG" : "en-US", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })
-                    : "";
+                const hasRelDate = Boolean(relDateObj && !isNaN(relDateObj.getTime()));
+                const relFormattedDate = hasRelDate && relDateObj
+                  ? relDateObj.toLocaleDateString(isRTL ? "ar-EG" : "en-US", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })
+                  : "";
+                const relFormattedTime = hasRelDate && relDateObj
+                  ? relDateObj.toLocaleTimeString(isRTL ? "ar-EG" : "en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "";
 
                 return (
                   <Link
@@ -655,9 +707,20 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
 
                     <div className="p-5 flex-1 flex flex-col justify-between space-y-3">
                       <div className="space-y-2">
-                        <div className="flex items-center gap-2 text-[11px] text-gray-500 font-medium">
-                          <Calendar className="w-3 h-3 text-[#C45B2A] shrink-0" />
-                          <span>{relFormattedDate}</span>
+                        <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-500 font-medium">
+                          <span className="flex items-center gap-1.5">
+                            <Calendar className="w-3 h-3 text-[#C45B2A] shrink-0" />
+                            <span>{relFormattedDate}</span>
+                          </span>
+                          {relFormattedTime && (
+                            <>
+                              <span className="text-gray-300">•</span>
+                              <span className="flex items-center gap-1 font-mono text-gray-600 bg-gray-50 px-1.5 py-0.5 rounded text-[10px] border border-gray-100">
+                                <Clock className="w-2.5 h-2.5 text-orange-400 shrink-0" />
+                                <span>{relFormattedTime}</span>
+                              </span>
+                            </>
+                          )}
                         </div>
                         <h4 className="font-display font-black text-sm text-gray-900 group-hover:text-[#C45B2A] transition-colors line-clamp-2 leading-snug">
                           {related.title.rendered.replace(/<[^>]*>?/gm, "")}

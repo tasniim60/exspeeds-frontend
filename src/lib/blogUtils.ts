@@ -30,7 +30,11 @@ export function convertAdminPostToWP(post: BlogPost, index: number): WPPost {
       .join("");
   }
 
-  const postDate = post.date ? `${post.date}T10:00:00Z` : new Date().toISOString();
+  const postDate = post.date
+    ? post.date.includes("T")
+      ? post.date
+      : `${post.date}T10:00:00Z`
+    : new Date().toISOString();
 
   return {
     id: parseInt(post.id.replace(/\D/g, "")) || 500 + index,

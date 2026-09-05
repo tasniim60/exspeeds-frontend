@@ -12,13 +12,23 @@ export default function PostCard({ post }: { post: WPPost }) {
     post.featured_image_url || "/assets/xspeed_about_showcase.jpg"
   );
 
-  const dateStr = post.date
-    ? new Date(post.date).toLocaleDateString(isRTL ? "ar-EG" : "en-US", {
+  const publishDateObj = post.date ? new Date(post.date) : null;
+  const hasValidDate = Boolean(publishDateObj && !isNaN(publishDateObj.getTime()));
+
+  const dateStr = hasValidDate && publishDateObj
+    ? publishDateObj.toLocaleDateString(isRTL ? "ar-EG" : "en-US", {
         month: "short",
         day: "numeric",
         year: "numeric",
       })
-    : (isRTL ? "مؤخراً" : "Recently");
+    : isRTL ? "مؤخراً" : "Recently";
+
+  const timeStr = hasValidDate && publishDateObj
+    ? publishDateObj.toLocaleTimeString(isRTL ? "ar-EG" : "en-US", {
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "";
 
   const rawExcerpt = post.excerpt?.rendered
     ? post.excerpt.rendered.replace(/<[^>]*>?/gm, "").trim()
@@ -70,15 +80,27 @@ export default function PostCard({ post }: { post: WPPost }) {
       {/* Main Body */}
       <div className="p-6 sm:p-7 flex flex-col justify-between flex-1 space-y-4">
         <div className="space-y-3">
-          {/* Date & Read time */}
-          <div className="flex items-center gap-3 text-xs font-semibold text-gray-500">
-            <span className="flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-[#C45B2A]" />
-              <span dir="ltr">{dateStr}</span>
-            </span>
+          {/* Date, Time of Publishing & Read time */}
+          <div className="flex flex-wrap items-center gap-2 text-xs font-semibold text-gray-500">
+            <time
+              dateTime={post.date}
+              className="flex items-center gap-1.5 text-gray-700 font-medium"
+              title={hasValidDate && timeStr ? `${dateStr} - ${timeStr}` : dateStr}
+            >
+              <Calendar className="w-3.5 h-3.5 text-[#C45B2A] shrink-0" />
+              <span>{dateStr}</span>
+            </time>
+            {timeStr && (
+              <>
+                <span className="text-gray-300">•</span>
+                <span className="flex items-center gap-1 font-mono text-[11px] text-gray-600 bg-orange-50/60 px-2 py-0.5 rounded-full border border-orange-100/80">
+                  <Clock className="w-3 h-3 text-[#C45B2A] shrink-0" />
+                  <span>{timeStr}</span>
+                </span>
+              </>
+            )}
             <span className="text-gray-300">•</span>
-            <span className="flex items-center gap-1.5">
-              <Clock className="w-3.5 h-3.5 text-gray-400" />
+            <span className="flex items-center gap-1 text-gray-400">
               <span>3 {isRTL ? "دقائق" : "min read"}</span>
             </span>
           </div>
