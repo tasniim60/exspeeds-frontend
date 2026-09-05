@@ -189,12 +189,19 @@ body {
 
 .prose-xspeed .lead {
   font-size: 1.25rem;
-  font-weight: 500;
-  line-height: 1.7;
-  color: #1f2937;
-  border-left: 3px solid var(--xspeed-orange);
-  padding-left: 1rem;
+  font-weight: 600;
+  line-height: 1.75;
+  color: #111827;
+  border-inline-start: 4px solid var(--xspeed-orange);
+  padding-inline-start: 1.25rem;
   margin-bottom: 2rem;
+  background: rgba(196, 91, 42, 0.04);
+  padding-block: 0.75rem;
+  border-radius: 0 8px 8px 0;
+}
+
+[dir="rtl"] .prose-xspeed .lead {
+  border-radius: 8px 0 0 8px;
 }
 
 .prose-xspeed h1 {
@@ -221,32 +228,34 @@ body {
 .prose-xspeed h2,
 .prose-xspeed h3,
 .prose-xspeed h4 {
-  color: #251516;
+  color: #111827;
   font-weight: 800;
   letter-spacing: -0.02em;
 }
 
 .prose-xspeed ul {
   list-style-type: disc;
-  padding-left: 1.5rem;
+  padding-inline-start: 1.75rem;
   margin-bottom: 1.5rem;
 }
 
 .prose-xspeed ol {
   list-style-type: decimal;
-  padding-left: 1.5rem;
+  padding-inline-start: 1.75rem;
   margin-bottom: 1.5rem;
 }
 
 .prose-xspeed li {
   margin-bottom: 0.5rem;
+  line-height: 1.75;
 }
 
 .prose-xspeed a {
   color: var(--xspeed-orange);
   text-decoration: underline;
   text-underline-offset: 3px;
-  font-weight: 600;
+  font-weight: 700;
+  transition: color 0.15s ease;
 }
 
 .prose-xspeed a:hover {
@@ -258,17 +267,76 @@ body {
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  max-width: 100%;
+  height: auto;
+}
+
+.prose-xspeed figure {
+  margin: 2rem 0;
+}
+
+.prose-xspeed figcaption {
+  font-size: 0.85rem;
+  color: #6b7280;
+  text-align: center;
+  margin-top: 0.5rem;
+  font-style: italic;
 }
 
 .prose-xspeed blockquote {
-  border-left: 4px solid var(--xspeed-orange);
-  padding: 1rem 1.5rem;
+  border-inline-start: 4px solid var(--xspeed-orange);
+  padding: 1.25rem 1.5rem;
   background-color: #fff9f6;
   border-radius: 0 12px 12px 0;
-  color: #4b5563;
+  color: #374151;
   font-style: italic;
-  font-size: 1.1rem;
+  font-size: 1.125rem;
+  line-height: 1.75;
   margin: 2rem 0;
+}
+
+[dir="rtl"] .prose-xspeed blockquote {
+  border-radius: 12px 0 0 12px;
+}
+
+.prose-xspeed table {
+  width: 100%;
+  margin: 2rem 0;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+  text-align: start;
+}
+
+.prose-xspeed th,
+.prose-xspeed td {
+  padding: 0.75rem 1rem;
+  border: 1px solid #e5e7eb;
+}
+
+.prose-xspeed th {
+  background-color: #f9fafb;
+  font-weight: 700;
+  color: #111827;
+}
+
+.prose-xspeed pre {
+  background-color: #1f2937;
+  color: #f9fafb;
+  padding: 1.25rem;
+  border-radius: 12px;
+  overflow-x: auto;
+  font-family: var(--font-jetbrains, monospace);
+  font-size: 0.875rem;
+  margin: 1.5rem 0;
+}
+
+.prose-xspeed code:not(pre code) {
+  background-color: #f3f4f6;
+  color: #c45b2a;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  font-size: 0.875em;
+  font-family: var(--font-jetbrains, monospace);
 }
 
 /* ── Label / Badge ── */

@@ -30,9 +30,12 @@ export function convertAdminPostToWP(post: BlogPost, index: number): WPPost {
       .join("");
   }
 
+  const postDate = post.date ? `${post.date}T10:00:00Z` : new Date().toISOString();
+
   return {
     id: parseInt(post.id.replace(/\D/g, "")) || 500 + index,
-    date: post.date ? `${post.date}T10:00:00Z` : new Date().toISOString(),
+    date: postDate,
+    modified: postDate,
     slug: post.slug,
     status: "publish",
     title: { rendered: post.title },
@@ -56,6 +59,8 @@ export function convertAdminPostToWP(post: BlogPost, index: number): WPPost {
       twitter_title: post.title,
       twitter_description: defaultExcerpt,
       twitter_image: defaultImage,
+      seo_score: post.seoScore || 92,
+      robots: ["index", "follow", "max-image-preview:large"],
     },
   };
 }

@@ -33,28 +33,37 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     "Express logistics analysis, supply chain optimizations, and freight intelligence from XSPEED.";
   const cleanDesc = rawDesc.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim().slice(0, 160);
 
-  const rawImage = post?.featured_image_url || post?.rank_math_seo?.og_image || "/assets/Home-pic1-C9kYJzAW.jpg";
+  const rawImage = post?.rank_math_seo?.og_image || post?.featured_image_url || "/assets/Home-pic1-C9kYJzAW.jpg";
   const ogImageUrl = rawImage.startsWith("http") ? rawImage : `https://exspeeds.com${rawImage.startsWith("/") ? "" : "/"}${rawImage}`;
 
-  const postUrl = `https://exspeeds.com/blog/${params.slug}`;
+  const postUrl = post?.rank_math_seo?.canonical || `https://exspeeds.com/blog/${params.slug}`;
+
+  const keywords = [
+    post?.rank_math_seo?.focus_keyword,
+    post?.category_name,
+    "logistics",
+    "express freight",
+    "customs clearance",
+  ].filter(Boolean) as string[];
 
   return {
     title: pageTitle,
     description: cleanDesc,
+    keywords: keywords,
     alternates: {
       canonical: postUrl,
     },
     openGraph: {
       type: "article",
-      title: pageTitle,
-      description: cleanDesc,
+      title: post?.rank_math_seo?.og_title || pageTitle,
+      description: post?.rank_math_seo?.og_description || cleanDesc,
       url: postUrl,
       siteName: "XSPEED Logistics",
       publishedTime: post?.date,
-      modifiedTime: post?.date,
+      modifiedTime: post?.modified || post?.date,
       authors: [post?.author_name || "XSPEED Editorial Team"],
       section: post?.category_name || "Technology & Logistics",
-      tags: [post?.rank_math_seo?.focus_keyword, post?.category_name, "logistics", "freight"].filter(Boolean) as string[],
+      tags: keywords,
       images: [
         {
           url: ogImageUrl,
@@ -66,9 +75,9 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     },
     twitter: {
       card: "summary_large_image",
-      title: pageTitle,
-      description: cleanDesc,
-      images: [ogImageUrl],
+      title: post?.rank_math_seo?.twitter_title || pageTitle,
+      description: post?.rank_math_seo?.twitter_description || cleanDesc,
+      images: [post?.rank_math_seo?.twitter_image || ogImageUrl],
       creator: "@xspeed_express",
     },
   };
@@ -81,13 +90,13 @@ export default async function SinglePostPage({ params }: PageProps) {
     ? post.title.rendered.replace(/<[^>]*>?/gm, "").replace(/&#\d+;/g, "").trim()
     : "XSPEED Logistics Article";
 
-  const cleanDesc = post?.excerpt?.rendered
+  const cleanDesc = post?.rank_math_seo?.description || (post?.excerpt?.rendered
     ? post.excerpt.rendered.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim()
-    : "Express logistics insights and supply chain updates.";
+    : "Express logistics insights and supply chain updates.");
 
-  const rawImage = post?.featured_image_url || "/assets/Home-pic1-C9kYJzAW.jpg";
+  const rawImage = post?.rank_math_seo?.og_image || post?.featured_image_url || "/assets/Home-pic1-C9kYJzAW.jpg";
   const ogImageUrl = rawImage.startsWith("http") ? rawImage : `https://exspeeds.com${rawImage.startsWith("/") ? "" : "/"}${rawImage}`;
-  const postUrl = `https://exspeeds.com/blog/${params.slug}`;
+  const postUrl = post?.rank_math_seo?.canonical || `https://exspeeds.com/blog/${params.slug}`;
 
   const articleSchema = {
     "@context": "https://schema.org",
@@ -96,11 +105,11 @@ export default async function SinglePostPage({ params }: PageProps) {
       "@type": "WebPage",
       "@id": postUrl,
     },
-    headline: cleanTitle,
+    headline: post?.rank_math_seo?.title ? post.rank_math_seo.title.replace(/<[^>]*>?/gm, "") : cleanTitle,
     description: cleanDesc,
     image: [ogImageUrl],
     datePublished: post?.date || "2026-08-01T00:00:00Z",
-    dateModified: post?.date || "2026-08-01T00:00:00Z",
+    dateModified: post?.modified || post?.date || "2026-08-01T00:00:00Z",
     author: {
       "@type": "Person",
       name: post?.author_name || "XSPEED Editorial Team",

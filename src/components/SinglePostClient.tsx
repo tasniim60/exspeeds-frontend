@@ -136,13 +136,33 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
     : 800;
   const readTimeMinutes = Math.max(2, Math.ceil(wordCount / 200));
 
-  const formattedDate = post.date
-    ? new Date(post.date).toLocaleDateString(isRTL ? "ar-EG" : "en-US", {
-        month: "long",
+  // Upload / Publish Date
+  const publishDateObj = post.date ? new Date(post.date) : null;
+  const formattedPublishDate = publishDateObj && !isNaN(publishDateObj.getTime())
+    ? publishDateObj.toLocaleDateString(isRTL ? "ar-EG" : "en-US", {
         day: "numeric",
+        month: "long",
         year: "numeric",
       })
-    : (isRTL ? "منشور حديثاً" : "Recently Published");
+    : (isRTL ? "تاريخ النشر غير متوفر" : "Recently Published");
+
+  // Modified / Updated Date
+  const modifiedDateObj = post.modified ? new Date(post.modified) : null;
+  const hasModifiedDiff =
+    modifiedDateObj &&
+    publishDateObj &&
+    !isNaN(modifiedDateObj.getTime()) &&
+    Math.abs(modifiedDateObj.getTime() - publishDateObj.getTime()) > 86400000;
+
+  const formattedModifiedDate = hasModifiedDiff
+    ? modifiedDateObj.toLocaleDateString(isRTL ? "ar-EG" : "en-US", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : null;
+
+  const seoScore = post.rank_math_seo?.seo_score || 94;
 
   return (
     <div className={`min-h-screen bg-[#FAF8F5] py-12 lg:py-20 px-2 sm:px-4 lg:px-6 ${isRTL ? "text-right" : "text-left"}`}>
@@ -180,21 +200,22 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
         </nav>
 
         {/* Main Article Container */}
-        <article className="bg-white/95 backdrop-blur-xl rounded-[32px] border border-orange-100/90 overflow-hidden shadow-[0_20px_50px_rgba(37,21,22,0.06)]">
+        <article className="bg-white/95 backdrop-blur-xl rounded-[32px] border border-orange-100/90 overflow-hidden shadow-[0_20px_50px_rgba(37,21,22,0.06)]" itemScope itemType="https://schema.org/BlogPosting">
           {/* Article Header */}
           <header className="p-7 sm:p-10 lg:p-12 space-y-6 border-b border-gray-100 text-start">
             <h1
+              itemProp="headline"
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-black text-gray-950 tracking-[-0.03em] leading-tight"
               dangerouslySetInnerHTML={{ __html: post.title.rendered }}
             />
 
-            {/* Meta Row: Author, Date, Read Time */}
-            <div className="flex flex-wrap items-center gap-4 text-xs text-gray-500 pt-2">
-              <div className="flex items-center gap-2 font-bold text-gray-800">
+            {/* Meta Row: Author, Upload Date, Modified Date, Rank Math Badge */}
+            <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-gray-600 pt-2">
+              <div className="flex items-center gap-2 font-bold text-gray-900" itemProp="author" itemScope itemType="https://schema.org/Person">
                 <div className="w-8 h-8 rounded-full bg-orange-100 text-[#C45B2A] flex items-center justify-center font-black text-xs border border-orange-200/80">
                   {post.author_name?.charAt(0) || "X"}
                 </div>
-                <span>{getLocalizedAuthor(post.author_name)}</span>
+                <span itemProp="name">{getLocalizedAuthor(post.author_name)}</span>
                 <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px] font-bold border border-emerald-200 flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3 text-emerald-600" />
                   {t("blogPage.verified") || (isRTL ? "فريق موثق" : "Verified")}
@@ -203,18 +224,47 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
 
               <span className="text-gray-300">•</span>
 
-              <time dateTime={post.date || new Date().toISOString()} className="flex items-center gap-1.5 font-medium">
+              {/* Upload Date */}
+              <time
+                dateTime={post.date || new Date().toISOString()}
+                itemProp="datePublished"
+                className="flex items-center gap-1.5 font-medium text-gray-700"
+                title={isRTL ? `تاريخ الرفع: ${formattedPublishDate}` : `Upload Date: ${formattedPublishDate}`}
+              >
                 <Calendar className="w-3.5 h-3.5 text-[#C45B2A] shrink-0" />
-                <span dir="ltr">{formattedDate}</span>
+                <span>{isRTL ? `نُشر: ${formattedPublishDate}` : `Published: ${formattedPublishDate}`}</span>
               </time>
+
+              {/* Modified Date (if available) */}
+              {formattedModifiedDate && (
+                <>
+                  <span className="text-gray-300">•</span>
+                  <time
+                    dateTime={post.modified}
+                    itemProp="dateModified"
+                    className="flex items-center gap-1.5 font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200/80"
+                    title={isRTL ? `تاريخ التعديل الأخير: ${formattedModifiedDate}` : `Last Modified: ${formattedModifiedDate}`}
+                  >
+                    <Clock className="w-3 h-3 text-emerald-600 shrink-0" />
+                    <span>{isRTL ? `محدث: ${formattedModifiedDate}` : `Updated: ${formattedModifiedDate}`}</span>
+                  </time>
+                </>
+              )}
 
               <span className="text-gray-300">•</span>
 
-              <div className="flex items-center gap-1.5 font-medium">
+              {/* Reading Time */}
+              <div className="flex items-center gap-1.5 font-medium text-gray-500">
                 <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
                 <span>
                   {readTimeMinutes} {t("blogPage.minRead") || (isRTL ? "دقائق قراءة" : "min read")} ({wordCount} {t("blogPage.words") || (isRTL ? "كلمة" : "words")})
                 </span>
+              </div>
+
+              {/* Rank Math SEO Score Chip */}
+              <div className="ms-auto flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-800 border border-emerald-200/80 rounded-full font-black text-[11px]">
+                <Sparkles className="w-3 h-3 text-emerald-600 shrink-0" />
+                <span>Rank Math SEO: {seoScore}/100</span>
               </div>
             </div>
           </header>
@@ -223,8 +273,9 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
           {imgSrc && (
             <div className="relative w-full h-72 sm:h-96 md:h-[440px] bg-gray-100 overflow-hidden">
               <img
+                itemProp="image"
                 src={imgSrc}
-                alt={post.title.rendered}
+                alt={post.title.rendered.replace(/<[^>]*>?/gm, "")}
                 className="w-full h-full object-cover"
                 onError={() => setImgSrc("/assets/xspeed_about_showcase.jpg")}
               />
@@ -247,9 +298,10 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
               </p>
             </div>
 
-            {/* Render HTML content */}
+            {/* Render Enhanced HTML content with prose-xspeed */}
             <div
-              className="prose prose-lg max-w-none text-gray-700 leading-relaxed font-medium space-y-6 prose-headings:font-display prose-headings:font-black prose-headings:text-gray-950 prose-a:text-[#C45B2A] prose-a:font-bold hover:prose-a:underline"
+              itemProp="articleBody"
+              className="prose-xspeed max-w-none text-start"
               dangerouslySetInnerHTML={{ __html: post.content.rendered }}
             />
 

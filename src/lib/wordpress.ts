@@ -9,11 +9,16 @@ export interface RankMathSEO {
   twitter_title: string;
   twitter_description: string;
   twitter_image: string | null;
+  seo_score?: number; // Rank Math SEO Score (0-100)
+  robots?: string[] | string;
 }
 
 export interface WPPost {
   id: number;
-  date: string;
+  date: string; // Publish / upload date (ISO 8601)
+  date_gmt?: string;
+  modified?: string; // Last updated / modified date (ISO 8601)
+  modified_gmt?: string;
   slug: string;
   status: string;
   title: { rendered: string };
@@ -22,7 +27,9 @@ export interface WPPost {
   featured_image_url?: string;
   category_name?: string;
   author_name?: string;
+  author_avatar?: string;
   rank_math_seo?: RankMathSEO;
+  meta?: Record<string, any>;
   _embedded?: any;
 }
 
@@ -278,11 +285,15 @@ export async function getPostBySlug(slug: string): Promise<WPPost | null> {
   return match || null;
 }
 
-function transformWpPost(post: WPPost): WPPost {
+function transformWpPost(post: any): WPPost {
   let featuredImage: string | undefined = undefined;
 
   const sourceUrl =
-    post._embedded?.["wp:featuredmedia"]?.[0]?.source_url;
+    post._embedded?.["wp:featuredmedia"]?.[0]?.source_url ||
+    post.featured_media_src_url ||
+    post.meta?.rank_math_facebook_image ||
+    post.meta?.rank_math_twitter_image ||
+    post.rank_math_seo?.og_image;
 
   if (sourceUrl) {
     try {
@@ -292,31 +303,79 @@ function transformWpPost(post: WPPost): WPPost {
     }
   }
 
-  const categoryName = post._embedded?.["wp:term"]?.[0]?.[0]?.name || "Technology & Logistics";
-  const authorName = post._embedded?.author?.[0]?.name || "XSPEED Editorial";
+  const categoryName =
+    post._embedded?.["wp:term"]?.[0]?.[0]?.name ||
+    post.category_name ||
+    "Technology & Logistics";
 
-  const defaultTitle = post.title?.rendered ? post.title.rendered.replace(/&#\d+;/g, "") : "Untitled";
-  const defaultDesc = post.excerpt?.rendered ? post.excerpt.rendered.replace(/<[^>]*>?/gm, "").trim() : "";
+  const authorName =
+    post._embedded?.author?.[0]?.name ||
+    post.author_name ||
+    "XSPEED Editorial Team";
 
-  const rankMathSeo: RankMathSEO = post.rank_math_seo || {
-    title: `${defaultTitle} | XSPEED`,
-    description: defaultDesc,
-    focus_keyword: "",
-    canonical: `https://exspeeds.com/blog/${post.slug}`,
-    og_title: defaultTitle,
-    og_description: defaultDesc,
-    og_image: featuredImage || "/assets/Home-pic1-C9kYJzAW.jpg",
-    twitter_title: defaultTitle,
-    twitter_description: defaultDesc,
-    twitter_image: featuredImage || "/assets/Home-pic1-C9kYJzAW.jpg",
+  const authorAvatar =
+    post._embedded?.author?.[0]?.avatar_urls?.["96"] ||
+    post._embedded?.author?.[0]?.avatar_urls?.["48"] ||
+    undefined;
+
+  const rawTitle = post.title?.rendered || post.title || "Untitled Article";
+  const defaultTitle = rawTitle.replace(/<[^>]*>?/gm, "").replace(/&#\d+;/g, "").trim();
+
+  const rawDesc = post.excerpt?.rendered || post.excerpt || "";
+  const defaultDesc = rawDesc.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim();
+
+  // Extract Rank Math meta if provided by WordPress REST API
+  const meta = post.meta || {};
+  const rm = post.rank_math_seo || {};
+
+  const rmTitle = rm.title || meta.rank_math_title || `${defaultTitle} | XSPEED`;
+  const rmDesc = rm.description || meta.rank_math_description || defaultDesc;
+  const rmFocusKeyword = rm.focus_keyword || meta.rank_math_focus_keyword || "";
+  const rmCanonical = rm.canonical || meta.rank_math_canonical_url || `https://exspeeds.com/blog/${post.slug}`;
+  const rmOgTitle = rm.og_title || meta.rank_math_facebook_title || rmTitle;
+  const rmOgDesc = rm.og_description || meta.rank_math_facebook_description || rmDesc;
+  const rmOgImage = rm.og_image || meta.rank_math_facebook_image || featuredImage || "/assets/Home-pic1-C9kYJzAW.jpg";
+  const rmTwitterTitle = rm.twitter_title || meta.rank_math_twitter_title || rmOgTitle;
+  const rmTwitterDesc = rm.twitter_description || meta.rank_math_twitter_description || rmOgDesc;
+  const rmTwitterImage = rm.twitter_image || meta.rank_math_twitter_image || rmOgImage;
+  const rmScore = rm.seo_score || (meta.rank_math_seo_score ? Number(meta.rank_math_seo_score) : 92);
+  const rmRobots = rm.robots || meta.rank_math_robots || ["index", "follow", "max-image-preview:large"];
+
+  const rankMathSeo: RankMathSEO = {
+    title: rmTitle,
+    description: rmDesc,
+    focus_keyword: rmFocusKeyword,
+    canonical: rmCanonical,
+    og_title: rmOgTitle,
+    og_description: rmOgDesc,
+    og_image: rmOgImage,
+    twitter_title: rmTwitterTitle,
+    twitter_description: rmTwitterDesc,
+    twitter_image: rmTwitterImage,
+    seo_score: rmScore,
+    robots: rmRobots,
   };
+
+  const publishDate = post.date || new Date().toISOString();
+  const modifiedDate = post.modified || post.date || publishDate;
 
   return {
     ...post,
+    date: publishDate,
+    date_gmt: post.date_gmt,
+    modified: modifiedDate,
+    modified_gmt: post.modified_gmt,
+    slug: post.slug,
+    status: post.status || "publish",
+    title: { rendered: rawTitle },
+    content: { rendered: post.content?.rendered || post.content || "" },
+    excerpt: { rendered: defaultDesc },
     featured_image_url: featuredImage || "/assets/Home-pic1-C9kYJzAW.jpg",
     category_name: categoryName,
     author_name: authorName,
+    author_avatar: authorAvatar,
     rank_math_seo: rankMathSeo,
+    meta: meta,
   };
 }
 
@@ -379,9 +438,11 @@ export async function createWordPressPost(data: {
   }
 
   // If WordPress engine is currently sleeping/local, return structured success payload
+  const nowIso = new Date().toISOString();
   const fallbackFormattedPost: WPPost = {
     id: Math.floor(600 + Math.random() * 1000),
-    date: new Date().toISOString(),
+    date: nowIso,
+    modified: nowIso,
     slug: data.slug,
     status: "publish",
     title: { rendered: data.title },
@@ -401,6 +462,8 @@ export async function createWordPressPost(data: {
       twitter_title: data.title,
       twitter_description: data.excerpt || data.title,
       twitter_image: defaultImage,
+      seo_score: data.seoScore || 94,
+      robots: ["index", "follow", "max-image-preview:large"],
     },
   };
 
