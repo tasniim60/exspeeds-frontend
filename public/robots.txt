@@ -1,0 +1,9 @@
+﻿User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /client
+Disallow: /api/auth
+
+Sitemap: https://exspeeds.com/sitemap.xml
+Host: https://exspeeds.com

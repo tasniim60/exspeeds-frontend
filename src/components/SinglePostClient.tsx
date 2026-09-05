@@ -148,20 +148,36 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
     <div className={`min-h-screen bg-[#FAF8F5] py-12 lg:py-20 px-2 sm:px-4 lg:px-6 ${isRTL ? "text-right" : "text-left"}`}>
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Navigation Breadcrumb */}
-        <div className="flex items-center justify-between">
-          <Link
-            href="/blog"
-            className="inline-flex items-center gap-2 text-xs font-bold text-gray-700 hover:text-[#C45B2A] bg-white px-4 py-2 rounded-full border border-gray-200 shadow-2xs transition-all hover:border-[#C45B2A]"
-          >
-            <ArrowLeft className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
-            <span>{t("blogPage.backToArticles") || (isRTL ? "العودة إلى جميع المقالات" : "Back to All Articles")}</span>
-          </Link>
+        <nav aria-label="Breadcrumb" className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs font-semibold text-gray-500">
+            <Link href="/" className="hover:text-[#C45B2A] transition-colors">
+              {isRTL ? "الرئيسية" : "Home"}
+            </Link>
+            <span>/</span>
+            <Link href="/blog" className="hover:text-[#C45B2A] transition-colors">
+              {isRTL ? "المدونة" : "Blog"}
+            </Link>
+            <span>/</span>
+            <span className="text-gray-900 font-bold truncate max-w-[200px] sm:max-w-xs md:max-w-md">
+              {post.title.rendered.replace(/<[^>]*>?/gm, "")}
+            </span>
+          </div>
 
-          {/* Category Pill */}
-          <span className="bg-orange-50 text-[#C45B2A] border border-orange-200/80 text-[11px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow-2xs">
-            {getLocalizedCategory(post.category_name)}
-          </span>
-        </div>
+          <div className="flex items-center gap-2">
+            <Link
+              href="/blog"
+              className="inline-flex items-center gap-2 text-xs font-bold text-gray-700 hover:text-[#C45B2A] bg-white px-4 py-1.5 rounded-full border border-gray-200 shadow-2xs transition-all hover:border-[#C45B2A]"
+            >
+              <ArrowLeft className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
+              <span>{t("blogPage.backToArticles") || (isRTL ? "العودة إلى جميع المقالات" : "Back to All Articles")}</span>
+            </Link>
+
+            {/* Category Pill */}
+            <span className="bg-orange-50 text-[#C45B2A] border border-orange-200/80 text-[11px] font-black uppercase tracking-wider px-3.5 py-1 rounded-full shadow-2xs">
+              {getLocalizedCategory(post.category_name)}
+            </span>
+          </div>
+        </nav>
 
         {/* Main Article Container */}
         <article className="bg-white/95 backdrop-blur-xl rounded-[32px] border border-orange-100/90 overflow-hidden shadow-[0_20px_50px_rgba(37,21,22,0.06)]">
@@ -187,10 +203,10 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
 
               <span className="text-gray-300">•</span>
 
-              <div className="flex items-center gap-1.5 font-medium">
+              <time dateTime={post.date || new Date().toISOString()} className="flex items-center gap-1.5 font-medium">
                 <Calendar className="w-3.5 h-3.5 text-[#C45B2A] shrink-0" />
                 <span dir="ltr">{formattedDate}</span>
-              </div>
+              </time>
 
               <span className="text-gray-300">•</span>
 

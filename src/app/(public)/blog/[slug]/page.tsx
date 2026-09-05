@@ -1,4 +1,4 @@
-import { getPostBySlug } from "@/lib/wordpress";
+import { getPostBySlug, getPosts } from "@/lib/wordpress";
 import SinglePostClient from "@/components/SinglePostClient";
 import { Metadata } from "next";
 
@@ -10,19 +10,152 @@ interface PageProps {
   };
 }
 
+export async function generateStaticParams() {
+  try {
+    const posts = await getPosts(50);
+    return posts.map((post) => ({
+      slug: post.slug,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const post = await getPostBySlug(params.slug);
-  const pageTitle = post?.rank_math_seo?.title || post?.title.rendered || "XSPEED Logistics Article";
-  const pageDesc = post?.rank_math_seo?.description || "Express Logistics & Supply Chain Intelligence";
+  const rawTitle = post?.rank_math_seo?.title || post?.title.rendered || "Logistics Insights";
+  const cleanTitle = rawTitle.replace(/<[^>]*>?/gm, "").replace(/&#\d+;/g, "").trim();
+  const pageTitle = cleanTitle.includes("XSPEED") ? cleanTitle : `${cleanTitle} | XSPEED`;
+
+  const rawDesc =
+    post?.rank_math_seo?.description ||
+    post?.excerpt?.rendered ||
+    "Express logistics analysis, supply chain optimizations, and freight intelligence from XSPEED.";
+  const cleanDesc = rawDesc.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim().slice(0, 160);
+
+  const rawImage = post?.featured_image_url || post?.rank_math_seo?.og_image || "/assets/Home-pic1-C9kYJzAW.jpg";
+  const ogImageUrl = rawImage.startsWith("http") ? rawImage : `https://exspeeds.com${rawImage.startsWith("/") ? "" : "/"}${rawImage}`;
+
+  const postUrl = `https://exspeeds.com/blog/${params.slug}`;
 
   return {
-    title: `${pageTitle} | XSPEED`,
-    description: pageDesc,
+    title: pageTitle,
+    description: cleanDesc,
+    alternates: {
+      canonical: postUrl,
+    },
+    openGraph: {
+      type: "article",
+      title: pageTitle,
+      description: cleanDesc,
+      url: postUrl,
+      siteName: "XSPEED Logistics",
+      publishedTime: post?.date,
+      modifiedTime: post?.date,
+      authors: [post?.author_name || "XSPEED Editorial Team"],
+      section: post?.category_name || "Technology & Logistics",
+      tags: [post?.rank_math_seo?.focus_keyword, post?.category_name, "logistics", "freight"].filter(Boolean) as string[],
+      images: [
+        {
+          url: ogImageUrl,
+          width: 1200,
+          height: 630,
+          alt: cleanTitle,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: pageTitle,
+      description: cleanDesc,
+      images: [ogImageUrl],
+      creator: "@xspeed_express",
+    },
   };
 }
 
 export default async function SinglePostPage({ params }: PageProps) {
   const post = await getPostBySlug(params.slug);
 
-  return <SinglePostClient slug={params.slug} initialPost={post} />;
+  const cleanTitle = post?.title.rendered
+    ? post.title.rendered.replace(/<[^>]*>?/gm, "").replace(/&#\d+;/g, "").trim()
+    : "XSPEED Logistics Article";
+
+  const cleanDesc = post?.excerpt?.rendered
+    ? post.excerpt.rendered.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim()
+    : "Express logistics insights and supply chain updates.";
+
+  const rawImage = post?.featured_image_url || "/assets/Home-pic1-C9kYJzAW.jpg";
+  const ogImageUrl = rawImage.startsWith("http") ? rawImage : `https://exspeeds.com${rawImage.startsWith("/") ? "" : "/"}${rawImage}`;
+  const postUrl = `https://exspeeds.com/blog/${params.slug}`;
+
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": postUrl,
+    },
+    headline: cleanTitle,
+    description: cleanDesc,
+    image: [ogImageUrl],
+    datePublished: post?.date || "2026-08-01T00:00:00Z",
+    dateModified: post?.date || "2026-08-01T00:00:00Z",
+    author: {
+      "@type": "Person",
+      name: post?.author_name || "XSPEED Editorial Team",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "XSPEED Logistics",
+      url: "https://exspeeds.com",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://exspeeds.com/assets/Favlogo-DSIHncWK.png",
+      },
+    },
+    articleSection: post?.category_name || "Technology & Logistics",
+    keywords: post?.rank_math_seo?.focus_keyword || "express logistics, freight customs, cargo delivery",
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://exspeeds.com",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Blog",
+        item: "https://exspeeds.com/blog",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: cleanTitle,
+        item: postUrl,
+      },
+    ],
+  };
+
+  return (
+    <>
+      {/* Schema.org JSON-LD Structured Data for Google Rich Snippets & AI Citations */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+
+      <SinglePostClient slug={params.slug} initialPost={post} />
+    </>
+  );
 }

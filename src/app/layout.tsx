@@ -25,10 +25,74 @@ const cairo = Cairo({
   weight: ["400", "600", "700", "800", "900"],
 });
 
-export const metadata = {
-  title: "XSPEED — Express Logistics & Technology Platform",
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  metadataBase: new URL("https://exspeeds.com"),
+  title: {
+    default: "XSPEED — Express Logistics & Technology Platform",
+    template: "%s | XSPEED",
+  },
   description:
     "The fastest regional express delivery. Automated dispatching, real-time tracking, and full supply chain visibility across 250+ global branches.",
+  keywords: [
+    "express logistics",
+    "freight forwarding",
+    "courier dispatch",
+    "customs clearance",
+    "Egypt cargo",
+    "GCC freight",
+    "cargo tracking",
+    "cross-docking",
+    "supply chain technology",
+  ],
+  authors: [{ name: "XSPEED Logistics", url: "https://exspeeds.com" }],
+  creator: "XSPEED Logistics",
+  publisher: "XSPEED Logistics",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "XSPEED — Express Logistics & Technology Platform",
+    description:
+      "The fastest regional express delivery. Automated dispatching, real-time tracking, and full supply chain visibility across 250+ global branches.",
+    url: "https://exspeeds.com",
+    siteName: "XSPEED Logistics",
+    locale: "en_US",
+    type: "website",
+    images: [
+      {
+        url: "/assets/Home-pic1-C9kYJzAW.jpg",
+        width: 1200,
+        height: 630,
+        alt: "XSPEED Express Logistics Fleet",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "XSPEED — Express Logistics & Technology Platform",
+    description:
+      "The fastest regional express delivery. Automated dispatching, real-time tracking, and full supply chain visibility across 250+ global branches.",
+    images: ["/assets/Home-pic1-C9kYJzAW.jpg"],
+    creator: "@xspeed_express",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
+  },
 };
 
 export default function RootLayout({
