@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -11,7 +10,6 @@ import {
   Headphones,
   ArrowLeft,
   ArrowRight,
-  Search,
   Compass,
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
@@ -19,19 +17,9 @@ import { useLanguage } from "@/context/LanguageContext";
 export default function NotFound() {
   const { t, isRTL } = useLanguage();
   const router = useRouter();
-  const [waybillInput, setWaybillInput] = useState("");
-
-  const handleTrackSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmed = waybillInput.trim();
-    if (trimmed) {
-      router.push(`/track?waybill=${encodeURIComponent(trimmed)}`);
-    } else {
-      router.push("/track");
-    }
-  };
 
   const ArrowIcon = isRTL ? ArrowLeft : ArrowRight;
+  const BackArrowIcon = isRTL ? ArrowRight : ArrowLeft;
 
   return (
     <main
@@ -74,35 +62,8 @@ export default function NotFound() {
               {t("errors.notFound.subtitle")}
             </p>
 
-            {/* Embedded Direct Waybill Quick Search */}
-            <div className="pt-2">
-              <form
-                onSubmit={handleTrackSubmit}
-                className="relative max-w-md mx-auto flex items-stretch rounded-2xl border border-gray-300 bg-gray-50/80 p-1.5 focus-within:border-[#C45B2A] focus-within:ring-2 focus-within:ring-[#C45B2A]/20 transition-all shadow-xs"
-              >
-                <div className="flex items-center px-3 text-gray-400 pointer-events-none">
-                  <PackageSearch className="w-5 h-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  value={waybillInput}
-                  onChange={(e) => setWaybillInput(e.target.value)}
-                  placeholder={t("errors.notFound.quickTrackerPlaceholder")}
-                  className="w-full bg-transparent text-xs sm:text-sm font-medium text-gray-800 placeholder-gray-400 focus:outline-none px-1"
-                  aria-label={t("errors.notFound.quickTrackerPlaceholder")}
-                />
-                <button
-                  type="submit"
-                  className="min-h-[44px] px-4 py-2.5 rounded-xl bg-[#C45B2A] hover:bg-[#A84A20] active:scale-[0.98] text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm cursor-pointer whitespace-nowrap"
-                >
-                  <Search className="w-3.5 h-3.5" />
-                  <span>{t("errors.notFound.trackNow")}</span>
-                </button>
-              </form>
-            </div>
-
-            {/* Return to Home Primary Button */}
-            <div className="flex items-center justify-center gap-3 pt-2">
+            {/* Action Navigation Controls */}
+            <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
               <Link
                 href="/"
                 className="min-h-[44px] px-6 py-2.5 rounded-xl bg-[#251516] hover:bg-[#3D2527] active:scale-[0.98] text-white font-bold text-xs sm:text-sm inline-flex items-center gap-2 shadow-md transition-all cursor-pointer"
@@ -110,6 +71,15 @@ export default function NotFound() {
                 <Home className="w-4 h-4" />
                 <span>{t("errors.notFound.homeBtn")}</span>
               </Link>
+
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="min-h-[44px] px-5 py-2.5 rounded-xl border border-gray-300 hover:bg-gray-50 active:scale-[0.98] text-gray-700 font-bold text-xs sm:text-sm inline-flex items-center gap-2 shadow-xs transition-all cursor-pointer"
+              >
+                <BackArrowIcon className="w-4 h-4" />
+                <span>{t("errors.notFound.backPrev")}</span>
+              </button>
             </div>
           </div>
         </div>
@@ -139,7 +109,7 @@ export default function NotFound() {
                   {t("errors.notFound.trackBtn")}
                 </span>
                 <span className="text-[11px] text-gray-500 line-clamp-1">
-                  {isRTL ? "متابعة مسار الشحنة المباشر" : "Real-time dispatch tracking"}
+                  {isRTL ? "بوابة الربط وتتبع شركات الشحن" : "Carrier tracking bridge & status"}
                 </span>
               </div>
             </Link>

@@ -4,21 +4,42 @@ import type { NextRequest } from "next/server";
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // 0. Permanent 301 Redirect for Legacy E-commerce Routes (SEO preservation)
   const lowerPath = pathname.toLowerCase();
-  const legacyShopPrefixes = [
+
+  // 0. Permanent 301 Redirect for /home (SEO preservation for indexed "Welcome to XSpeed")
+  if (lowerPath === "/home" || lowerPath.startsWith("/home/")) {
+    const rootUrl = new URL("/", request.url);
+    return NextResponse.redirect(rootUrl, { status: 301 });
+  }
+
+  // 1. Permanent 301 Redirect for Legacy E-commerce & Shop Routes to /blog
+  // (Exspeeds does not have a shop; all store/product traffic redirects to the content/logistics blog)
+  const legacyBlogRedirects = [
     "/shop",
+    "/store",
     "/product",
     "/products",
     "/product-category",
-    "/store",
+  ];
+
+  if (
+    legacyBlogRedirects.some(
+      (prefix) => lowerPath === prefix || lowerPath.startsWith(`${prefix}/`)
+    )
+  ) {
+    const blogUrl = new URL("/blog", request.url);
+    return NextResponse.redirect(blogUrl, { status: 301 });
+  }
+
+  // 2. Permanent 301 Redirect for Cart/Checkout/Account to root /
+  const legacyAccountPrefixes = [
     "/cart",
     "/checkout",
     "/my-account",
   ];
 
   if (
-    legacyShopPrefixes.some(
+    legacyAccountPrefixes.some(
       (prefix) => lowerPath === prefix || lowerPath.startsWith(`${prefix}/`)
     )
   ) {
@@ -80,6 +101,8 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/home",
+    "/home/:path*",
     "/admin/:path*",
     "/api/customers/:path*",
     "/api/invoices/:path*",
