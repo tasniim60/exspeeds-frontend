@@ -93,6 +93,9 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  verification: {
+    google: "QD1ZGw9Lxk-ITk35fNXbhrZ66LuV0-EOuMcpLFOnjAM",
+  },
 };
 
 export default function RootLayout({
@@ -104,6 +107,10 @@ export default function RootLayout({
     <html lang="en" dir="ltr" className="scroll-smooth">
       <head>
         <link rel="icon" href="/assets/Favlogo-DSIHncWK.png" />
+        <meta
+          name="google-site-verification"
+          content="QD1ZGw9Lxk-ITk35fNXbhrZ66LuV0-EOuMcpLFOnjAM"
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
