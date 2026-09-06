@@ -222,6 +222,63 @@ export const FALLBACK_POSTS: WPPost[] = [
       robots: ["index", "follow", "max-image-preview:large"],
     },
   },
+  {
+    id: 105,
+    date: "2026-08-15T09:00:00Z",
+    modified: "2026-09-02T14:30:00Z",
+    slug: "fast-freight-solutions-egypt-gcc-2026",
+    status: "publish",
+    title: {
+      rendered: "Fast Freight Solutions: Egypt & GCC Trade Corridors in 2026",
+    },
+    excerpt: {
+      rendered:
+        "Comprehensive logistics strategies, air & sea express linehauls, and accelerated customs pre-clearance connecting Egypt with Saudi Arabia, UAE, and the wider GCC.",
+    },
+    content: {
+      rendered: `
+        <p class="lead">The trade highway connecting the Arab Republic of Egypt with the Gulf Cooperation Council (GCC) economies has entered a transformative era in 2026. Powered by synchronized customs digitizations, expanded air cargo frequencies, and unified multimodal infrastructure, express cargo velocity between Cairo and regional capitals has reached unprecedented benchmarks.</p>
+
+        <h2>Strategic Dynamics of the Egypt-GCC Freight Artery</h2>
+        <p>With Saudi Arabia's Vision 2030 megaprojects and the UAE's re-export dominance expanding industrial demands, rapid supply chain connectivity with Egypt provides immediate manufacturing, agricultural, and fast-moving consumer goods (FMCG) replenishment. XSPEED has engineered dedicated priority linehauls ensuring rapid turnarounds between major logistics nodes.</p>
+
+        <h3>Core Operational Capabilities:</h3>
+        <ul>
+          <li><strong>Direct Air Cargo Consolidation:</strong> Daily scheduled freighter operations connecting Cairo Cargo Village (CAI) with Riyadh (RUH), Jeddah (JED), and Dubai World Central (DWC) within 4 to 6 hours flight-to-ramp.</li>
+          <li><strong>Expedited Customs Pre-Clearance:</strong> Digital invoice and cargo declaration exchange via Egypt's Nafeza single-window integrated seamlessly with Saudi ZATCA and UAE Customs systems before wheels-down.</li>
+          <li><strong>Cold-Chain & High-Value Assurance:</strong> Continuous 2°C–8°C active thermal telemetry for pharmaceutical and sensitive biological consignments across ambient Gulf temperatures.</li>
+          <li><strong>Integrated Last-Mile Distribution:</strong> Direct handover to regional courier fleets enabling door-to-door delivery within 24 to 48 hours across urban centers in Riyadh, Dubai, Dammam, and Cairo.</li>
+        </ul>
+
+        <h2>Overcoming Cross-Border Clearance Bottlenecks</h2>
+        <p>Cross-border logistics traditionally faced administrative frictions at entry gateways. By leveraging automated Harmonized System (HS) code classification and verified pre-arrival digital manifest lodging, XSPEED consignments achieve over 95% green-lane clearance rates without cargo detention.</p>
+
+        <blockquote>
+          "In 2026, freight efficiency is measured in hours, not days. Connecting Egypt and the GCC requires end-to-end telemetry, automated customs compliance, and dedicated air-road linehaul continuity."
+        </blockquote>
+
+        <h2>Future Outlook: Multimodal Speed & Decarbonization</h2>
+        <p>Looking forward across 2026 and beyond, XSPEED continues investing in aerodynamic trailer fleets, consolidated sea-air express bridges via Port Said and Alexandria, and real-time carbon telemetry to provide sustainable, market-leading delivery SLAs.</p>
+      `,
+    },
+    featured_image_url: "/assets/plane-pic-7WwFXnsZ.jpg",
+    category_name: "International Trade",
+    author_name: "XSPEED Operations & Logistics Team",
+    rank_math_seo: {
+      title: "Fast Freight Solutions: Egypt & GCC Trade Corridors 2026 | XSPEED",
+      description: "Discover modern fast freight solutions and expedited customs clearance between Egypt, Saudi Arabia, and UAE across 2026 trade corridors.",
+      focus_keyword: "fast freight solutions egypt gcc",
+      canonical: "https://exspeeds.com/blog/fast-freight-solutions-egypt-gcc-2026",
+      og_title: "Fast Freight Solutions: Egypt & GCC Trade Corridors in 2026",
+      og_description: "Discover modern fast freight solutions and expedited customs clearance between Egypt, Saudi Arabia, and UAE across 2026 trade corridors.",
+      og_image: "/assets/plane-pic-7WwFXnsZ.jpg",
+      twitter_title: "Fast Freight Solutions: Egypt & GCC Trade Corridors in 2026",
+      twitter_description: "Discover modern fast freight solutions and expedited customs clearance between Egypt, Saudi Arabia, and UAE across 2026 trade corridors.",
+      twitter_image: "/assets/plane-pic-7WwFXnsZ.jpg",
+      seo_score: 97,
+      robots: ["index", "follow", "max-image-preview:large"],
+    },
+  },
 ];
 
 const getCandidateUrls = (): string[] => {
@@ -229,12 +286,16 @@ const getCandidateUrls = (): string[] => {
   const envPublic = process.env.NEXT_PUBLIC_WP_URL;
 
   const candidates: string[] = [];
+
+  // 1. Primary endpoint: Canonical WordPress subfolder on production
+  candidates.push("https://exspeeds.com/wordpress/wp-json");
+
+  // 2. Custom environment overrides if configured
   if (envInternal && envInternal.startsWith("http")) candidates.push(envInternal);
   if (envPublic && envPublic.startsWith("http")) candidates.push(envPublic);
 
-  // Standard WordPress endpoints fallback
+  // 3. Fallback standard endpoints
   candidates.push("https://exspeeds.com/wp-json");
-  candidates.push("https://exspeeds.com/wordpress/wp-json");
 
   return Array.from(new Set(candidates));
 };
@@ -243,30 +304,41 @@ export async function getPosts(limit = 20): Promise<WPPost[]> {
   const candidateUrls = getCandidateUrls();
 
   for (const apiUrl of candidateUrls) {
+    const url = `${apiUrl}/wp/v2/posts?_embed=1&per_page=${limit}`;
     try {
-      const url = `${apiUrl}/wp/v2/posts?_embed=1&per_page=${limit}`;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1200);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
 
       const res = await fetch(url, {
         next: { revalidate: 60 },
         signal: controller.signal,
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "XSPEED-NextJS-SSR/1.0",
+        },
       });
       clearTimeout(timeoutId);
 
       if (res.ok) {
-        const text = await res.text();
-        const posts: WPPost[] = JSON.parse(text);
-        if (Array.isArray(posts) && posts.length > 0) {
-          return posts.map(transformWpPost);
+        const contentType = res.headers.get("content-type") || "";
+        if (contentType.includes("json")) {
+          const posts: WPPost[] = await res.json();
+          if (Array.isArray(posts) && posts.length > 0) {
+            console.log(`[WordPress API] Successfully fetched ${posts.length} posts from ${apiUrl}`);
+            return posts.map(transformWpPost);
+          }
+        } else {
+          console.warn(`[WordPress API] Expected JSON but received ${contentType} from ${url}`);
         }
+      } else {
+        console.warn(`[WordPress API] HTTP ${res.status} (${res.statusText}) from ${url}`);
       }
-    } catch {
-      // Continue to next candidate or fallback
+    } catch (err: any) {
+      console.warn(`[WordPress API] Failed to fetch posts from ${url}:`, err?.message || err);
     }
   }
 
-  // Resilient fallback to high-quality seeded blog posts
+  console.warn(`[WordPress API] All live endpoints exhausted. Using resilient fallback posts (${FALLBACK_POSTS.length} posts).`);
   return FALLBACK_POSTS.slice(0, limit);
 }
 
@@ -274,31 +346,52 @@ export async function getPostBySlug(slug: string): Promise<WPPost | null> {
   const candidateUrls = getCandidateUrls();
 
   for (const apiUrl of candidateUrls) {
+    const url = `${apiUrl}/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1`;
     try {
-      const url = `${apiUrl}/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1`;
+      console.log(`[WordPress API] Querying post slug "${slug}" from ${apiUrl}...`);
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1200);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
 
       const res = await fetch(url, {
         next: { revalidate: 10 },
         signal: controller.signal,
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "XSPEED-NextJS-SSR/1.0",
+        },
       });
       clearTimeout(timeoutId);
 
       if (res.ok) {
-        const posts: WPPost[] = await res.json();
-        if (Array.isArray(posts) && posts.length > 0) {
-          return transformWpPost(posts[0]);
+        const contentType = res.headers.get("content-type") || "";
+        if (contentType.includes("json")) {
+          const posts: WPPost[] = await res.json();
+          if (Array.isArray(posts) && posts.length > 0) {
+            console.log(`[WordPress API] Post "${slug}" found successfully via ${apiUrl}`);
+            return transformWpPost(posts[0]);
+          } else {
+            console.warn(`[WordPress API] Endpoint ${apiUrl} returned empty array [] for slug "${slug}"`);
+          }
+        } else {
+          console.warn(`[WordPress API] Expected JSON but received ${contentType} from ${url}`);
         }
+      } else {
+        console.warn(`[WordPress API] HTTP ${res.status} (${res.statusText}) for slug "${slug}" from ${url}`);
       }
-    } catch {
-      // Continue to next candidate or fallback
+    } catch (err: any) {
+      console.warn(`[WordPress API] Request error for slug "${slug}" from ${url}:`, err?.message || err);
     }
   }
 
   // Look up in fallback posts
   const match = FALLBACK_POSTS.find((p) => p.slug === slug);
-  return match || null;
+  if (match) {
+    console.log(`[WordPress API] Slug "${slug}" matched in fallback posts dataset.`);
+    return match;
+  }
+
+  console.error(`[WordPress API] Slug "${slug}" was not found on WordPress REST API or fallback posts dataset.`);
+  return null;
 }
 
 function transformWpPost(post: any): WPPost {
@@ -427,12 +520,13 @@ export async function createWordPressPost(data: {
     try {
       const url = `${apiUrl}/wp/v2/posts`;
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 400);
+      const timeoutId = setTimeout(() => controller.abort(), 8000);
 
       const res = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "User-Agent": "XSPEED-NextJS-SSR/1.0",
         },
         body: JSON.stringify(wpPayload),
         signal: controller.signal,
@@ -441,15 +535,18 @@ export async function createWordPressPost(data: {
 
       if (res.ok) {
         const createdPost: WPPost = await res.json();
+        console.log(`[WordPress API] Created post ID ${createdPost.id} via ${apiUrl}`);
         return {
           success: true,
           wpId: createdPost.id,
           post: transformWpPost(createdPost),
           message: "Saved to WordPress database successfully.",
         };
+      } else {
+        console.warn(`[WordPress API] Create post failed at ${apiUrl} with status ${res.status}`);
       }
-    } catch {
-      // Continue to next endpoint or fallback
+    } catch (err: any) {
+      console.warn(`[WordPress API] Create post error at ${apiUrl}:`, err?.message || err);
     }
   }
 

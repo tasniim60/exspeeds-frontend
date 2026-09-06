@@ -962,7 +962,6 @@ function ClientProfileContent() {
                                 </span>
                               ) : item.hasPrice ? (
                                 <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-300 text-emerald-900 px-2.5 py-1 rounded-lg shadow-2xs font-mono font-black text-xs" dir="ltr">
-                                  <DollarSign className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
                                   <span>{item.priceDisplay}</span>
                                 </div>
                               ) : (

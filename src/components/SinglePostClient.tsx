@@ -26,6 +26,7 @@ import {
   ChevronRight,
   ArrowUpRight,
   BookmarkCheck,
+  Loader2,
 } from "lucide-react";
 
 interface SinglePostClientProps {
@@ -42,6 +43,9 @@ interface HeadingItem {
 export default function SinglePostClient({ slug, initialPost }: SinglePostClientProps) {
   const { t, isRTL, formatDate } = useLanguage();
   const [post, setPost] = useState<WPPost | null>(initialPost);
+  const [isLoading, setIsLoading] = useState(
+    !initialPost && !FALLBACK_POSTS.some((p) => p.slug === slug)
+  );
   const [copied, setCopied] = useState(false);
   const [imgSrc, setImgSrc] = useState<string>("/assets/xspeed_about_showcase.jpg");
   const [scrollPercent, setScrollPercent] = useState(0);
@@ -71,6 +75,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
       if (converted.featured_image_url) {
         setImgSrc(converted.featured_image_url);
       }
+      setIsLoading(false);
       return;
     }
 
@@ -80,6 +85,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
       if (initialPost.featured_image_url) {
         setImgSrc(initialPost.featured_image_url);
       }
+      setIsLoading(false);
       return;
     }
 
@@ -90,7 +96,68 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
       if (matchedFallback.featured_image_url) {
         setImgSrc(matchedFallback.featured_image_url);
       }
+      setIsLoading(false);
+      return;
     }
+
+    // 4. Client-side live recovery: fetch directly from WordPress REST API
+    let isMounted = true;
+    setIsLoading(true);
+
+    const tryFetchPost = async () => {
+      const endpoints = [
+        `/wordpress/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1`,
+        `/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1`,
+        `https://exspeeds.com/wordpress/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1`,
+      ];
+
+      for (const endpoint of endpoints) {
+        try {
+          const res = await fetch(endpoint, {
+            headers: { Accept: "application/json" },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            if (Array.isArray(data) && data.length > 0 && isMounted) {
+              const fetchedPost = data[0];
+              const rawTitle = fetchedPost.title?.rendered || fetchedPost.title || "Logistics Insights";
+              const cleanTitle = rawTitle.replace(/<[^>]*>?/gm, "").replace(/&#\d+;/g, "").trim();
+              const defaultImage =
+                fetchedPost._embedded?.["wp:featuredmedia"]?.[0]?.source_url ||
+                fetchedPost.featured_media_src_url ||
+                "/assets/plane-pic-7WwFXnsZ.jpg";
+
+              const formatted: WPPost = {
+                ...fetchedPost,
+                title: { rendered: rawTitle },
+                content: { rendered: fetchedPost.content?.rendered || fetchedPost.content || "" },
+                excerpt: { rendered: fetchedPost.excerpt?.rendered || fetchedPost.excerpt || "" },
+                featured_image_url: defaultImage,
+                author_name: fetchedPost._embedded?.author?.[0]?.name || "XSPEED Editorial Team",
+                category_name: fetchedPost._embedded?.["wp:term"]?.[0]?.[0]?.name || "Technology & Logistics",
+              };
+
+              setPost(formatted);
+              setImgSrc(defaultImage);
+              setIsLoading(false);
+              return;
+            }
+          }
+        } catch (e) {
+          // continue checking next endpoint
+        }
+      }
+
+      if (isMounted) {
+        setIsLoading(false);
+      }
+    };
+
+    tryFetchPost();
+
+    return () => {
+      isMounted = false;
+    };
   }, [slug, initialPost]);
 
   // Handle Share / Copy Link
@@ -179,6 +246,26 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
   const relatedPosts = useMemo(() => {
     return FALLBACK_POSTS.filter((p) => p.slug !== slug).slice(0, 3);
   }, [slug]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-[#FAF8F5] py-20 px-4 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white p-8 rounded-[28px] border border-orange-100 shadow-xl text-center space-y-4">
+          <div className="w-12 h-12 rounded-full bg-orange-50 text-[#C45B2A] flex items-center justify-center mx-auto animate-pulse">
+            <Loader2 className="w-6 h-6 animate-spin text-[#C45B2A]" />
+          </div>
+          <div className="space-y-2">
+            <div className="h-5 bg-orange-100/60 rounded-full w-3/4 mx-auto animate-pulse"></div>
+            <div className="h-3.5 bg-gray-100 rounded-full w-5/6 mx-auto animate-pulse"></div>
+            <div className="h-3 bg-gray-100 rounded-full w-1/2 mx-auto animate-pulse"></div>
+          </div>
+          <p className="text-xs text-gray-500 font-medium">
+            {isRTL ? "جاري مزامنة بيانات المقال اللوجستي..." : "Syncing logistics article data..."}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!post) {
     return (
