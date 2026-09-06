@@ -25,7 +25,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const post = await getPostBySlug(params.slug);
   const rawTitle = post?.rank_math_seo?.title || post?.title.rendered || "Logistics Insights";
   const cleanTitle = rawTitle.replace(/<[^>]*>?/gm, "").replace(/&#\d+;/g, "").trim();
-  const pageTitle = cleanTitle.includes("XSPEED") ? cleanTitle : `${cleanTitle} | XSPEED`;
+  // Strip any trailing '| XSPEED' so the layout title template '%s | XSPEED' won't duplicate it
+  const pageTitle = cleanTitle.replace(/\s*\|\s*XSPEED/gi, "").trim();
 
   const rawDesc =
     post?.rank_math_seo?.description ||

@@ -104,6 +104,42 @@ export default function RootLayout({
     <html lang="en" dir="ltr" className="scroll-smooth">
       <head>
         <link rel="icon" href="/assets/Favlogo-DSIHncWK.png" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "Organization",
+                  "@id": "https://exspeeds.com/#organization",
+                  "name": "XSPEED Logistics",
+                  "url": "https://exspeeds.com",
+                  "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://exspeeds.com/assets/Favlogo-DSIHncWK.png",
+                  },
+                  "description":
+                    "The fastest regional express delivery and logistics technology platform across Egypt and GCC.",
+                },
+                {
+                  "@type": "WebSite",
+                  "@id": "https://exspeeds.com/#website",
+                  "url": "https://exspeeds.com",
+                  "name": "XSPEED Logistics",
+                  "publisher": {
+                    "@id": "https://exspeeds.com/#organization",
+                  },
+                  "potentialAction": {
+                    "@type": "SearchAction",
+                    "target": "https://exspeeds.com/blog?q={search_term_string}",
+                    "query-input": "required name=search_term_string",
+                  },
+                },
+              ],
+            }),
+          }}
+        />
       </head>
       <body
         className={`bg-white text-xspeed-dark font-body flex flex-col min-h-screen antialiased ${inter.variable} ${jetbrainsMono.variable} ${cairo.variable} font-sans`}
