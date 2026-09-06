@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getPosts, createWordPressPost } from "@/lib/wordpress";
+import { ServerStore } from "@/lib/serverStore";
+import { BlogPost } from "@/lib/adminData";
 
 export const dynamic = "force-dynamic";
 
@@ -46,6 +48,32 @@ export async function POST(request: Request) {
       seoScore: seoScore || 90,
       imageUrl: imageUrl || "/assets/Home-pic1-C9kYJzAW.jpg",
     });
+
+    // Persist to ServerStore for local and admin persistence
+    try {
+      const newBlogPost: BlogPost = {
+        id: result.wpId ? `wp-${result.wpId}` : `post-${Date.now()}`,
+        title: title,
+        slug: computedSlug,
+        author: author || "XSPEED Operations & Logistics Team",
+        category: category || "Technology & Logistics",
+        date: new Date().toISOString(),
+        status: "published",
+        views: 1,
+        seoScore: seoScore || 90,
+        focusKeyword: focusKeyword || title.toLowerCase().slice(0, 25),
+        wordCount: content ? content.split(/\s+/).length : 500,
+        wpEditUrl: `/wp-admin/post.php?post=${result.wpId || 101}&action=edit`,
+        imageUrl: imageUrl || "/assets/Home-pic1-C9kYJzAW.jpg",
+        excerpt: excerpt || title,
+        content: content || `<p>${title}</p>`,
+      };
+      const existingPosts = ServerStore.getBlogPosts();
+      const filtered = existingPosts.filter((p) => p.slug !== computedSlug);
+      ServerStore.saveBlogPosts([newBlogPost, ...filtered]);
+    } catch (storeErr) {
+      console.warn("[ServerStore] Could not persist to local JSON store:", storeErr);
+    }
 
     return NextResponse.json(result);
   } catch (error: any) {

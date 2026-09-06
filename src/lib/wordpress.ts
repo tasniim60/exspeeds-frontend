@@ -580,11 +580,180 @@ export async function createWordPressPost(data: {
     },
   };
 
+  addPostToFallback(fallbackFormattedPost);
+
   return {
     success: true,
     wpId: fallbackFormattedPost.id,
     post: fallbackFormattedPost,
     message: "Post registered and synced with Next.js SSR & Rank Math schema.",
   };
+}
+
+export function addPostToFallback(post: WPPost) {
+  const existsIndex = FALLBACK_POSTS.findIndex((p) => p.slug === post.slug);
+  if (existsIndex >= 0) {
+    FALLBACK_POSTS[existsIndex] = post;
+  } else {
+    FALLBACK_POSTS.unshift(post);
+  }
+}
+
+/**
+ * Fetches canonical Rank Math Schema.org JSON-LD structured data from WordPress REST API:
+ *   GET /wp-json/rankmath/v1/getHead?url={encodedUrl}
+ *
+ * Extracts all <script type="application/ld+json">...</script> tags.
+ * Falls back to high-fidelity, post-tailored Schema if the endpoint is offline or not yet enabled.
+ */
+export async function getRankMathSchema(
+  targetUrl: string,
+  fallbackPost?: WPPost | null
+): Promise<any[]> {
+  const candidateUrls = getCandidateUrls();
+
+  for (const apiUrl of candidateUrls) {
+    const endpoint = `${apiUrl}/rankmath/v1/getHead?url=${encodeURIComponent(targetUrl)}`;
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+      const res = await fetch(endpoint, {
+        next: { revalidate: 3600 }, // Cache for 1 hour (ISR)
+        signal: controller.signal,
+        headers: {
+          Accept: "application/json",
+          "User-Agent": "XSPEED-NextJS-SSR/1.0",
+        },
+      });
+      clearTimeout(timeoutId);
+
+      if (res.ok) {
+        const contentType = res.headers.get("content-type") || "";
+        let headHtml = "";
+
+        if (contentType.includes("json")) {
+          const json = await res.json();
+          headHtml = json?.head || (typeof json === "string" ? json : "");
+        } else {
+          headHtml = await res.text();
+        }
+
+        if (headHtml) {
+          const scriptRegex = /<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+          const schemas: any[] = [];
+          let match;
+
+          while ((match = scriptRegex.exec(headHtml)) !== null) {
+            const rawJson = match[1].trim();
+            if (rawJson) {
+              try {
+                const parsed = JSON.parse(rawJson);
+                schemas.push(parsed);
+              } catch (parseErr) {
+                console.warn(`[Rank Math Schema] Error parsing JSON-LD script from ${endpoint}:`, parseErr);
+              }
+            }
+          }
+
+          if (schemas.length > 0) {
+            console.log(`[Rank Math Schema] Successfully extracted ${schemas.length} schema block(s) from ${endpoint}`);
+            return schemas;
+          }
+        }
+      } else {
+        console.warn(`[Rank Math Schema] HTTP ${res.status} (${res.statusText}) from ${endpoint}`);
+      }
+    } catch (err: any) {
+      console.warn(`[Rank Math Schema] Request failed for ${endpoint}:`, err?.message || err);
+    }
+  }
+
+  // Fallback to high-fidelity post data (zero generic filler)
+  if (fallbackPost) {
+    return generateFallbackPostSchema(fallbackPost, targetUrl);
+  }
+
+  return [];
+}
+
+/**
+ * Builds Schema.org BlogPosting & BreadcrumbList strictly tailored to the post's real Rank Math metadata.
+ */
+export function generateFallbackPostSchema(post: WPPost, targetUrl: string): any[] {
+  const rawTitle = post.title?.rendered || "Logistics Insights";
+  const cleanTitle = rawTitle.replace(/<[^>]*>?/gm, "").replace(/&#\d+;/g, "").trim();
+
+  const headline = post.rank_math_seo?.title
+    ? post.rank_math_seo.title.replace(/<[^>]*>?/gm, "").replace(/&#\d+;/g, "").trim()
+    : cleanTitle;
+
+  const rawDesc =
+    post.rank_math_seo?.description ||
+    (post.excerpt?.rendered ? post.excerpt.rendered.replace(/<[^>]*>?/gm, "").replace(/\s+/g, " ").trim() : "");
+  const description = rawDesc || headline;
+
+  const rawImage = post.rank_math_seo?.og_image || post.featured_image_url || "/assets/Home-pic1-C9kYJzAW.jpg";
+  const ogImageUrl = rawImage.startsWith("http")
+    ? rawImage
+    : `https://exspeeds.com${rawImage.startsWith("/") ? "" : "/"}${rawImage}`;
+
+  const postUrl = post.rank_math_seo?.canonical || targetUrl;
+
+  const articleSchema = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": postUrl,
+    },
+    headline: headline,
+    description: description,
+    image: [ogImageUrl],
+    datePublished: post.date,
+    dateModified: post.modified || post.date,
+    author: {
+      "@type": "Person",
+      name: post.author_name || "XSPEED Operations & Logistics Team",
+    },
+    publisher: {
+      "@type": "Organization",
+      name: "XSPEED Logistics",
+      url: "https://exspeeds.com",
+      logo: {
+        "@type": "ImageObject",
+        url: "https://exspeeds.com/assets/Favlogo-DSIHncWK.png",
+      },
+    },
+    articleSection: post.category_name || "International Trade & Logistics",
+    keywords: post.rank_math_seo?.focus_keyword || "express freight, logistics customs",
+  };
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: "https://exspeeds.com",
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Blog",
+        item: "https://exspeeds.com/blog",
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: headline,
+        item: postUrl,
+      },
+    ],
+  };
+
+  return [articleSchema, breadcrumbSchema];
 }
 

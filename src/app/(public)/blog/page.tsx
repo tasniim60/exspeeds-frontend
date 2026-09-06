@@ -1,4 +1,4 @@
-import { getPosts } from "@/lib/wordpress";
+import { getPosts, getRankMathSchema } from "@/lib/wordpress";
 import BlogList from "@/components/BlogList";
 import BlogHeader from "@/components/BlogHeader";
 import { Metadata } from "next";
@@ -39,14 +39,18 @@ export const metadata: Metadata = {
 
 export default async function BlogPage() {
   const posts = await getPosts(30);
+  const blogUrl = "https://exspeeds.com/blog";
 
-  const blogSchema = {
+  // Fetch canonical Rank Math Schema for Blog listing page
+  const schemas = await getRankMathSchema(blogUrl);
+
+  const fallbackBlogSchema = {
     "@context": "https://schema.org",
     "@type": "Blog",
     name: "XSPEED Logistics Blog & Insights",
     description:
       "Industry insights, shipping guides, and logistics news from the XSPEED team.",
-    url: "https://exspeeds.com/blog",
+    url: blogUrl,
     publisher: {
       "@type": "Organization",
       name: "XSPEED Logistics",
@@ -58,12 +62,18 @@ export default async function BlogPage() {
     },
     blogPost: posts.map((post) => ({
       "@type": "BlogPosting",
-      headline: post.title.rendered.replace(/<[^>]*>?/gm, ""),
+      headline: (post.rank_math_seo?.title || post.title.rendered).replace(/<[^>]*>?/gm, "").trim(),
+      description: (post.rank_math_seo?.description || post.excerpt.rendered)
+        .replace(/<[^>]*>?/gm, "")
+        .replace(/\s+/g, " ")
+        .trim(),
       url: `https://exspeeds.com/blog/${post.slug}`,
       datePublished: post.date,
+      dateModified: post.modified || post.date,
+      image: post.rank_math_seo?.og_image || post.featured_image_url || "/assets/Home-pic1-C9kYJzAW.jpg",
       author: {
         "@type": "Person",
-        name: post.author_name || "XSPEED Editorial Team",
+        name: post.author_name || "XSPEED Operations & Logistics Team",
       },
     })),
   };
@@ -82,22 +92,23 @@ export default async function BlogPage() {
         "@type": "ListItem",
         position: 2,
         name: "Blog",
-        item: "https://exspeeds.com/blog",
+        item: blogUrl,
       },
     ],
   };
 
+  const activeSchemas = schemas.length > 0 ? schemas : [fallbackBlogSchema, breadcrumbSchema];
+
   return (
     <div className="min-h-screen bg-[#FAF8F5]">
       {/* Structured Data JSON-LD for SEO & Rich Results */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(blogSchema) }}
-      />
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
-      />
+      {activeSchemas.map((schema, index) => (
+        <script
+          key={index}
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(schema) }}
+        />
+      ))}
 
       {/* Localized Hero Header */}
       <BlogHeader />
