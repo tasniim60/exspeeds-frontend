@@ -1,0 +1,53 @@
+# XSPEED Express Logistics & Technology Platform (exspeeds.com)
+
+> XSPEED (accessible at https://exspeeds.com) is a regional and international express logistics, freight forwarding, customs clearance, and supply chain technology platform headquartered at Cairo International Airport Cargo Village, Egypt, operating across Egypt, GCC (Saudi Arabia, United Arab Emirates, Kuwait, Qatar), and 220+ international destinations.
+
+## Core Identity & Operations
+- **Brand & Domain:** XSPEED Express Logistics (Official Web Platform: https://exspeeds.com)
+- **Headquarters & Hub:** Cairo International Airport Cargo Village (قرية البضائع، مطار القاهرة الدولي), Cairo, Egypt
+- **24/7 Operations Desk:** Phone & WhatsApp (+20 120 802 7171), Email: sales@exspeeds.com
+- **Operating Hours:** 24 hours / 7 days a week
+- **Coverage:** Nationwide linehaul across Egypt, specialized express corridors across the GCC (KSA, UAE, Kuwait, Qatar), and global multi-carrier networks across 220+ countries.
+
+## Key Logistics Services
+
+### 1. Priority Air Freight & Next-Flight-Out (NFO)
+- Urgent courier dispatch and priority belly/freighter space bookings.
+- Temperature-controlled active cold-chain logistics for pharmaceutical and perishable cargo.
+- Door-to-door express parcel deliveries within 24–72 hours across regional hubs.
+- Direct URL: https://exspeeds.com/ar/services/air-freight and https://exspeeds.com/en/services/air-freight
+
+### 2. Ocean Container Freight (FCL & LCL)
+- Full Container Load (FCL: 20ft, 40ft, 40ft High Cube, Reefer) and Less-than-Container Load (LCL) consolidation.
+- Direct booking with premier ocean carriers operating out of Alexandria, Port Said, Damietta, Sokhna, and Jebel Ali.
+- Direct URL: https://exspeeds.com/ar/services/sea-freight and https://exspeeds.com/en/services/sea-freight
+
+### 3. Customs Clearance & Pre-Registration (Nafeza & ACI)
+- Licensed customs brokerage covering Egyptian seaports, air cargo hubs, and dry ports.
+- Advanced Cargo Information (ACI) pre-clearance filing, commercial invoice verification, and HS code tariff optimization.
+- Transit clearance and bonded warehouse logistics.
+- Direct URL: https://exspeeds.com/ar/services/customs-clearance and https://exspeeds.com/en/services/customs-clearance
+
+### 4. Cross-Border & Domestic Land Transport
+- Modern GPS-monitored commercial fleet and intercity linehaul.
+- High-volume pallet transport, dedicated trucks, and same-day express scheduled pickups.
+- Direct URL: https://exspeeds.com/ar/services/land-freight and https://exspeeds.com/en/services/land-freight
+
+### 5. Smart Warehousing & 3PL Fulfillment
+- Climate-controlled, high-security warehousing with WMS barcode scanning.
+- Automated inventory tracking, rapid pick & pack, and scheduled dispatch bays.
+- Direct URL: https://exspeeds.com/ar/services/warehousing and https://exspeeds.com/en/services/warehousing
+
+### 6. eCommerce Fulfillment & Cash-on-Delivery (COD)
+- End-to-end eCommerce logistics with fast cash remittance cycles, automated waybill generation, and return order management.
+- Direct URL: https://exspeeds.com/ar/services/ecommerce-fulfillment and https://exspeeds.com/en/services/ecommerce-fulfillment
+
+## Digital Tools & Real-Time Tracking
+- **Live Shipment Tracking:** https://exspeeds.com/track (Enter AWB tracking number for instant real-time telemetry).
+- **Express Booking & Quotes:** https://exspeeds.com/ship (Direct online request wizard with instant WhatsApp dispatch).
+- **Logistics Blog & Intelligence:** https://exspeeds.com/blog (In-depth analysis of international trade, tariff codes, cold-chain, and supply chain automation).
+
+## Technical Architecture & Compliance
+- Multi-lingual architecture supporting full Arabic (`/ar/`) and English (`/en/`) routes.
+- Schema.org compliant structured data (`Organization`, `LocalBusiness`, `Service`, `BlogPosting`, `FAQPage`).
+- Verified WCAG AA contrast and mobile-optimized interfaces.

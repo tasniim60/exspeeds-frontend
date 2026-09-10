@@ -78,7 +78,7 @@ export function DialogContent({
           <X className="h-5 w-5" />
         </button>
       )}
-      <div className={`flex-1 overflow-y-auto ${hasCustomPadding ? "" : "p-6 sm:p-8"}`}>
+      <div className={`flex-1 overflow-y-auto ${hasCustomPadding ? "" : "p-4 sm:p-6 md:p-8"}`}>
         {children}
       </div>
     </div>
@@ -91,7 +91,7 @@ export function DialogHeader({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`flex flex-col space-y-1.5 text-left border-b border-gray-100 pb-4 mb-5 ${className}`}
+      className={`flex flex-col space-y-1.5 text-left border-b border-gray-100 pb-3 sm:pb-4 mb-4 sm:mb-5 ${className}`}
       {...props}
     />
   );
@@ -103,7 +103,7 @@ export function DialogTitle({
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h2
-      className={`text-lg sm:text-xl font-bold tracking-tight text-[#251516] flex items-center gap-2 ${className}`}
+      className={`text-base sm:text-xl font-bold tracking-tight text-[#251516] flex items-center gap-2 ${className}`}
       {...props}
     />
   );
@@ -127,7 +127,7 @@ export function DialogFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4 border-t border-gray-100 mt-6 gap-2 ${className}`}
+      className={`grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-end sm:items-center sm:gap-2.5 pt-4 border-t border-gray-100 mt-5 sm:mt-6 [&>*]:w-full sm:[&>*]:w-auto [&>*:only-child]:col-span-2 ${className}`}
       {...props}
     />
   );

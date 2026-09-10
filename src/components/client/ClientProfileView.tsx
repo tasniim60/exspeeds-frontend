@@ -69,7 +69,7 @@ function ClientProfileContent() {
   const tabParam = searchParams.get("tab");
 
   const { user, updateProfile, logout } = useAuth();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, formatDate } = useLanguage();
 
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<"dashboard" | "settings" | "security">("settings");
@@ -324,7 +324,7 @@ function ClientProfileContent() {
         id: `shp-${s.id}`,
         kind: "shipment",
         rawDate: s.date || "",
-        displayDate: s.date ? s.date.split("T")[0].split(" ")[0] : "—",
+        displayDate: s.date ? (formatDate(s.date) || s.date.split("T")[0].split(" ")[0]) : "—",
         refNumber: s.awb,
         carrierOrType: s.carrier || (isRTL ? "شحن سريع" : "Express"),
         routeTitle: s.receiverName || (isRTL ? "مستلم محدد" : "Consignee"),
@@ -353,7 +353,7 @@ function ClientProfileContent() {
         id: `req-${r.id}`,
         kind: "request",
         rawDate: r.createdAt || "",
-        displayDate: r.createdAt ? r.createdAt.split("T")[0].split(" ")[0] : "—",
+        displayDate: r.createdAt ? (formatDate(r.createdAt) || r.createdAt.split("T")[0].split(" ")[0]) : "—",
         refNumber: r.requestNumber,
         carrierOrType: getLocalizedShipmentType(r.shipmentType, isRTL),
         routeTitle: `${r.deliveryCity}, ${r.deliveryCountry}`,

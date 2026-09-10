@@ -69,18 +69,19 @@ export async function POST(request: Request) {
       token,
     });
 
-    // Set secure HTTP cookies
+    // Set secure HTTP-only cookies
+    const isProduction = process.env.NODE_ENV === "production";
     response.cookies.set("xspeed_session", sessionString, {
-      httpOnly: false,
-      secure: false, // set true in HTTPS production
+      httpOnly: true,
+      secure: isProduction,
       sameSite: "lax",
       path: "/",
       maxAge: 86400 * 7, // 7 days
     });
 
     response.cookies.set("xspeed_user", "authenticated", {
-      httpOnly: false,
-      secure: false,
+      httpOnly: true,
+      secure: isProduction,
       sameSite: "lax",
       path: "/",
       maxAge: 86400 * 7,
@@ -88,8 +89,8 @@ export async function POST(request: Request) {
 
     if (userRole === "admin") {
       response.cookies.set("xspeed_admin_auth", "authenticated", {
-        httpOnly: false,
-        secure: false,
+        httpOnly: true,
+        secure: isProduction,
         sameSite: "lax",
         path: "/",
         maxAge: 86400 * 7,

@@ -671,18 +671,18 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
                     onDispatchOrder(selectedOrder);
                     setSelectedOrder(null);
                   }}
-                  className="text-xs font-bold cursor-pointer"
+                  className="w-full sm:w-auto h-10 text-xs font-bold cursor-pointer justify-center"
                 >
-                  <Truck className="h-4 w-4" />
-                  <span>{isRTL ? "إصدار بوليصة وإرسال" : "Generate AWB & Dispatch"}</span>
-                  <ArrowRight className={`h-3.5 w-3.5 ${isRTL ? "rotate-180" : ""}`} />
+                  <Truck className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{isRTL ? "إصدار بوليصة وإرسال" : "Generate AWB & Dispatch"}</span>
+                  <ArrowRight className={`h-3.5 w-3.5 shrink-0 ${isRTL ? "rotate-180" : ""}`} />
                 </Button>
               )}
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setSelectedOrder(null)}
-                className="text-xs cursor-pointer"
+                className="w-full sm:w-auto h-10 text-xs cursor-pointer justify-center"
               >
                 {t("common.close")}
               </Button>
@@ -718,7 +718,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
                   {isRTL ? "تاريخ التسليم المستهدف" : "Target Delivery Date"}
@@ -738,7 +738,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
                 <select
                   value={priority}
                   onChange={(e) => setPriority(e.target.value as any)}
-                  className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700"
+                  className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700 cursor-pointer"
                 >
                   <option value="Express 24H">Express 24H</option>
                   <option value="High Priority">High Priority</option>
@@ -748,8 +748,8 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
-              <div className="col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div className="sm:col-span-2">
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
                   {isRTL ? "وصف البضاعة" : "Item Description"}
                 </label>
@@ -776,7 +776,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
                   {isRTL ? "عنوان الاستلام" : "Pickup Address"}
@@ -801,7 +801,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
                   {isRTL ? "القيمة المعلنة ($)" : "Declared Value ($)"}
@@ -820,7 +820,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
                 <select
                   value={paymentStatus}
                   onChange={(e) => setPaymentStatus(e.target.value as any)}
-                  className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700"
+                  className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700 cursor-pointer"
                 >
                   <option value="Paid">Prepaid (Paid)</option>
                   <option value="COD">Cash on Delivery (COD)</option>
@@ -835,14 +835,14 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
                 type="button"
                 variant="outline"
                 onClick={() => setCreateModalOpen(false)}
-                className="text-xs cursor-pointer"
+                className="w-full sm:w-auto h-10 text-xs cursor-pointer justify-center"
               >
                 {t("common.cancel")}
               </Button>
               <Button
                 type="submit"
                 variant="brand"
-                className="text-xs font-bold cursor-pointer"
+                className="w-full sm:w-auto h-10 text-xs font-bold cursor-pointer justify-center"
               >
                 {t("admin.orders.modal.saveBtn")}
               </Button>

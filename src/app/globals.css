@@ -443,7 +443,7 @@ html[lang="ar"],
 [dir="rtl"] .ltr-preserve {
   direction: ltr !important;
   unicode-bidi: isolate !important;
-  display: inline-block;
+
 }
 
 /* Directional Icon Flipping */

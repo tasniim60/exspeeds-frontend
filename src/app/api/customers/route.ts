@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ServerStore } from "@/lib/serverStore";
 import { Customer } from "@/lib/adminData";
+import { requireAdmin } from "@/lib/apiAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +9,9 @@ const LARAVEL_API_URL = process.env.NEXT_PUBLIC_LARAVEL_API_URL || "http://local
 
 export async function GET() {
   try {
+    const auth = await requireAdmin();
+    if ("errorResponse" in auth) return auth.errorResponse;
+
     // 1. Try Laravel DB if available
     try {
       const res = await fetch(`${LARAVEL_API_URL}/admin/users`, {
@@ -57,6 +61,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAdmin();
+    if ("errorResponse" in auth) return auth.errorResponse;
+
     const body: Customer = await request.json();
     if (!body.id) {
       body.id = `CUST-${Math.floor(100 + Math.random() * 900)}`;
@@ -96,6 +103,9 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    const auth = await requireAdmin();
+    if ("errorResponse" in auth) return auth.errorResponse;
+
     const body = await request.json();
     const { id, ...patch } = body;
     if (!id) {
@@ -113,6 +123,9 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const auth = await requireAdmin();
+    if ("errorResponse" in auth) return auth.errorResponse;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     if (!id) {

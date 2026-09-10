@@ -1,12 +1,30 @@
 import { NextResponse } from "next/server";
 import { ServerStore } from "@/lib/serverStore";
 import { Invoice } from "@/lib/adminData";
+import { requireAdmin, getAuthenticatedUser } from "@/lib/apiAuth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     const invoices = ServerStore.getInvoices();
+
+    // If customer, only return their invoices
+    if (user.role !== "admin") {
+      const userEmail = (user.email || "").toLowerCase().trim();
+      const userName = (user.name || "").toLowerCase().trim();
+      const filtered = invoices.filter((inv) => {
+        const cName = (inv.customerName || inv.companyName || "").toLowerCase().trim();
+        return cName.includes(userName) || cName.includes(userEmail);
+      });
+      return NextResponse.json({ success: true, data: filtered });
+    }
+
     return NextResponse.json({ success: true, data: invoices });
   } catch (error: any) {
     return NextResponse.json(
@@ -18,6 +36,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAdmin();
+    if ("errorResponse" in auth) return auth.errorResponse;
+
     const body: Invoice = await request.json();
     if (!body.invoiceNumber) {
       body.invoiceNumber = `INV-2026-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -57,6 +78,9 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    const auth = await requireAdmin();
+    if ("errorResponse" in auth) return auth.errorResponse;
+
     const body = await request.json();
     const { id, ...patch } = body;
     if (!id) {
@@ -89,6 +113,9 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const auth = await requireAdmin();
+    if ("errorResponse" in auth) return auth.errorResponse;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     if (!id) {

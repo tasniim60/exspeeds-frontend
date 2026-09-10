@@ -46,7 +46,7 @@ export async function POST(request: Request) {
       author: author || "XSPEED Editorial Team",
       focusKeyword: focusKeyword || title.toLowerCase().slice(0, 25),
       seoScore: seoScore || 90,
-      imageUrl: imageUrl || "/assets/Home-pic1-C9kYJzAW.jpg",
+      imageUrl: imageUrl || "/assets/xspeed_about_showcase.jpg",
     });
 
     // Persist to ServerStore for local and admin persistence
@@ -64,7 +64,7 @@ export async function POST(request: Request) {
         focusKeyword: focusKeyword || title.toLowerCase().slice(0, 25),
         wordCount: content ? content.split(/\s+/).length : 500,
         wpEditUrl: `/wp-admin/post.php?post=${result.wpId || 101}&action=edit`,
-        imageUrl: imageUrl || "/assets/Home-pic1-C9kYJzAW.jpg",
+        imageUrl: imageUrl || "/assets/xspeed_about_showcase.jpg",
         excerpt: excerpt || title,
         content: content || `<p>${title}</p>`,
       };

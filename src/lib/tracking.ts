@@ -25,9 +25,27 @@ export const CARRIERS: CarrierOption[] = [
   {
     id: "DHL",
     name: "Express",
-    displayName: "DHL Express",
+    displayName: "Express",
     code: "Express",
-    placeholder: "Enter tracking number...",
+    placeholder: "Enter DHL tracking number...",
+    isExternal: true,
+    category: "courier",
+  },
+  {
+    id: "FedEx",
+    name: "FedEx Express",
+    displayName: "FedEx Express",
+    code: "FDX",
+    placeholder: "Enter FedEx tracking number...",
+    isExternal: true,
+    category: "courier",
+  },
+  {
+    id: "Aramex",
+    name: "Aramex",
+    displayName: "Aramex",
+    code: "ARX",
+    placeholder: "Enter Aramex tracking number...",
     isExternal: true,
     category: "courier",
   },
@@ -50,20 +68,10 @@ export const CARRIERS: CarrierOption[] = [
     category: "courier",
   },
   {
-    id: "FedEx",
-    name: "FedEx Express",
-    displayName: "FedEx Express",
-    code: "FDX",
-    placeholder: "Enter FedEx tracking number...",
-    isExternal: true,
-    category: "courier",
-  },
-  {
     id: "DBSchenker",
     name: "DB Schenker USA",
     displayName: "DB Schenker USA",
     code: "DBS",
-   
     placeholder: "Enter DB Schenker tracking number...",
     isExternal: true,
     category: "freight",
@@ -104,30 +112,22 @@ export const CARRIERS: CarrierOption[] = [
     isExternal: true,
     category: "ocean",
   },
-  {
-    id: "Aramex",
-    name: "Aramex",
-    displayName: "Aramex",
-    code: "ARX",
-    placeholder: "Enter Aramex tracking number...",
-    isExternal: true,
-    category: "courier",
-  },
 ];
 
 export const CARRIER_URL_TEMPLATES: Record<string, string> = {
-  SMSA: "https://www.smsaexpress.com/track?tracknumbers={AWB}",
+  SMSA: "https://www.smsaexpress.com/trackingdetails?tracknumbers%5B0%5D={AWB}",
+  DHL: "https://www.dhl.com/eg-en/home/tracking/tracking-express.html?submit=1&tracking-id={AWB}",
   Express: "https://www.dhl.com/eg-en/home/tracking/tracking-express.html?submit=1&tracking-id={AWB}",
   UPS: "https://www.ups.com/track?tracknum={AWB}",
   TNT: "https://www.tnt.com/express/en_gc/site/shipping-tools/tracking.html?cons={AWB}",
   FedEx: "https://www.fedex.com/fedextrack/?trknbr={AWB}",
+  Aramex: "https://www.aramex.com/track/results?mode=0&ShipmentNumber={AWB}",
+  AramexAir: "https://www.aramex.com/track/results?mode=0&ShipmentNumber={AWB}",
   DBSchenker: "https://eschenker.dbschenker.com/nges-portal/public/en-US_US/#!/tracking/customer-search?query={AWB}",
   AirCargo: "https://www.track-trace.com/aircargo?number={AWB}",
   PostEMS: "https://tools.usps.com/go/TrackConfirmAction?tLabels={AWB}",
   Container: "https://www.track-trace.com/container?number={AWB}",
   BillOfLading: "https://www.track-trace.com/bol?number={AWB}",
-  Aramex: "https://www.aramex.com/track/results?mode=0&ShipmentNumber={AWB}",
-  AramexAir: "https://www.aramex.com/track/results?mode=0&ShipmentNumber={AWB}",
 };
 
 /**
@@ -141,22 +141,21 @@ export function cleanAwbNumber(rawAwb: string): string {
 /**
  * Normalizes carrier name into standard carrier key
  */
-export function getCarrierKey(carrierInput: string): string {
-  if (!carrierInput) return "XSPEED";
-  const c = carrierInput.toUpperCase();
-  if (c.includes("XSPEED") || c === "XSP") return "XSPEED";
-  if (c.includes("SMSA")) return "SMSA";
-  if (c === "EXPRESS" || c.includes("DHL")) return "Express";
-  if (c.includes("UPS")) return "UPS";
-  if (c.includes("TNT")) return "TNT";
-  if (c.includes("FEDEX") || c.includes("FDX")) return "FedEx";
-  if (c.includes("SCHENKER") || c.includes("DBS")) return "DBSchenker";
-  if (c.includes("ARAMEX") || c.includes("ARX")) return "Aramex";
-  if (c.includes("CARGO") || c.includes("AIR")) return "AirCargo";
+export function getCarrierKey(carrierInput?: string | null): string {
+  if (!carrierInput) return "SMSA";
+  const c = carrierInput.toUpperCase().trim();
+  if (c === "SMSA" || c.includes("SMSA")) return "SMSA";
+  if (c === "DHL" || c === "EXPRESS" || c.includes("DHL")) return "DHL";
+  if (c === "UPS" || c.includes("UPS")) return "UPS";
+  if (c === "TNT" || c.includes("TNT")) return "TNT";
+  if (c === "FEDEX" || c.includes("FEDEX") || c === "FDX") return "FedEx";
+  if (c === "ARAMEX" || c.includes("ARAMEX") || c === "ARX") return "Aramex";
+  if (c.includes("SCHENKER") || c === "DBS" || c.includes("DBS")) return "DBSchenker";
+  if (c.includes("CARGO") || c.includes("AIR") || c === "AC") return "AirCargo";
   if (c.includes("POST") || c.includes("EMS") || c.includes("USPS")) return "PostEMS";
-  if (c.includes("CONTAINER") || c.includes("CONT")) return "Container";
+  if (c.includes("CONTAINER") || c === "CONT" || c.includes("CONT")) return "Container";
   if (c.includes("LADING") || c.includes("BILL") || c.includes("B/L") || c === "BL") return "BillOfLading";
-  return "XSPEED";
+  return "SMSA";
 }
 
 /**

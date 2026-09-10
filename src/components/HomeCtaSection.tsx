@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 export default function HomeCtaSection() {
   const [mounted, setMounted] = useState(false);
   const { user, isLoading } = useAuth();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, getLocalizedPath } = useLanguage();
 
   useEffect(() => {
     setMounted(true);
@@ -29,7 +29,7 @@ export default function HomeCtaSection() {
                 {t("home.cta.subtitle")}
               </p>
             </div>
-            <Link href="/ship">
+            <Link href={getLocalizedPath("/ship")}>
               <button className="bg-gradient-to-r from-[#C45B2A] to-[#E65100] text-white font-bold py-4 px-8 text-base rounded-full shadow-lg shadow-orange-500/25">
                 {t("home.cta.requestBtn")}
               </button>
@@ -60,14 +60,14 @@ export default function HomeCtaSection() {
             </div>
 
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-              <Link href="/admin">
+              <Link href={getLocalizedPath("/admin")}>
                 <button className="bg-gradient-to-r from-[#C45B2A] to-[#E65100] hover:from-[#A34920] hover:to-[#C45B2A] text-white font-bold py-4 px-8 rounded-full shadow-lg shadow-orange-500/25 flex items-center gap-2 cursor-pointer transition-all hover:scale-[1.02]">
                   <LayoutDashboard className="h-4 w-4" />
                   <span>{t("nav.adminDashboard")}</span>
                   <ArrowRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
                 </button>
               </Link>
-              <Link href="/track">
+              <Link href={getLocalizedPath("/track")}>
                 <button className="border border-white/20 bg-white/10 hover:bg-white/20 text-white font-bold py-4 px-6 rounded-full flex items-center gap-2 cursor-pointer transition-all">
                   <Truck className="h-4 w-4 text-[#C45B2A]" />
                   <span>{t("nav.track")}</span>
@@ -100,13 +100,13 @@ export default function HomeCtaSection() {
             </div>
 
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
-              <Link href="/ship">
+              <Link href={getLocalizedPath("/ship")}>
                 <button className="bg-gradient-to-r from-[#C45B2A] to-[#E65100] hover:from-[#A34920] hover:to-[#C45B2A] text-white font-bold py-4 px-8 rounded-full shadow-lg shadow-orange-500/25 flex items-center gap-2 cursor-pointer transition-all hover:scale-[1.02]">
                   <Package className="w-4 h-4 stroke-[2.2]" />
                   <span>{t("nav.requestShipment")}</span>
                 </button>
               </Link>
-              <Link href="/profile">
+              <Link href={getLocalizedPath("/profile")}>
                 <button className="border border-white/20 bg-white/10 hover:bg-white/20 text-white font-bold py-4 px-6 rounded-full flex items-center gap-2 cursor-pointer transition-all">
                   <span>{t("home.cta.portalBtn")}</span>
                   <ArrowRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
@@ -138,7 +138,7 @@ export default function HomeCtaSection() {
             </p>
           </div>
           <div className="flex flex-wrap gap-4 items-center">
-            <Link href="/login?redirect=/ship">
+            <Link href={getLocalizedPath("/login?redirect=/ship")}>
               <button className="bg-gradient-to-r from-[#C45B2A] to-[#E65100] hover:from-[#A34920] hover:to-[#C45B2A] text-white font-bold py-4 px-8 rounded-full shadow-lg shadow-orange-500/30 flex items-center gap-2.5 cursor-pointer transition-all hover:scale-[1.02]">
                 <Package className="w-5 h-5 stroke-[2.2]" />
                 <span>{t("home.cta.requestBtn")}</span>

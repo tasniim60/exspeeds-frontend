@@ -116,6 +116,11 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    const authUser = getAuthenticatedUser();
+    if (!authUser || authUser.role !== "admin") {
+      return NextResponse.json({ success: false, error: "Forbidden: Admin access required" }, { status: 403 });
+    }
+
     const body = await request.json();
     const { id, ...patch } = body;
     if (!id) {
@@ -163,6 +168,11 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const authUser = getAuthenticatedUser();
+    if (!authUser || authUser.role !== "admin") {
+      return NextResponse.json({ success: false, error: "Forbidden: Admin access required" }, { status: 403 });
+    }
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     if (!id) {

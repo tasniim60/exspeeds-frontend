@@ -6,7 +6,7 @@ import { WPPost } from "@/lib/wordpress";
  * Shared across BlogList, HomeBlogSection, and SinglePostClient.
  */
 export function convertAdminPostToWP(post: BlogPost, index: number): WPPost {
-  const defaultImage = post.imageUrl || "/assets/Home-pic1-C9kYJzAW.jpg";
+  const defaultImage = post.imageUrl || "/assets/xspeed_about_showcase.jpg";
   const defaultExcerpt = post.excerpt || `${post.title}. Comprehensive logistics insights on ${post.focusKeyword}.`;
 
   // Format content: if rich HTML, preserve; if plain text, wrap gracefully into structured article

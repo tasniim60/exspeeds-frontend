@@ -163,7 +163,7 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
             className="text-xs font-bold shadow-sm self-start sm:self-auto cursor-pointer"
           >
             <ArrowDownToLine className="h-4 w-4" />
-            <span>{t("admin.warehouse.inboundReceiving")}</span>
+            <span>{t("admin.warehouse.addItem")}</span>
           </Button>
         </div>
 
@@ -327,7 +327,7 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
 
       {/* ── Inbound Receiving Modal ── */}
       <Dialog open={inboundModalOpen} onOpenChange={setInboundModalOpen}>
-        <DialogContent className="max-w-xl text-start" onClose={() => setInboundModalOpen(false)}>
+        <DialogContent className="max-w-xl text-start p-4 sm:p-6" onClose={() => setInboundModalOpen(false)}>
           <DialogHeader>
             <DialogTitle>
               <Warehouse className="h-5 w-5 text-[#C45B2A]" />
@@ -339,7 +339,7 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
           </DialogHeader>
 
           <form onSubmit={handleInboundItem} className="space-y-3.5">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
                   {t("admin.warehouse.modal.sku")}
@@ -358,7 +358,7 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as any)}
-                  className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700"
+                  className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700 cursor-pointer"
                 >
                   <option value="Electronics">Electronics</option>
                   <option value="Pharmaceuticals">Pharmaceuticals</option>
@@ -383,7 +383,7 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
                   {t("admin.warehouse.modal.quantity")}
@@ -411,7 +411,7 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
                   {t("admin.warehouse.modal.location")}
@@ -431,7 +431,7 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
                 <select
                   value={tempZone}
                   onChange={(e) => setTempZone(e.target.value as any)}
-                  className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700"
+                  className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700 cursor-pointer"
                 >
                   <option value="Ambient">{isRTL ? "مستودع جاف قياسي (Ambient)" : "Ambient Warehouse (Standard)"}</option>
                   <option value="Cold Chain (2-8°C)">{isRTL ? "سلسلة تبريد (2-8°C)" : "Cold Chain Chamber (2-8°C)"}</option>
@@ -446,14 +446,14 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
                 type="button"
                 variant="outline"
                 onClick={() => setInboundModalOpen(false)}
-                className="text-xs cursor-pointer"
+                className="w-full sm:w-auto h-10 text-xs cursor-pointer justify-center"
               >
                 {t("common.cancel")}
               </Button>
               <Button
                 type="submit"
                 variant="brand"
-                className="text-xs font-bold cursor-pointer"
+                className="w-full sm:w-auto h-10 text-xs font-bold cursor-pointer justify-center"
               >
                 {t("admin.warehouse.modal.saveBtn")}
               </Button>

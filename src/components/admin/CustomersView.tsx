@@ -399,7 +399,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
           </DialogHeader>
 
           <form onSubmit={handleCreateCustomer} className="space-y-3.5">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
                   {t("admin.customers.modal.companyName")}
@@ -426,7 +426,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
                   {t("admin.customers.modal.email")}
@@ -454,7 +454,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
                   {t("admin.customers.table.cityCountry")}
@@ -483,7 +483,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                 <select
                   value={formTier}
                   onChange={(e) => setFormTier(e.target.value as any)}
-                  className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700"
+                  className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700 cursor-pointer"
                 >
                   <option value="Enterprise VIP">Enterprise VIP (High Volume)</option>
                   <option value="Corporate Partner">Corporate Partner</option>
@@ -492,7 +492,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
                   {t("admin.customers.modal.creditLimit")}
@@ -523,14 +523,14 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                 type="button"
                 variant="outline"
                 onClick={() => setAddModalOpen(false)}
-                className="text-xs cursor-pointer"
+                className="w-full sm:w-auto h-10 text-xs cursor-pointer justify-center"
               >
                 {t("common.cancel")}
               </Button>
               <Button
                 type="submit"
                 variant="brand"
-                className="text-xs font-bold cursor-pointer"
+                className="w-full sm:w-auto h-10 text-xs font-bold cursor-pointer justify-center"
               >
                 {t("admin.customers.modal.saveBtn")}
               </Button>

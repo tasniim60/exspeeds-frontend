@@ -1,6 +1,7 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { Locale, Direction, getTranslationValue, defaultLocale } from "@/locales";
 
 interface LanguageContextType {
@@ -9,8 +10,11 @@ interface LanguageContextType {
   isRTL: boolean;
   setLocale: (locale: Locale) => void;
   toggleLocale: () => void;
+  getLocalizedPath: (path: string, targetLocale?: Locale) => string;
   t: (path: string, params?: Record<string, string | number>) => string;
   formatDate: (date: string | Date | undefined, options?: Intl.DateTimeFormatOptions) => string;
+  formatTime: (date: string | Date | undefined, options?: Intl.DateTimeFormatOptions) => string;
+  formatDateTime: (date: string | Date | undefined, options?: Intl.DateTimeFormatOptions) => string;
   formatNumber: (num: number) => string;
   formatCurrency: (amount: number, currencyCode?: string) => string;
   formatWeight: (weightKg: number | string) => string;
@@ -20,29 +24,23 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 const STORAGE_KEY = "xspeed_language";
 
-function getInitialLocale(): Locale {
-  if (typeof window === "undefined") return "ar";
-
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY) as Locale | null;
-    if (saved && (saved === "en" || saved === "ar")) {
-      return saved;
-    }
-
-    // Check cookie
-    const match = document.cookie.match(new RegExp(`(^| )${STORAGE_KEY}=([^;]+)`));
-    if (match && (match[2] === "en" || match[2] === "ar")) {
-      return match[2] as Locale;
-    }
-  } catch (err) {
-    console.warn("Error detecting language:", err);
-  }
-
-  return "ar";
+function parseDateSafe(dateVal: string | Date | undefined): Date | null {
+  if (!dateVal) return null;
+  if (dateVal instanceof Date) return isNaN(dateVal.getTime()) ? null : dateVal;
+  const d = new Date(dateVal);
+  return isNaN(d.getTime()) ? null : d;
 }
 
-export function LanguageProvider({ children }: { children: React.ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>(defaultLocale);
+export function LanguageProvider({
+  children,
+  initialLocale = defaultLocale,
+}: {
+  children: React.ReactNode;
+  initialLocale?: Locale;
+}) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
   const [mounted, setMounted] = useState(false);
 
   // Sync DOM attributes (lang and dir)
@@ -60,12 +58,35 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  // Sync when initialLocale changes (e.g. on navigation)
   useEffect(() => {
-    const detected = getInitialLocale();
-    setLocaleState(detected);
-    applyLocaleToDom(detected);
+    if (initialLocale && initialLocale !== locale) {
+      setLocaleState(initialLocale);
+      applyLocaleToDom(initialLocale);
+    }
+  }, [initialLocale, locale, applyLocaleToDom]);
+
+  useEffect(() => {
+    applyLocaleToDom(locale);
     setMounted(true);
-  }, [applyLocaleToDom]);
+  }, [locale, applyLocaleToDom]);
+
+  const getLocalizedPath = useCallback(
+    (targetPath: string, targetLoc: Locale = locale): string => {
+      if (!targetPath) return `/${targetLoc}`;
+      let cleanPath = targetPath;
+      if (cleanPath.startsWith("/ar/") || cleanPath === "/ar") {
+        cleanPath = cleanPath.replace(/^\/ar/, "");
+      } else if (cleanPath.startsWith("/en/") || cleanPath === "/en") {
+        cleanPath = cleanPath.replace(/^\/en/, "");
+      }
+      if (!cleanPath.startsWith("/")) {
+        cleanPath = `/${cleanPath}`;
+      }
+      return cleanPath === "/" ? `/${targetLoc}` : `/${targetLoc}${cleanPath}`;
+    },
+    [locale]
+  );
 
   const setLocale = useCallback(
     (newLocale: Locale) => {
@@ -77,8 +98,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       } catch (err) {
         console.warn("Failed to persist language choice:", err);
       }
+
+      // Navigate to the localized URL if route is available
+      if (pathname) {
+        const nextUrl = getLocalizedPath(pathname, newLocale);
+        if (nextUrl !== pathname) {
+          router.push(nextUrl);
+        }
+      }
     },
-    [applyLocaleToDom]
+    [applyLocaleToDom, getLocalizedPath, pathname, router]
   );
 
   const toggleLocale = useCallback(() => {
@@ -96,12 +125,53 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     (dateVal: string | Date | undefined, options?: Intl.DateTimeFormatOptions): string => {
       if (!dateVal) return "";
       try {
-        const d = typeof dateVal === "string" ? new Date(dateVal) : dateVal;
-        if (isNaN(d.getTime())) return String(dateVal);
-        return new Intl.DateTimeFormat(locale === "ar" ? "ar-EG" : "en-US", {
+        const d = parseDateSafe(dateVal);
+        if (!d) return typeof dateVal === "string" && dateVal !== "—" && dateVal !== "N/A" ? dateVal : "";
+        return new Intl.DateTimeFormat(locale === "ar" ? "ar-EG-u-nu-latn" : "en-US", {
           year: "numeric",
           month: "short",
           day: "numeric",
+          ...options,
+        }).format(d);
+      } catch {
+        return String(dateVal);
+      }
+    },
+    [locale]
+  );
+
+  const formatTime = useCallback(
+    (dateVal: string | Date | undefined, options?: Intl.DateTimeFormatOptions): string => {
+      if (!dateVal) return "";
+      try {
+        const d = parseDateSafe(dateVal);
+        if (!d) return "";
+        return new Intl.DateTimeFormat(locale === "ar" ? "ar-EG-u-nu-latn" : "en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+          ...options,
+        }).format(d);
+      } catch {
+        return "";
+      }
+    },
+    [locale]
+  );
+
+  const formatDateTime = useCallback(
+    (dateVal: string | Date | undefined, options?: Intl.DateTimeFormatOptions): string => {
+      if (!dateVal) return "";
+      try {
+        const d = parseDateSafe(dateVal);
+        if (!d) return typeof dateVal === "string" && dateVal !== "—" && dateVal !== "N/A" ? dateVal : "";
+        return new Intl.DateTimeFormat(locale === "ar" ? "ar-EG-u-nu-latn" : "en-US", {
+          year: "numeric",
+          month: "short",
+          day: "numeric",
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
           ...options,
         }).format(d);
       } catch {
@@ -162,13 +232,16 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
       isRTL,
       setLocale,
       toggleLocale,
+      getLocalizedPath,
       t,
       formatDate,
+      formatTime,
+      formatDateTime,
       formatNumber,
       formatCurrency,
       formatWeight,
     }),
-    [locale, dir, isRTL, setLocale, toggleLocale, t, formatDate, formatNumber, formatCurrency, formatWeight]
+    [locale, dir, isRTL, setLocale, toggleLocale, getLocalizedPath, t, formatDate, formatTime, formatDateTime, formatNumber, formatCurrency, formatWeight]
   );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;

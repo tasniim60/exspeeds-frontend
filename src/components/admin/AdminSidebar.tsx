@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 
 export type AdminTab =
   | "statistics"
@@ -52,16 +53,10 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   badgeCounts,
 }) => {
   const { t, isRTL } = useLanguage();
+  const { logout } = useAuth();
 
   const handleLogout = async () => {
-    try {
-      if (typeof window !== "undefined") {
-        localStorage.removeItem("xspeed_user");
-        document.cookie = "xspeed_session=; path=/; max-age=0; SameSite=Lax";
-        document.cookie = "xspeed_user=; path=/; max-age=0; SameSite=Lax";
-        document.cookie = "xspeed_admin_auth=; path=/; max-age=0; SameSite=Lax";
-      }
-    } catch {}
+    await logout();
     window.location.href = "/login";
   };
 

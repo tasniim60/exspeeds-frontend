@@ -30,14 +30,14 @@ import { CARRIERS } from "@/lib/tracking";
 
 export function HomeHeroSection() {
   const router = useRouter();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, getLocalizedPath } = useLanguage();
   const [carrier, setCarrier] = useState("DHL");
   const [awb, setAwb] = useState("");
 
   const handleTrackSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!awb.trim()) return;
-    router.push(`/track?awb=${encodeURIComponent(awb.trim())}&carrier=${encodeURIComponent(carrier)}`);
+    router.push(getLocalizedPath(`/track?awb=${encodeURIComponent(awb.trim())}&carrier=${encodeURIComponent(carrier)}`));
   };
 
   return (
@@ -53,30 +53,28 @@ export function HomeHeroSection() {
           width={1920}
           height={1080}
           className={`w-full h-full object-cover transition-transform duration-700 ${
-            isRTL
-              ? "scale-x-[-1] object-center lg:object-left"
-              : "object-center lg:object-right"
+            isRTL ? "scale-x-[-1]" : ""
           }`}
         />
-        {/* Soft gradient wash mirroring based on text position in RTL/LTR */}
-        <div
-          className={`absolute inset-0 bg-gradient-to-b from-[#FAF8F5]/80 via-transparent to-[#FAF8F5]/90 ${
-            isRTL
-              ? "lg:bg-gradient-to-l lg:from-[#FAF8F5]/95 lg:via-[#FAF8F5]/50 lg:to-transparent"
-              : "lg:bg-gradient-to-r lg:from-[#FAF8F5]/95 lg:via-[#FAF8F5]/50 lg:to-transparent"
-          } pointer-events-none`}
-        />
+        {/* Soft Radial Vignette for Content Readability */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#FAF8F5]/90 via-[#FAF8F5]/70 to-[#FAF8F5]/95 backdrop-blur-[1.5px]" />
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full flex-grow flex items-start pt-6 sm:pt-10 lg:pt-12">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-8 items-start w-full py-6 lg:py-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 w-full relative z-10 flex-1 flex flex-col justify-center">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           
-          {/* Left/Right Column: Headline, CTAs, and 4 Feature Badges */}
-          <div className="lg:col-span-7 flex flex-col space-y-8 text-start">
+          {/* Left Column: Expressive Copy & Highlights */}
+          <div className="lg:col-span-7 space-y-6 sm:space-y-8 text-start">
             
-            {/* Main Headline */}
-            <div className="space-y-4 max-w-2xl">
-              <h1 className="text-4xl sm:text-5xl lg:text-[56px] xl:text-[62px] font-display font-black tracking-[-0.035em] leading-[1.1] text-gray-950">
+            {/* Tag Badge */}
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 border border-orange-200/90 shadow-2xs text-[#C45B2A] text-xs font-black uppercase tracking-wider backdrop-blur-md">
+              <span className="w-2 h-2 rounded-full bg-[#C45B2A] animate-pulse" />
+              <span>{t("home.hero.badge")}</span>
+            </div>
+
+            {/* Display Heading */}
+            <div className="space-y-4">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-display font-black tracking-[-0.03em] leading-[1.12] text-gray-950">
                 <span>{t("home.hero.titlePrefix") || (isRTL ? "خدمات لوجستية سريعة" : "Express Logistics")}</span>{" "}
                 <br className="hidden sm:inline" />
                 <span className="text-[#C45B2A] inline-block mt-1">
@@ -91,7 +89,7 @@ export function HomeHeroSection() {
 
             {/* Hero Action Buttons */}
             <div className="flex flex-wrap items-center gap-4 pt-1">
-              <Link href="/ship">
+              <Link href={getLocalizedPath("/ship")}>
                 <button
                   type="button"
                   className="bg-gradient-to-r from-[#C45B2A] to-[#E65100] hover:from-[#A34920] hover:to-[#C45B2A] text-white font-bold text-sm sm:text-base px-7 sm:px-8 py-3.5 sm:py-4 rounded-full shadow-lg shadow-orange-500/25 transition-all hover:scale-[1.02] flex items-center gap-2.5 cursor-pointer"
@@ -177,7 +175,7 @@ export function HomeHeroSection() {
               <div className="text-center space-y-2">
                 <div className="h-16 flex items-center justify-center mx-auto max-w-[220px]">
                   <img
-                    src="/assets/xspeed_logo_earth_wide.jpg"
+                    src="/assets/xspeed_logo_earth_light.jpg"
                     alt="XSPEED Logo"
                     width={220}
                     height={48}
@@ -250,7 +248,7 @@ export function HomeHeroSection() {
               </div>
 
               {/* Track Multiple Shipments Button */}
-              <Link href="/track" className="block">
+              <Link href={getLocalizedPath("/track")} className="block">
                 <button
                   type="button"
                   className="w-full h-12 rounded-full bg-gray-50/90 hover:bg-gray-100 border border-gray-200 text-gray-700 font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-2 cursor-pointer shadow-2xs"
@@ -337,7 +335,7 @@ export function HomeHeroSection() {
 
 
 export function HomeAboutSection() {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, getLocalizedPath } = useLanguage();
 
   return (
     <section className="bg-[#FAF8F5] py-20 border-b border-gray-100 relative overflow-hidden">
@@ -392,7 +390,7 @@ export function HomeAboutSection() {
           </div>
 
           <div className="pt-4">
-            <Link href="/about">
+            <Link href={getLocalizedPath("/about")}>
               <Button variant="outline" className="rounded-full px-6 py-2.5 font-bold border-gray-300 hover:border-[#C45B2A] text-gray-900 flex items-center gap-2 cursor-pointer shadow-2xs">
                 <span>{t("common.learnMore")}</span>
                 <ArrowRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />

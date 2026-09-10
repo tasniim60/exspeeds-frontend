@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { WPPost, FALLBACK_POSTS } from "@/lib/wordpress";
+import { WPPost, FALLBACK_POSTS_AR, FALLBACK_POSTS_EN } from "@/lib/wordpress";
 import { AdminStorage } from "@/lib/adminData";
 import { convertAdminPostToWP } from "@/lib/blogUtils";
 import { useLanguage } from "@/context/LanguageContext";
+import { sanitizeHtml } from "@/lib/sanitize";
 import {
   ArrowLeft,
   Calendar,
@@ -21,8 +22,6 @@ import {
   ShieldCheck,
   BookOpen,
   ListOrdered,
-  Linkedin,
-  Twitter,
   ChevronRight,
   ArrowUpRight,
   BookmarkCheck,
@@ -41,13 +40,16 @@ interface HeadingItem {
 }
 
 export default function SinglePostClient({ slug, initialPost }: SinglePostClientProps) {
-  const { t, isRTL, formatDate } = useLanguage();
+  const { t, isRTL, formatDate, getLocalizedPath } = useLanguage();
   const [post, setPost] = useState<WPPost | null>(initialPost);
   const [isLoading, setIsLoading] = useState(
-    !initialPost && !FALLBACK_POSTS.some((p) => p.slug === slug)
+    !initialPost &&
+      !(isRTL ? FALLBACK_POSTS_AR : FALLBACK_POSTS_EN).some((p) => p.slug === slug)
   );
   const [copied, setCopied] = useState(false);
-  const [imgSrc, setImgSrc] = useState<string>("/assets/xspeed_about_showcase.jpg");
+  const [imgSrc, setImgSrc] = useState<string>(
+    initialPost?.featured_image_url || "/assets/xspeed_about_showcase.jpg"
+  );
   const [scrollPercent, setScrollPercent] = useState(0);
   const [showToc, setShowToc] = useState(true);
 
@@ -65,7 +67,33 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
   }, []);
 
   useEffect(() => {
-    // 1. Check local AdminStorage first
+    // 1. If initialPost is available from SSR (matched for current route & locale), use it
+    if (initialPost) {
+      setPost(initialPost);
+      if (initialPost.featured_image_url) {
+        setImgSrc(initialPost.featured_image_url);
+      }
+      setIsLoading(false);
+      return;
+    }
+
+    // 2. Fallback lookup in seeded posts matching the active locale
+    const primaryFallback = isRTL ? FALLBACK_POSTS_AR : FALLBACK_POSTS_EN;
+    const secondaryFallback = isRTL ? FALLBACK_POSTS_EN : FALLBACK_POSTS_AR;
+    const matchedFallback =
+      primaryFallback.find((p) => p.slug === slug) ||
+      secondaryFallback.find((p) => p.slug === slug);
+
+    if (matchedFallback) {
+      setPost(matchedFallback);
+      if (matchedFallback.featured_image_url) {
+        setImgSrc(matchedFallback.featured_image_url);
+      }
+      setIsLoading(false);
+      return;
+    }
+
+    // 3. Check local AdminStorage for custom user-created posts
     const adminPosts = AdminStorage.getBlogPosts();
     const matchedAdmin = adminPosts.find((p) => p.slug === slug);
 
@@ -79,36 +107,16 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
       return;
     }
 
-    // 2. If initialPost is available from SSR, use it
-    if (initialPost) {
-      setPost(initialPost);
-      if (initialPost.featured_image_url) {
-        setImgSrc(initialPost.featured_image_url);
-      }
-      setIsLoading(false);
-      return;
-    }
-
-    // 3. Fallback lookup in seeded posts
-    const matchedFallback = FALLBACK_POSTS.find((p) => p.slug === slug);
-    if (matchedFallback) {
-      setPost(matchedFallback);
-      if (matchedFallback.featured_image_url) {
-        setImgSrc(matchedFallback.featured_image_url);
-      }
-      setIsLoading(false);
-      return;
-    }
-
-    // 4. Client-side live recovery: fetch directly from WordPress REST API
+    // 4. Client-side live recovery: fetch directly from WordPress REST API with lang parameter
     let isMounted = true;
     setIsLoading(true);
 
     const tryFetchPost = async () => {
+      const currentLocale = isRTL ? "ar" : "en";
       const endpoints = [
-        `/wordpress/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1`,
-        `/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1`,
-        `https://exspeeds.com/wordpress/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1`,
+        `/wordpress/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1&lang=${currentLocale}`,
+        `/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1&lang=${currentLocale}`,
+        `https://exspeeds.com/wordpress/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1&lang=${currentLocale}`,
       ];
 
       for (const endpoint of endpoints) {
@@ -120,12 +128,14 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
             const data = await res.json();
             if (Array.isArray(data) && data.length > 0 && isMounted) {
               const fetchedPost = data[0];
-              const rawTitle = fetchedPost.title?.rendered || fetchedPost.title || "Logistics Insights";
-              const cleanTitle = rawTitle.replace(/<[^>]*>?/gm, "").replace(/&#\d+;/g, "").trim();
+              const rawTitle =
+                fetchedPost.title?.rendered ||
+                fetchedPost.title ||
+                (isRTL ? "مقال لوجستي" : "Logistics Insights");
               const defaultImage =
                 fetchedPost._embedded?.["wp:featuredmedia"]?.[0]?.source_url ||
                 fetchedPost.featured_media_src_url ||
-                "/assets/plane-pic-7WwFXnsZ.jpg";
+                "/assets/xspeed_about_showcase.jpg";
 
               const formatted: WPPost = {
                 ...fetchedPost,
@@ -133,8 +143,12 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
                 content: { rendered: fetchedPost.content?.rendered || fetchedPost.content || "" },
                 excerpt: { rendered: fetchedPost.excerpt?.rendered || fetchedPost.excerpt || "" },
                 featured_image_url: defaultImage,
-                author_name: fetchedPost._embedded?.author?.[0]?.name || "XSPEED Editorial Team",
-                category_name: fetchedPost._embedded?.["wp:term"]?.[0]?.[0]?.name || "Technology & Logistics",
+                author_name:
+                  fetchedPost._embedded?.author?.[0]?.name ||
+                  (isRTL ? "فريق تحرير إكس سبيد" : "XSPEED Editorial Team"),
+                category_name:
+                  fetchedPost._embedded?.["wp:term"]?.[0]?.[0]?.name ||
+                  (isRTL ? "التكنولوجيا واللوجستيات" : "Technology & Logistics"),
               };
 
               setPost(formatted);
@@ -143,7 +157,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
               return;
             }
           }
-        } catch (e) {
+        } catch {
           // continue checking next endpoint
         }
       }
@@ -158,7 +172,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
     return () => {
       isMounted = false;
     };
-  }, [slug, initialPost]);
+  }, [slug, initialPost, isRTL]);
 
   // Handle Share / Copy Link
   const handleCopyLink = () => {
@@ -172,7 +186,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
   // Social Share URLs
   const getShareUrls = () => {
     if (typeof window === "undefined" || !post) {
-      return { whatsapp: "#", linkedin: "#", twitter: "#" };
+      return { whatsapp: "#"};
     }
     const cleanTitle = post.title.rendered.replace(/<[^>]*>?/gm, "").trim();
     const currentUrl = window.location.href;
@@ -180,8 +194,6 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
 
     return {
       whatsapp: `https://wa.me/?text=${encodeURIComponent(shareText)}`,
-      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(currentUrl)}`,
-      twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(cleanTitle)}&url=${encodeURIComponent(currentUrl)}&via=xspeed_express`,
     };
   };
 
@@ -223,11 +235,12 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
     });
   }, [post?.content?.rendered]);
 
-  // Inject IDs into HTML content for anchor navigation
+  // Inject IDs into HTML content for anchor navigation with XSS sanitization
   const processedContent = useMemo(() => {
     if (!post?.content?.rendered) return "";
+    const sanitized = sanitizeHtml(post.content.rendered);
     let idx = 0;
-    return post.content.rendered.replace(/<h([2-3])([^>]*)>(.*?)<\/h\1>/gi, (match, level, attrs, innerText) => {
+    return sanitized.replace(/<h([2-3])([^>]*)>(.*?)<\/h\1>/gi, (match, level, attrs, innerText) => {
       const rawText = innerText.replace(/<[^>]*>?/gm, "").trim();
       const id = `section-${idx}-${rawText.toLowerCase().replace(/[^a-z0-9\u0600-\u06FF]+/g, "-")}`;
       idx++;
@@ -242,10 +255,59 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
     }
   };
 
-  // Related posts (excluding current slug)
+  // Determine if the post itself is written in Arabic or English
+  const isArabicPost = useMemo(() => {
+    if (!post) return isRTL;
+    const sampleText = `${post.title?.rendered || ""} ${post.excerpt?.rendered || ""} ${(post.content?.rendered || "").slice(0, 500)}`;
+    const cleanSample = sampleText.replace(/<[^>]*>?/gm, "");
+    const arabicMatches = cleanSample.match(/[\u0600-\u06FF]/g) || [];
+    const latinMatches = cleanSample.match(/[a-zA-Z]/g) || [];
+    return arabicMatches.length >= latinMatches.length;
+  }, [post, isRTL]);
+
+  const postDir = isArabicPost ? "rtl" : "ltr";
+  const postAlign = isArabicPost ? "text-right" : "text-left";
+  const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  // FAQs tailored for logistics intelligence
+  const postFaqs = useMemo(() => {
+    if (isArabicPost) {
+      return [
+        {
+          q: "ما هي المدة المتوقعة للتسليم الدولي السريع مع XSPEED؟",
+          a: "تتراوح مدة التسليم السريع بين 24 إلى 72 ساعة لمعظم الوجهات الإقليمية في الشرق الأوسط والخليج، وتصل إلى 3-5 أيام عمل للوجهات العالمية، مع متابعة لحظية عبر رقم البوليصة."
+        },
+        {
+          q: "هل تتوفر خدمات التخليص الجمركي للشحنات التجارية والشخصية؟",
+          a: "نعم، يتولى فريقنا المتخصص إجراءات التخليص الجمركي الفوري عبر منظومة نافذة والتسجيل المسبق ACI لتفادي أي تأخير أو رسوم أرضيات في الموانئ والمطارات."
+        },
+        {
+          q: "كيف يمكنني طلب عرض أسعار مخصص لشحنتي؟",
+          a: "يمكنك الضغط على زر 'طلب عرض سعر الآن' أو التواصل الفوري مع مكتب العمليات عبر الواتساب لتلقي عرض سعر تنافسي خلال دقائق."
+        }
+      ];
+    }
+    return [
+      {
+        q: "What is the standard transit time for XSPEED express shipments?",
+        a: "Regional express consignments across the Middle East & GCC are delivered within 24–72 hours, while global freight typically arrives within 3–5 business days with real-time waypoint telemetry."
+      },
+      {
+        q: "Does XSPEED handle customs clearance and documentation?",
+        a: "Yes, our licensed brokerage desk handles pre-clearance, ACI registration, and tariff code optimization across all major airports and sea terminals."
+      },
+      {
+        q: "How can I get an instant commercial rate quote?",
+        a: "Click 'Request Quote Now' or chat directly with our 24/7 operations desk on WhatsApp for an immediate competitive rate."
+      }
+    ];
+  }, [isArabicPost]);
+
+  // Related posts (excluding current slug) localized
   const relatedPosts = useMemo(() => {
-    return FALLBACK_POSTS.filter((p) => p.slug !== slug).slice(0, 3);
-  }, [slug]);
+    const list = isArabicPost ? FALLBACK_POSTS_AR : FALLBACK_POSTS_EN;
+    return list.filter((p) => p.slug !== slug).slice(0, 3);
+  }, [slug, isArabicPost]);
 
   if (isLoading) {
     return (
@@ -285,7 +347,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
           </p>
           <div className="pt-2">
             <Link
-              href="/blog"
+              href={getLocalizedPath("/blog")}
               className="bg-[#C45B2A] hover:bg-[#A34920] text-white font-bold text-xs py-3 px-6 rounded-full inline-flex items-center gap-2 transition-all cursor-pointer min-h-[44px]"
             >
               <ArrowLeft className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
@@ -381,11 +443,11 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
         {/* Navigation Breadcrumb */}
         <nav aria-label="Breadcrumb" className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2 text-xs font-semibold text-gray-500">
-            <Link href="/" className="hover:text-[#C45B2A] transition-colors cursor-pointer">
+            <Link href={getLocalizedPath("/")} className="hover:text-[#C45B2A] transition-colors cursor-pointer">
               {isRTL ? "الرئيسية" : "Home"}
             </Link>
             <span className="text-gray-300">/</span>
-            <Link href="/blog" className="hover:text-[#C45B2A] transition-colors cursor-pointer">
+            <Link href={getLocalizedPath("/blog")} className="hover:text-[#C45B2A] transition-colors cursor-pointer">
               {isRTL ? "المدونة" : "Blog"}
             </Link>
             <span className="text-gray-300">/</span>
@@ -396,7 +458,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
 
           <div className="flex items-center gap-2">
             <Link
-              href="/blog"
+              href={getLocalizedPath("/blog")}
               className="inline-flex items-center gap-2 text-xs font-bold text-gray-700 hover:text-[#C45B2A] bg-white px-4 py-2 rounded-full border border-gray-200 shadow-2xs transition-all hover:border-[#C45B2A] cursor-pointer min-h-[44px]"
             >
               <ArrowLeft className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
@@ -412,19 +474,20 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
 
         {/* Main Article Container */}
         <article
-          className="bg-white/95 backdrop-blur-xl rounded-[32px] border border-orange-100/90 overflow-hidden shadow-[0_20px_50px_rgba(37,21,22,0.06)]"
+          dir={postDir}
+          className={`bg-white/95 backdrop-blur-xl rounded-[32px] border border-orange-100/90 overflow-hidden shadow-[0_20px_50px_rgba(37,21,22,0.06)] ${postAlign}`}
           itemScope
           itemType="https://schema.org/BlogPosting"
         >
           {/* Article Header */}
-          <header className="p-6 sm:p-10 lg:p-12 space-y-6 border-b border-gray-100 text-start">
+          <header className={`p-6 sm:p-10 lg:p-12 space-y-6 border-b border-gray-100 ${postAlign}`}>
             <h1
               itemProp="headline"
               className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-display font-black text-gray-950 tracking-[-0.03em] leading-[1.2]"
-              dangerouslySetInnerHTML={{ __html: post.title.rendered }}
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.title.rendered) }}
             />
 
-            {/* Meta Row: Author, Upload Date, Modified Date, Reading Time, Rank Math Badge */}
+            {/* Meta Row: Author, Upload Date, Modified Date, Reading Time */}
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-gray-600 pt-2">
               {/* Author */}
               <div
@@ -436,16 +499,18 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
                 <div className="w-8 h-8 rounded-full bg-orange-100 text-[#C45B2A] flex items-center justify-center font-black text-xs border border-orange-200/80 shrink-0">
                   {post.author_name?.charAt(0) || "X"}
                 </div>
-                <span itemProp="name">{getLocalizedAuthor(post.author_name)}</span>
+                <span itemProp="name">
+                  {isArabicPost ? getLocalizedAuthor(post.author_name) : (post.author_name || "XSPEED Editorial Team")}
+                </span>
                 <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px] font-bold border border-emerald-200 flex items-center gap-1">
                   <ShieldCheck className="w-3 h-3 text-emerald-600 shrink-0" />
-                  {t("blogPage.verified") || (isRTL ? "فريق موثق" : "Verified")}
+                  {isArabicPost ? "فريق موثق" : "Verified Author"}
                 </span>
               </div>
 
               <span className="text-gray-300">•</span>
 
-              {/* Upload Date & Time of Publishing (Prominently Formatted) */}
+              {/* Upload Date & Time of Publishing */}
               <time
                 dateTime={post.date || new Date().toISOString()}
                 itemProp="datePublished"
@@ -454,18 +519,9 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
               >
                 <Calendar className="w-3.5 h-3.5 text-[#C45B2A] shrink-0" />
                 <span>
-                  {t("blogPage.publishedOn") || (isRTL ? "نُشر بتاريخ:" : "Published on:")}{" "}
+                  {isArabicPost ? "نُشر بتاريخ:" : "Published on:"}{" "}
                   <strong className="text-gray-900">{formattedPublishDate}</strong>
                 </span>
-                {formattedPublishTime && (
-                  <>
-                    <span className="text-orange-300">•</span>
-                    <span className="flex items-center gap-1 font-mono text-gray-700 text-[11px] bg-white/80 px-2 py-0.5 rounded-full border border-orange-100">
-                      <Clock className="w-3 h-3 text-[#C45B2A] shrink-0" />
-                      <span>{formattedPublishTime}</span>
-                    </span>
-                  </>
-                )}
               </time>
 
               {/* Last Modified Date & Time (if different from publish date) */}
@@ -480,7 +536,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
                   >
                     <Clock className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                     <span>
-                      {t("blogPage.lastUpdated") || (isRTL ? "آخر تحديث:" : "Last Updated:")}{" "}
+                      {isArabicPost ? "آخر تحديث:" : "Last Updated:"}{" "}
                       <strong className="text-emerald-950">{formattedModifiedDate}</strong>
                     </span>
                     {formattedModifiedTime && (
@@ -496,21 +552,10 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
               )}
 
               <span className="text-gray-300">•</span>
-
-              {/* Reading Time */}
-              <div className="flex items-center gap-1.5 font-medium text-gray-500">
-                <Clock className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                <span>
-                  {readTimeMinutes} {t("blogPage.minRead") || (isRTL ? "دقائق قراءة" : "min read")} ({wordCount}{" "}
-                  {t("blogPage.words") || (isRTL ? "كلمة" : "words")})
-                </span>
-              </div>
-
-              {/* Rank Math SEO Score Badge */}
-              <div className="ms-auto flex items-center gap-1 px-3 py-1 bg-gradient-to-r from-emerald-50 to-teal-50 text-emerald-800 border border-emerald-200/80 rounded-full font-black text-[11px] shadow-2xs">
-                <Sparkles className="w-3 h-3 text-emerald-600 shrink-0" />
-                <span>Rank Math SEO: {seoScore}/100</span>
-              </div>
+              <span className="flex items-center gap-1 text-gray-500 font-medium">
+                <Clock className="w-3.5 h-3.5 text-gray-400" />
+                <span>{readTimeMinutes} {isArabicPost ? "دقائق قراءة" : "min read"}</span>
+              </span>
             </div>
           </header>
 
@@ -529,15 +574,15 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
           )}
 
           {/* Article Body Content */}
-          <div className="p-6 sm:p-10 lg:p-12 text-start space-y-8">
+          <div className={`p-6 sm:p-10 lg:p-12 space-y-8 ${postAlign}`}>
             {/* Key Takeaways Callout Box */}
             <div className="bg-orange-50/80 rounded-2xl p-5 sm:p-6 border border-orange-200/90 space-y-2">
               <div className="flex items-center gap-2 text-xs font-black text-[#C45B2A] uppercase tracking-wider">
                 <Sparkles className="w-4 h-4 shrink-0" />
-                <span>{isRTL ? "أبرز نقاط المقال اللوجستي" : "Key Logistics Takeaways"}</span>
+                <span>{isArabicPost ? "أبرز نقاط المقال اللوجستي" : "Key Logistics Takeaways"}</span>
               </div>
               <p className="text-xs sm:text-sm text-gray-800 leading-relaxed font-semibold">
-                {isRTL
+                {isArabicPost
                   ? "يستعرض هذا المقال المعايير والتطورات الحديثة في الشحن الدولي والسريع، مع التركيز على أفضل ممارسات سلاسل الإمداد، التخليص الجمركي الفوري عبر منظومة نافذة، والتقنيات الرقمية المعتمدة لضمان سرعة وأمان الشحنات."
                   : "This article examines key standards in express freight, supply chain acceleration, rapid customs clearance protocols, and digital tracking technologies ensuring on-time delivery across global corridors."}
               </p>
@@ -549,27 +594,27 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-black text-gray-900 uppercase tracking-wider">
                     <ListOrdered className="w-4 h-4 text-[#C45B2A] shrink-0" />
-                    <span>{t("blogPage.tableOfContents") || (isRTL ? "فهرس المقال" : "Table of Contents")}</span>
+                    <span>{isArabicPost ? "فهرس المقال" : "Table of Contents"}</span>
                   </div>
                   <button
                     onClick={() => setShowToc(!showToc)}
                     className="text-xs font-bold text-gray-500 hover:text-[#C45B2A] transition-colors cursor-pointer px-2 py-1"
                   >
-                    {showToc ? (isRTL ? "إخفاء" : "Hide") : (isRTL ? "عرض" : "Show")}
+                    {showToc ? (isArabicPost ? "إخفاء" : "Hide") : (isArabicPost ? "عرض" : "Show")}
                   </button>
                 </div>
 
                 {showToc && (
                   <ul className="space-y-1.5 pt-2 border-t border-orange-100/60 text-xs sm:text-sm">
                     {headings.map((heading) => (
-                      <li key={heading.id} className={heading.level === 3 ? "ms-4" : ""}>
+                      <li key={heading.id} className={heading.level === 3 ? (isArabicPost ? "me-4" : "ms-4") : ""}>
                         <button
                           onClick={() => scrollToHeading(heading.id)}
-                          className="flex items-center gap-1.5 text-gray-700 hover:text-[#C45B2A] font-medium transition-colors text-start cursor-pointer group py-1"
+                          className={`flex items-center gap-1.5 text-gray-700 hover:text-[#C45B2A] font-medium transition-colors cursor-pointer group py-1 ${postAlign}`}
                         >
                           <ChevronRight
                             className={`w-3.5 h-3.5 text-orange-400 group-hover:text-[#C45B2A] transition-colors shrink-0 ${
-                              isRTL ? "rotate-180" : ""
+                              isArabicPost ? "rotate-180" : ""
                             }`}
                           />
                           <span className="group-hover:underline underline-offset-2">{heading.text}</span>
@@ -581,117 +626,87 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
               </div>
             )}
 
-            {/* Render Enhanced HTML content with prose-xspeed */}
+            {/* Render Enhanced HTML content with prose-xspeed and XSS sanitization */}
             <div
               itemProp="articleBody"
-              className="prose-xspeed max-w-none text-start"
-              dangerouslySetInnerHTML={{ __html: processedContent || post.content.rendered }}
+              dir={postDir}
+              className={`prose-xspeed max-w-none ${postAlign}`}
+              dangerouslySetInnerHTML={{ __html: processedContent || (post.content.rendered ? sanitizeHtml(post.content.rendered) : "") }}
             />
 
-            {/* Author Bio & E-E-A-T Verification Card */}
-            <div className="mt-10 p-6 rounded-2xl bg-[#FAF8F5] border border-orange-100/90 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-              <div className="w-14 h-14 rounded-full bg-gradient-to-br from-orange-400 to-[#C45B2A] text-white flex items-center justify-center font-black text-lg shadow-md shrink-0">
-                {post.author_name?.charAt(0) || "X"}
+            {/* FAQ Accordion Section for Rich Snippets & E-E-A-T */}
+            <div className="pt-6 border-t border-gray-100 space-y-4">
+              <div className="flex items-center gap-2 text-sm font-black text-gray-900 uppercase tracking-wider">
+                <BookmarkCheck className="w-4 h-4 text-[#C45B2A] shrink-0" />
+                <span>{isArabicPost ? "الأسئلة الشائعة حول الموضوع" : "Frequently Asked Questions"}</span>
               </div>
-              <div className="space-y-1 text-start">
-                <div className="flex items-center gap-2">
-                  <h2 className="font-bold text-sm text-gray-950">{getLocalizedAuthor(post.author_name)}</h2>
-                  <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px] font-bold border border-emerald-200 flex items-center gap-1">
-                    <ShieldCheck className="w-3 h-3 text-emerald-600" />
-                    {t("blogPage.verified") || (isRTL ? "خبير معتمد" : "Verified Specialist")}
-                  </span>
-                </div>
-                <p className="text-xs text-gray-600 leading-relaxed">
-                  {t("blogPage.authorExpertise") ||
-                    (isRTL
-                      ? "خبير معتمد في حلول الشحن السريع الدولي والعمليات الجمركية وسلاسل الإمداد لدى شركة إكس سبيد لخدمات الشحن."
-                      : "Certified express logistics and cross-border customs specialist at XSPEED.")}
-                </p>
+
+              <div className="space-y-3">
+                {postFaqs.map((faq, idx) => (
+                  <div
+                    key={idx}
+                    className="border border-orange-100 rounded-2xl overflow-hidden bg-[#FAF8F5] transition-all"
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                      className={`w-full p-4 flex items-center justify-between gap-3 text-xs sm:text-sm font-bold text-gray-900 hover:text-[#C45B2A] transition-colors cursor-pointer ${postAlign}`}
+                    >
+                      <span>{faq.q}</span>
+                      <ChevronRight
+                        className={`w-4 h-4 text-gray-400 transition-transform duration-200 shrink-0 ${
+                          openFaq === idx ? "rotate-90 text-[#C45B2A]" : (isArabicPost ? "rotate-180" : "")
+                        }`}
+                      />
+                    </button>
+                    {openFaq === idx && (
+                      <div className={`px-4 pb-4 text-xs sm:text-sm text-gray-600 leading-relaxed font-medium border-t border-orange-100/60 pt-2 ${postAlign}`}>
+                        {faq.a}
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
 
-            {/* Bottom Meta & Sharing Bar */}
-            <div className="mt-10 pt-8 border-t border-gray-100 space-y-6">
-              {/* Focus Keyword & Rank Math Tag */}
-              {post.rank_math_seo?.focus_keyword && (
-                <div className="flex flex-wrap items-center gap-2 text-xs">
-                  <span className="text-gray-500 font-bold flex items-center gap-1">
-                    <Tag className="w-3.5 h-3.5 text-[#C45B2A]" />
-                    {t("blogPage.focusKeyword") || (isRTL ? "الكلمة المفتاحية:" : "Focus Keyword:")}
-                  </span>
-                  <span className="bg-[#FAF8F5] text-gray-900 font-mono font-bold px-3 py-1 rounded-full border border-gray-200">
-                    {post.rank_math_seo.focus_keyword}
-                  </span>
-                  <span className="bg-emerald-50 text-emerald-700 font-bold px-3 py-1 rounded-full border border-emerald-200 text-[11px] flex items-center gap-1">
-                    <Sparkles className="w-3 h-3 text-emerald-600" />
-                    {t("blogPage.rankMathVerified") || (isRTL ? "تحسين سيو معتمد (Rank Math)" : "Rank Math Verified")}
-                  </span>
-                </div>
-              )}
+            {/* Social Sharing Bar with Proper SVG Icons and AA Contrast */}
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-[#FAF8F5] p-5 rounded-2xl border border-orange-100/80">
+              <span className="text-xs font-bold text-gray-800 flex items-center gap-2">
+                <Share2 className="w-4 h-4 text-[#C45B2A]" />
+                <span>{isArabicPost ? "مشاركة المقال:" : "Share this article:"}</span>
+              </span>
 
-              {/* Social Sharing Bar with Proper SVG Icons and AA Contrast */}
-              <div className="flex flex-wrap items-center justify-between gap-4 bg-[#FAF8F5] p-5 rounded-2xl border border-orange-100/80">
-                <span className="text-xs font-bold text-gray-800 flex items-center gap-2">
-                  <Share2 className="w-4 h-4 text-[#C45B2A]" />
-                  <span>{t("blogPage.shareArticle") || (isRTL ? "مشاركة المقال:" : "Share this article:")}</span>
-                </span>
+              <div className="flex flex-wrap items-center gap-2">
+                {/* WhatsApp */}
+                <a
+                  href={shareUrls.whatsapp}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer min-h-[44px]"
+                  aria-label="Share via WhatsApp"
+                >
+                  <MessageSquare className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                  <span>WhatsApp</span>
+                </a>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  {/* WhatsApp */}
-                  <a
-                    href={shareUrls.whatsapp}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer min-h-[44px]"
-                    aria-label="Share via WhatsApp"
-                  >
-                    <MessageSquare className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span>{t("blogPage.shareWhatsApp") || "WhatsApp"}</span>
-                  </a>
-
-                  {/* LinkedIn */}
-                  <a
-                    href={shareUrls.linkedin}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 rounded-full bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer min-h-[44px]"
-                    aria-label="Share via LinkedIn"
-                  >
-                    <Linkedin className="w-3.5 h-3.5 text-blue-600 shrink-0" />
-                    <span>{t("blogPage.shareLinkedIn") || "LinkedIn"}</span>
-                  </a>
-
-                  {/* Twitter / X */}
-                  <a
-                    href={shareUrls.twitter}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 rounded-full bg-gray-100 text-gray-800 border border-gray-200 hover:bg-gray-200 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer min-h-[44px]"
-                    aria-label="Share on X"
-                  >
-                    <Twitter className="w-3.5 h-3.5 text-gray-700 shrink-0" />
-                    <span>{t("blogPage.shareTwitter") || "X"}</span>
-                  </a>
-
-                  {/* Copy Link Button */}
-                  <button
-                    onClick={handleCopyLink}
-                    className="px-4 py-2 rounded-full bg-white hover:bg-gray-50 text-gray-800 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer border border-gray-200 shadow-2xs min-h-[44px]"
-                    aria-label="Copy Article Link"
-                  >
-                    {copied ? (
-                      <>
-                        <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                        <span className="text-emerald-700">{t("blogPage.copied") || (isRTL ? "تم النسخ!" : "Copied!")}</span>
-                      </>
-                    ) : (
-                      <>
-                        <Share2 className="w-3.5 h-3.5 text-gray-400 shrink-0" />
-                        <span>{t("blogPage.copyLink") || (isRTL ? "نسخ الرابط" : "Copy Link")}</span>
-                      </>
-                    )}
-                  </button>
-                </div>
+                {/* Copy Link Button */}
+                <button
+                  onClick={handleCopyLink}
+                  className="px-4 py-2 rounded-full bg-white hover:bg-gray-50 text-gray-800 text-xs font-bold flex items-center gap-1.5 transition-colors cursor-pointer border border-gray-200 shadow-2xs min-h-[44px]"
+                  aria-label="Copy Article Link"
+                >
+                  {copied ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                      <span className="text-emerald-700">{isArabicPost ? "تم النسخ!" : "Copied!"}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                      <span>{isArabicPost ? "نسخ الرابط" : "Copy Link"}</span>
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           </div>
@@ -716,7 +731,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
 
           <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto shrink-0">
             <Link
-              href="/ship"
+              href={getLocalizedPath("/ship")}
               className="bg-gradient-to-r from-[#C45B2A] to-[#E65100] hover:from-[#A34920] hover:to-[#C45B2A] text-white font-bold py-3.5 px-7 rounded-full text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg shadow-orange-500/25 transition-all hover:scale-[1.02] cursor-pointer min-h-[44px]"
             >
               <Truck className="w-4 h-4 shrink-0" />
@@ -724,7 +739,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
             </Link>
 
             <Link
-              href="/track"
+              href={getLocalizedPath("/track")}
               className="bg-white/10 hover:bg-white/20 text-white border border-white/20 font-bold py-3.5 px-7 rounded-full text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer min-h-[44px]"
             >
               <span>{t("blogPage.trackWaybillBtn") || (isRTL ? "تتبع بوليصة" : "Track Waybill")}</span>
@@ -745,7 +760,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
                 </h3>
               </div>
               <Link
-                href="/blog"
+                href={getLocalizedPath("/blog")}
                 className="text-xs font-bold text-[#C45B2A] hover:text-[#A34920] flex items-center gap-1 group transition-colors cursor-pointer"
               >
                 <span>{isRTL ? "جميع المقالات" : "All Articles"}</span>
@@ -778,12 +793,12 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
                 return (
                   <Link
                     key={related.slug}
-                    href={`/blog/${related.slug}`}
+                    href={getLocalizedPath(`/blog/${related.slug}`)}
                     className="group bg-white rounded-2xl border border-orange-100/90 overflow-hidden shadow-xs hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col cursor-pointer"
                   >
                     <div className="relative h-44 w-full bg-gray-100 overflow-hidden">
                       <img
-                        src={related.featured_image_url || "/assets/Home-pic1-C9kYJzAW.jpg"}
+                        src={related.featured_image_url || "/assets/xspeed_about_showcase.jpg"}
                         alt={related.title.rendered.replace(/<[^>]*>?/gm, "")}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />

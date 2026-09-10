@@ -32,6 +32,13 @@ import {
   Scale,
   Sparkles,
   Info,
+  Ship,
+  FileCheck,
+  Building2,
+  Plane,
+  ChevronDown,
+  Warehouse,
+  ExternalLink,
 } from "lucide-react";
 
 const WHATSAPP_NUMBER = process.env.NEXT_PUBLIC_WHATSAPP_NUMBER || "201208027171";
@@ -45,13 +52,148 @@ const POPULAR_DESTINATIONS = [
   { country: "United States", countryAr: "الولايات المتحدة", code: "US" },
 ];
 
-const STORAGE_KEY_DRAFT = "xspeed_shipment_wizard_draft_v2";
-const STORAGE_KEY_STEP = "xspeed_shipment_wizard_step_v2";
-const STORAGE_KEY_SUBMITTED = "xspeed_shipment_wizard_submitted_v2";
+const STORAGE_KEY_DRAFT = "xspeed_shipment_wizard_draft_v3";
+const STORAGE_KEY_STEP = "xspeed_shipment_wizard_step_v3";
+const STORAGE_KEY_SERVICE = "xspeed_shipment_wizard_service_v3";
+const STORAGE_KEY_SUBMITTED = "xspeed_shipment_wizard_submitted_v3";
 
 export default function ShipmentRequestWizard() {
   const { user } = useAuth();
   const { locale, isRTL } = useLanguage();
+
+  // Selected Service Type from grid or initial step
+  const [selectedService, setSelectedService] = useState<string>("express-parcel");
+
+  // Services definitions with high-craft badges, icons, and descriptions
+  const servicesList = useMemo(
+    () => [
+      {
+        id: "express-parcel",
+        title: isRTL ? "طلب شحن سريع (طرود وبضائع)" : "Express Courier & Parcel Booking",
+        shortTitle: isRTL ? "شحن طرود سريع" : "Express Parcels",
+        desc: isRTL
+          ? "إدخال بيانات الشحنة والاستلام والتسليم من الباب للباب مع حساب الوزن الحجمي والتسعير الفوري."
+          : "Door-to-door courier, express cargo, and commercial parcel booking with volumetric calculation.",
+        icon: Package,
+        isForm: true,
+        tag: isRTL ? "نموذج شحن فوري" : "Instant Form",
+        badgeBg: "bg-orange-100 text-orange-900 border-orange-200",
+        actionText: isRTL ? "تسجيل بيانات الشحنة" : "Fill Shipment Details",
+        whatsappMsg: isRTL
+          ? "مرحباً XSPEED، أود الاستفسار وحساب تكلفة شحن طرود وبضائع دولية مستعجلة."
+          : "Hello XSPEED, I would like to inquire about express international parcel shipping.",
+      },
+      {
+        id: "ocean-freight",
+        title: isRTL ? "شحن بحري وحاويات (FCL / LCL)" : "Ocean Container Freight (FCL / LCL)",
+        shortTitle: isRTL ? "شحن بحري وحاويات" : "Ocean Freight",
+        desc: isRTL
+          ? "حجز مساحات الحاويات الكاملة والمجزأة عبر كبرى الخطوط الملاحية العالمية بأفضل أسعار النولون."
+          : "Full container load (FCL) and consolidated (LCL) global freight booking with best ocean freight rates.",
+        icon: Ship,
+        isForm: false,
+        tag: isRTL ? "واتساب فوري" : "Instant WhatsApp",
+        badgeBg: "bg-emerald-100 text-emerald-900 border-emerald-200",
+        actionText: isRTL ? "تنسيق عبر واتساب" : "WhatsApp Fast-Track",
+        whatsappMsg: isRTL
+          ? "مرحباً XSPEED، أود الاستفسار وحجز مساحة لشحن بحري (حاويات كاملة FCL أو مجمعة LCL)."
+          : "Hello XSPEED, I would like to inquire and book ocean freight cargo space (FCL/LCL).",
+      },
+      {
+        id: "air-freight",
+        title: isRTL ? "شحن جوي تجاري ومستعجل (Priority NFO)" : "Priority Commercial Air Cargo (NFO)",
+        shortTitle: isRTL ? "شحن جوي أول رحلة" : "Air Freight (NFO)",
+        desc: isRTL
+          ? "شحن بضائع تجارية وشحنات حساسة في أول رحلة طيران متاحة مع متابعة مسار الشحنة وسلسلة التبريد."
+          : "Next-flight-out priority cargo space, commercial air freight, and temperature-controlled logistics.",
+        icon: Plane,
+        isForm: false,
+        tag: isRTL ? "واتساب فوري" : "Instant WhatsApp",
+        badgeBg: "bg-emerald-100 text-emerald-900 border-emerald-200",
+        actionText: isRTL ? "تنسيق عبر واتساب" : "WhatsApp Fast-Track",
+        whatsappMsg: isRTL
+          ? "مرحباً XSPEED، أود الاستفسار عن الشحن الجوي التجاري السريع في أول رحلة طيران متاحة."
+          : "Hello XSPEED, I would like to book priority commercial air cargo on the next available flight.",
+      },
+      {
+        id: "customs-clearance",
+        title: isRTL ? "تخليص جمركي واستشارات ACI ونظام نافذة" : "Customs Clearance & ACI Advisory",
+        shortTitle: isRTL ? "تخليص جمركي وACI" : "Customs & Nafeza",
+        desc: isRTL
+          ? "إنهاء إجراءات الإفراج المسبق والتسجيل بنظام نافذة (ACI) وتصنيف البنود الجمركية بالموانئ والمطارات."
+          : "Fast-track pre-clearance via Nafeza, ACI registration, and tariff classification at all Egyptian ports.",
+        icon: FileCheck,
+        isForm: false,
+        tag: isRTL ? "واتساب فوري" : "Instant WhatsApp",
+        badgeBg: "bg-emerald-100 text-emerald-900 border-emerald-200",
+        actionText: isRTL ? "تنسيق عبر واتساب" : "WhatsApp Fast-Track",
+        whatsappMsg: isRTL
+          ? "مرحباً XSPEED، أود الاستفسار عن خدمات التخليص الجمركي للشحنات الدولية ونظام نافذة / ACI."
+          : "Hello XSPEED, I would like to inquire about customs clearance services, Nafeza compliance, and ACI pre-clearance.",
+      },
+      {
+        id: "warehousing",
+        title: isRTL ? "تخزين وإدارة مستودعات ذكية (3PL Hub)" : "Smart Warehousing & 3PL Hub",
+        shortTitle: isRTL ? "مستودعات وتخزين 3PL" : "Warehousing 3PL",
+        desc: isRTL
+          ? "مساحات تخزين آمنة، إدارة مخزون دقيقة بنظام WMS، وتجهيز وتغليف الطلبات لمتاجر التجارة الإلكترونية."
+          : "Secure pallet storage, WMS inventory tracking, and rapid pick & pack fulfillment for eCommerce.",
+        icon: Warehouse,
+        isForm: false,
+        tag: isRTL ? "واتساب فوري" : "Instant WhatsApp",
+        badgeBg: "bg-emerald-100 text-emerald-900 border-emerald-200",
+        actionText: isRTL ? "تنسيق عبر واتساب" : "WhatsApp Fast-Track",
+        whatsappMsg: isRTL
+          ? "مرحباً XSPEED، أود الاستفسار عن خدمات التخزين والمستودعات الذكية وحلول 3PL."
+          : "Hello XSPEED, I would like to inquire about smart warehousing and 3PL fulfillment solutions.",
+      },
+      {
+        id: "enterprise",
+        title: isRTL ? "عقود الشركات وحلول سلاسل الإمداد" : "Corporate Accounts & Enterprise SLA",
+        shortTitle: isRTL ? "حسابات شركات وعقود" : "Enterprise B2B",
+        desc: isRTL
+          ? "أسعار تفضيلية تعاقدية للشركات، فواتير دورية ائتمانية، ومدير حساب لوجستي مخصص لدعم عملياتك."
+          : "Contracted enterprise freight rates, monthly invoicing, and dedicated account manager.",
+        icon: Building2,
+        isForm: false,
+        tag: isRTL ? "واتساب فوري" : "Instant WhatsApp",
+        badgeBg: "bg-emerald-100 text-emerald-900 border-emerald-200",
+        actionText: isRTL ? "تنسيق عبر واتساب" : "WhatsApp Fast-Track",
+        whatsappMsg: isRTL
+          ? "مرحباً XSPEED، أود مناقشة فتح حساب شركات وعقد خدمات لوجستية دورية بأسعار مخصصة."
+          : "Hello XSPEED, I would like to discuss opening a corporate B2B logistics account with custom rates.",
+      },
+    ],
+    [isRTL]
+  );
+
+  const activeService = useMemo(
+    () => servicesList.find((s) => s.id === selectedService) || servicesList[0],
+    [servicesList, selectedService]
+  );
+
+  // Handle service change: express parcel stays in form; others trigger WhatsApp directly
+  const handleServiceSelect = (serviceId: string, directOpen = true) => {
+    setSelectedService(serviceId);
+    try {
+      sessionStorage.setItem(STORAGE_KEY_SERVICE, serviceId);
+    } catch {}
+    if (fieldErrors.selectedService) {
+      setFieldErrors((prev) => {
+        const updated = { ...prev };
+        delete updated.selectedService;
+        return updated;
+      });
+    }
+
+    const target = servicesList.find((s) => s.id === serviceId);
+    if (target && !target.isForm && directOpen) {
+      const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(target.whatsappMsg || "")}`;
+      if (typeof window !== "undefined") {
+        window.open(waUrl, "_blank");
+      }
+    }
+  };
 
   const defaultFormData = useMemo(
     () => ({
@@ -106,6 +248,11 @@ export default function ShipmentRequestWizard() {
   // Restore draft state on mount
   useEffect(() => {
     try {
+      const savedService = sessionStorage.getItem(STORAGE_KEY_SERVICE);
+      if (savedService) {
+        setSelectedService(savedService);
+      }
+
       const savedSubmitted = sessionStorage.getItem(STORAGE_KEY_SUBMITTED);
       if (savedSubmitted) {
         setSubmittedData(JSON.parse(savedSubmitted));
@@ -141,7 +288,7 @@ export default function ShipmentRequestWizard() {
       const urlStep = new URLSearchParams(window.location.search).get("step");
       const savedStep = sessionStorage.getItem(STORAGE_KEY_STEP);
       const targetStep = urlStep ? parseInt(urlStep, 10) : savedStep ? parseInt(savedStep, 10) : 1;
-      if (targetStep >= 1 && targetStep <= 4) {
+      if (targetStep >= 1 && targetStep <= 5) {
         setStep(targetStep);
       }
     } catch (e) {
@@ -210,11 +357,17 @@ export default function ShipmentRequestWizard() {
     return type;
   };
 
-  // Validation Logic
+  // Validation Logic per step
   const validateStep = (currentStep: number): boolean => {
     const errors: Record<string, string> = {};
 
     if (currentStep === 1) {
+      if (!selectedService) {
+        errors.selectedService = isRTL ? "يرجى اختيار نوع الخدمة المطلوبة" : "Please select a service type";
+      }
+    }
+
+    if (currentStep === 2) {
       if (!formData.pickupCountry.trim()) {
         errors.pickupCountry = isRTL ? "يرجى إدخال دولة الاستلام" : "Pickup country is required";
       }
@@ -235,7 +388,7 @@ export default function ShipmentRequestWizard() {
       }
     }
 
-    if (currentStep === 2) {
+    if (currentStep === 3) {
       if (!formData.deliveryCountry.trim()) {
         errors.deliveryCountry = isRTL ? "يرجى تحديد دولة التسليم" : "Destination country is required";
       }
@@ -253,7 +406,7 @@ export default function ShipmentRequestWizard() {
       }
     }
 
-    if (currentStep === 3) {
+    if (currentStep === 4) {
       if (formData.shipmentType === "Other" && !formData.customShipmentType.trim()) {
         errors.customShipmentType = isRTL ? "يرجى تحديد نوع الشحنة الخاصة" : "Please specify custom shipment type";
       }
@@ -282,7 +435,7 @@ export default function ShipmentRequestWizard() {
 
   const handleNext = () => {
     if (validateStep(step)) {
-      updateStep(Math.min(step + 1, 4));
+      updateStep(Math.min(step + 1, 5));
     }
   };
 
@@ -294,6 +447,7 @@ export default function ShipmentRequestWizard() {
     try {
       sessionStorage.removeItem(STORAGE_KEY_DRAFT);
       sessionStorage.removeItem(STORAGE_KEY_STEP);
+      sessionStorage.removeItem(STORAGE_KEY_SERVICE);
       sessionStorage.removeItem(STORAGE_KEY_SUBMITTED);
       if (typeof window !== "undefined") {
         const url = new URL(window.location.href);
@@ -302,6 +456,7 @@ export default function ShipmentRequestWizard() {
       }
     } catch {}
     setSubmittedData(null);
+    setSelectedService("express-parcel");
     setFormData(defaultFormData);
     setConfirmedCorrect(false);
     setFieldErrors({});
@@ -326,15 +481,59 @@ export default function ShipmentRequestWizard() {
 
     const payload = {
       ...formData,
+      serviceId: selectedService,
+      serviceTitle: activeService.title,
       shipmentType: resolvedShipmentType,
+      shipment_type: resolvedShipmentType,
       customerName: user?.name || formData.customerName,
+      customer_name: user?.name || formData.customerName,
       email: user?.email || formData.email,
       companyName: user?.company || formData.companyName,
+      company_name: user?.company || formData.companyName,
       phone: user?.phone || formData.phone,
       whatsapp: formData.whatsapp || user?.phone || formData.phone,
       country: formData.pickupCountry,
       city: formData.pickupCity,
       address: formData.pickupAddress,
+      pickupCountry: formData.pickupCountry,
+      pickup_country: formData.pickupCountry,
+      pickupCity: formData.pickupCity,
+      pickup_city: formData.pickupCity,
+      pickupAddress: formData.pickupAddress,
+      pickup_address: formData.pickupAddress,
+      pickupContactName: formData.pickupContactName,
+      pickup_contact_name: formData.pickupContactName,
+      pickupContactPhone: formData.pickupContactPhone,
+      pickup_contact_phone: formData.pickupContactPhone,
+      preferredPickupDate: formData.preferredPickupDate,
+      preferred_pickup_date: formData.preferredPickupDate,
+      pickupNotes: formData.pickupNotes,
+      pickup_notes: formData.pickupNotes,
+      deliveryCountry: formData.deliveryCountry,
+      delivery_country: formData.deliveryCountry,
+      deliveryCity: formData.deliveryCity,
+      delivery_city: formData.deliveryCity,
+      deliveryShortAddress: formData.deliveryShortAddress,
+      delivery_short_address: formData.deliveryShortAddress,
+      deliveryAddress: formData.deliveryAddress,
+      delivery_address: formData.deliveryAddress,
+      consigneeName: formData.consigneeName,
+      consignee_name: formData.consigneeName,
+      consigneePhone: formData.consigneePhone,
+      consignee_phone: formData.consigneePhone,
+      deliveryNotes: formData.deliveryNotes,
+      delivery_notes: formData.deliveryNotes,
+      packageCount: Number(formData.packageCount) || 1,
+      package_count: Number(formData.packageCount) || 1,
+      weight: Number(formData.weight) || 1,
+      declaredValue: Number(formData.declaredValue) || 0,
+      declared_value: Number(formData.declaredValue) || 0,
+      isFragile: Boolean(formData.isFragile),
+      is_fragile: Boolean(formData.isFragile),
+      isTemperatureControlled: Boolean(formData.isTemperatureControlled),
+      is_temperature_controlled: Boolean(formData.isTemperatureControlled),
+      specialInstructions: formData.specialInstructions,
+      special_instructions: formData.specialInstructions,
     };
 
     try {
@@ -401,12 +600,14 @@ export default function ShipmentRequestWizard() {
   const generateWhatsAppUrl = (req: any) => {
     let text = "";
     const displayType = req.shipmentType || (formData.shipmentType === "Other" ? formData.customShipmentType : formData.shipmentType) || "-";
+    const displayService = req.serviceTitle || activeService.title || "-";
 
     if (locale === "ar") {
       const rlm = "\u200F";
       const parts: string[] = [
         `${rlm}*طلب شحن دولي جديد - XSPEED Express*`,
         `${rlm}رقم الطلب: *${req.requestNumber}*`,
+        `${rlm}نوع الخدمة: *${displayService}*`,
         `${rlm}────────────────────`,
         `${rlm}*بيانات العميل:*`,
         `${rlm}- الاسم: ${req.customerName || "-"}`,
@@ -447,8 +648,9 @@ export default function ShipmentRequestWizard() {
 
       parts.push(
         `${rlm}────────────────────`,
-        `${rlm}*تفاصيل الشحنة:*`,
-        `${rlm}- النوع: ${displayType}`,
+        `${rlm}*تفاصيل ومواصفات الشحنة:*`,
+        `${rlm}- الخدمة المطلوبة: ${displayService}`,
+        `${rlm}- نوع الشحنة: ${displayType}`,
         `${rlm}- المحتويات: ${req.contents || "-"}`,
         `${rlm}- عدد الطرود: ${req.packageCount || "1"} طرد`,
         `${rlm}- الوزن الفعلي: ${req.weight || "-"} كجم`
@@ -474,6 +676,7 @@ export default function ShipmentRequestWizard() {
       const parts: string[] = [
         `*New International Shipment Request - XSPEED Express*`,
         `Request ID: *${req.requestNumber}*`,
+        `Service Type: *${displayService}*`,
         `────────────────────`,
         `*Customer Details:*`,
         `- Name: ${req.customerName || "-"}`,
@@ -515,7 +718,8 @@ export default function ShipmentRequestWizard() {
       parts.push(
         `────────────────────`,
         `*Cargo Specifications:*`,
-        `- Type: ${displayType}`,
+        `- Service: ${displayService}`,
+        `- Cargo Type: ${displayType}`,
         `- Contents: ${req.contents || "-"}`,
         `- Packages: ${req.packageCount || "1"}`,
         `- Actual Weight: ${req.weight || "-"} KG`
@@ -614,9 +818,9 @@ export default function ShipmentRequestWizard() {
 
   return (
     <div className={`bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden w-full mx-auto ${isRTL ? "text-right" : "text-left"}`}>
-      {/* Sleek Minimal Stepper Header */}
-      <div className="bg-[#211112] text-white p-5 sm:p-6 border-b border-white/10">
-        <div className="flex items-center justify-between mb-4">
+      {/* Stepper Header with 5-Step Progress */}
+      <div className="bg-[#211112] text-white p-5 sm:p-6 border-b border-white/10 space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
             <div className="p-2 rounded-xl bg-[#C45B2A]/20 text-[#E07A48] border border-[#C45B2A]/30">
               <Package className="w-5 h-5" />
@@ -626,72 +830,102 @@ export default function ShipmentRequestWizard() {
                 {isRTL ? "طلب شحن سريع وتحديد الأسعار" : "Direct Shipment Request"}
               </h2>
               <p className="text-xs text-gray-300">
-                {isRTL ? "خطوات بسيطة لتسعير شحنتك الدولية" : "Easy steps to quote your international shipment"}
+                {isRTL ? "منظومة XSPEED المتكاملة للشحن والخدمات اللوجستية" : "XSPEED Integrated Freight & Logistics System"}
               </p>
             </div>
           </div>
-          <span className="text-xs font-bold bg-white/15 px-3 py-1 rounded-full text-orange-200 border border-white/20">
-            {isRTL ? `الخطوة ${step} من 4` : `Step ${step} of 4`}
-          </span>
+
+          <div className="self-start sm:self-auto flex items-center gap-2">
+            <span className="text-[11px] font-mono font-bold px-3 py-1 rounded-full bg-white/10 border border-white/15 text-orange-200">
+              {isRTL ? `الخطوة ${step} من 5` : `Step ${step} of 5`}
+            </span>
+          </div>
         </div>
 
-        <div className="grid grid-cols-4 gap-2 text-center text-xs font-bold">
-          <button
-            type="button"
-            onClick={() => step > 1 && updateStep(1)}
-            className={`py-2 px-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              step === 1
-                ? "bg-[#C45B2A] text-white shadow-md"
-                : step > 1
-                ? "bg-white/20 text-emerald-200 hover:bg-white/30"
-                : "bg-white/5 text-gray-400"
-            }`}
-          >
-            <MapPin className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{isRTL ? "1. الاستلام" : "1. Pickup"}</span>
-            <span className="sm:hidden">1</span>
-          </button>
+        {/* Stepper Navigation Indicator (5 Steps) */}
+        <div className="pt-2 border-t border-white/10">
+          <div className="grid grid-cols-5 gap-1.5 sm:gap-2 text-center text-xs font-bold w-full">
+            {/* Step 1: Service Type */}
+            <button
+              type="button"
+              onClick={() => updateStep(1)}
+              className={`py-2 px-1 sm:px-2 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                step === 1
+                  ? "bg-[#C45B2A] text-white shadow-md"
+                  : step > 1
+                  ? "bg-white/20 text-emerald-200 hover:bg-white/30"
+                  : "bg-white/5 text-gray-400"
+              }`}
+            >
+              <Layers className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isRTL ? "1. نوع الخدمة" : "1. Service"}</span>
+              <span className="sm:hidden">1</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => step > 2 && updateStep(2)}
-            className={`py-2 px-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              step === 2
-                ? "bg-[#C45B2A] text-white shadow-md"
-                : step > 2
-                ? "bg-white/20 text-emerald-200 hover:bg-white/30"
-                : "bg-white/5 text-gray-400"
-            }`}
-          >
-            <Truck className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{isRTL ? "2. التسليم" : "2. Delivery"}</span>
-            <span className="sm:hidden">2</span>
-          </button>
+            {/* Step 2: Pickup */}
+            <button
+              type="button"
+              onClick={() => step > 2 && updateStep(2)}
+              disabled={step < 2}
+              className={`py-2 px-1 sm:px-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                step === 2
+                  ? "bg-[#C45B2A] text-white shadow-md cursor-pointer"
+                  : step > 2
+                  ? "bg-white/20 text-emerald-200 hover:bg-white/30 cursor-pointer"
+                  : "bg-white/5 text-gray-400 cursor-not-allowed"
+              }`}
+            >
+              <MapPin className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isRTL ? "2. الاستلام" : "2. Pickup"}</span>
+              <span className="sm:hidden">2</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => step > 3 && updateStep(3)}
-            className={`py-2 px-1.5 rounded-xl transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
-              step === 3
-                ? "bg-[#C45B2A] text-white shadow-md"
-                : step > 3
-                ? "bg-white/20 text-emerald-200 hover:bg-white/30"
-                : "bg-white/5 text-gray-400"
-            }`}
-          >
-            <Package className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{isRTL ? "3. الشحنة" : "3. Cargo"}</span>
-            <span className="sm:hidden">3</span>
-          </button>
+            {/* Step 3: Delivery */}
+            <button
+              type="button"
+              onClick={() => step > 3 && updateStep(3)}
+              disabled={step < 3}
+              className={`py-2 px-1 sm:px-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                step === 3
+                  ? "bg-[#C45B2A] text-white shadow-md cursor-pointer"
+                  : step > 3
+                  ? "bg-white/20 text-emerald-200 hover:bg-white/30 cursor-pointer"
+                  : "bg-white/5 text-gray-400 cursor-not-allowed"
+              }`}
+            >
+              <Truck className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isRTL ? "3. التسليم" : "3. Delivery"}</span>
+              <span className="sm:hidden">3</span>
+            </button>
 
-          <div
-            className={`py-2 px-1.5 rounded-xl flex items-center justify-center gap-1.5 ${
-              step === 4 ? "bg-[#C45B2A] text-white shadow-md" : "bg-white/5 text-gray-400"
-            }`}
-          >
-            <FileText className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">{isRTL ? "4. التأكيد" : "4. Confirm"}</span>
-            <span className="sm:hidden">4</span>
+            {/* Step 4: Cargo */}
+            <button
+              type="button"
+              onClick={() => step > 4 && updateStep(4)}
+              disabled={step < 4}
+              className={`py-2 px-1 sm:px-2 rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+                step === 4
+                  ? "bg-[#C45B2A] text-white shadow-md cursor-pointer"
+                  : step > 4
+                  ? "bg-white/20 text-emerald-200 hover:bg-white/30 cursor-pointer"
+                  : "bg-white/5 text-gray-400 cursor-not-allowed"
+              }`}
+            >
+              <Package className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isRTL ? "4. الشحنة" : "4. Cargo"}</span>
+              <span className="sm:hidden">4</span>
+            </button>
+
+            {/* Step 5: Confirm */}
+            <div
+              className={`py-2 px-1 sm:px-2 rounded-xl flex items-center justify-center gap-1.5 ${
+                step === 5 ? "bg-[#C45B2A] text-white shadow-md" : "bg-white/5 text-gray-400"
+              }`}
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isRTL ? "5. التأكيد" : "5. Confirm"}</span>
+              <span className="sm:hidden">5</span>
+            </div>
           </div>
         </div>
       </div>
@@ -705,7 +939,7 @@ export default function ShipmentRequestWizard() {
       )}
 
       <div className="p-5 sm:p-7 md:p-8 space-y-6">
-        {/* Minimal Authorized Shipper Status (No Profile Link) */}
+        {/* Shipper Status */}
         {user && (
           <div className="bg-emerald-50/70 border border-emerald-200 rounded-xl p-3 flex items-center gap-3 text-xs text-emerald-950">
             <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-800 shrink-0">
@@ -725,14 +959,186 @@ export default function ShipmentRequestWizard() {
           </div>
         )}
 
-        {/* STEP 1: PICKUP DETAILS */}
+        {/* STEP 1: SELECT SERVICE TYPE (GRID SYSTEM) */}
         {step === 1 && (
+          <div className="space-y-6 animate-fade-up">
+            <div className="border-b border-gray-100 pb-3">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-base sm:text-lg font-bold text-[#251516] flex items-center gap-2">
+                    <Layers className="w-5 h-5 text-[#C45B2A]" />
+                    <span>{isRTL ? "الخطوة الابتدائية: حدد نوع الخدمة اللوجستية المطلوبة" : "Initial Step: Select Logistics Service"}</span>
+                  </h3>
+                  <p className="text-xs text-gray-500 mt-1">
+                    {isRTL
+                      ? "اختر الخدمة المناسبة من الشبكة أدناه للمتابعة إلى إدخال بيانات الشحنة والاستلام والتسليم وحساب التسعير."
+                      : "Select the logistics solution tailored to your freight needs to configure your shipment and get an instant quote."}
+                  </p>
+                </div>
+                <span className="self-start sm:self-auto text-[11px] font-bold px-3 py-1 rounded-full bg-orange-100/80 border border-orange-200 text-[#C45B2A]">
+                  {isRTL ? "الخطوة 1 من 5" : "Step 1 of 5"}
+                </span>
+              </div>
+            </div>
+
+            {/* Interactive Grid System */}
+            <div
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4"
+              role="radiogroup"
+              aria-label={isRTL ? "قائمة الخدمات اللوجستية" : "Logistics Services List"}
+            >
+              {servicesList.map((svc) => {
+                const isSelected = selectedService === svc.id;
+                const IconComponent = svc.icon;
+
+                return (
+                  <div
+                    key={svc.id}
+                    onClick={() => handleServiceSelect(svc.id, !svc.isForm)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        handleServiceSelect(svc.id, !svc.isForm);
+                      }
+                    }}
+                    role="radio"
+                    aria-checked={isSelected}
+                    tabIndex={0}
+                    className={`relative group rounded-2xl p-4 sm:p-5 text-start transition-all duration-200 cursor-pointer border-2 focus:outline-none focus-visible:ring-4 focus-visible:ring-[#C45B2A]/20 flex flex-col justify-between select-none min-h-[160px] ${
+                      isSelected
+                        ? svc.isForm
+                          ? "bg-gradient-to-br from-orange-50/90 via-orange-50/40 to-white border-[#C45B2A] shadow-md ring-2 ring-[#C45B2A]/20 transform -translate-y-0.5"
+                          : "bg-gradient-to-br from-emerald-50/90 via-emerald-50/40 to-white border-emerald-500 shadow-md ring-2 ring-emerald-500/20 transform -translate-y-0.5"
+                        : "bg-white border-gray-200/90 hover:border-orange-300 hover:bg-orange-50/20 hover:shadow-xs hover:-translate-y-0.5"
+                    }`}
+                  >
+                    <div>
+                      {/* Card Top Header */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div
+                          className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all ${
+                            isSelected
+                              ? svc.isForm
+                                ? "bg-[#C45B2A] text-white shadow-xs"
+                                : "bg-emerald-600 text-white shadow-xs"
+                              : "bg-orange-50 text-[#C45B2A] group-hover:bg-[#C45B2A] group-hover:text-white"
+                          }`}
+                        >
+                          <IconComponent className="w-5 h-5 stroke-[2.2]" />
+                        </div>
+
+                        {isSelected ? (
+                          <span
+                            className={`inline-flex items-center gap-1 text-[11px] font-bold px-2.5 py-1 rounded-full shadow-2xs ${
+                              svc.isForm
+                                ? "text-[#C45B2A] bg-orange-100/90 border border-orange-300"
+                                : "text-emerald-800 bg-emerald-100/90 border border-emerald-300"
+                            }`}
+                          >
+                            <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" />
+                            <span>{isRTL ? "محدد" : "Selected"}</span>
+                          </span>
+                        ) : (
+                          <span className={`inline-flex items-center text-[10px] font-bold px-2 py-0.5 rounded-md border ${svc.badgeBg}`}>
+                            {svc.tag}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Title & Description */}
+                      <div className="mt-3.5 space-y-1.5">
+                        <h4
+                          className={`font-extrabold text-sm sm:text-base leading-snug transition-colors ${
+                            isSelected
+                              ? svc.isForm
+                                ? "text-[#C45B2A]"
+                                : "text-emerald-800"
+                              : "text-gray-900 group-hover:text-[#C45B2A]"
+                          }`}
+                        >
+                          {svc.title}
+                        </h4>
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          {svc.desc}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Bottom Action Hint */}
+                    <div className="pt-3 mt-3 border-t border-gray-100/80 flex items-center justify-between text-[11px] font-bold">
+                      <span className={isSelected ? (svc.isForm ? "text-[#C45B2A]" : "text-emerald-700") : "text-gray-400 group-hover:text-gray-600"}>
+                        {svc.shortTitle}
+                      </span>
+                      <span className={`flex items-center gap-1 ${isSelected ? (svc.isForm ? "text-[#C45B2A]" : "text-emerald-700") : "text-gray-400 group-hover:text-[#C45B2A]"}`}>
+                        <span>
+                          {isSelected
+                            ? svc.isForm
+                              ? (isRTL ? "تسجيل بيانات الشحنة" : "Fill Shipment Data")
+                              : (isRTL ? "تنسيق فوري عبر واتساب" : "Direct WhatsApp Chat")
+                            : svc.isForm
+                            ? (isRTL ? "انقر لتسجيل البيانات" : "Click to fill data")
+                            : (isRTL ? "انقر للمتابعة عبر واتساب" : "Click for WhatsApp")}
+                        </span>
+                        {svc.isForm ? (
+                          <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
+                        ) : (
+                          <ExternalLink className="w-3.5 h-3.5" />
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Selected Service Summary Bar (Clean & Focused, Single Action at Footer) */}
+            <div
+              className={`p-4 sm:p-5 rounded-2xl border flex items-center justify-between gap-4 shadow-2xs transition-all ${
+                activeService.isForm
+                  ? "bg-gradient-to-r from-orange-50/90 via-white to-orange-50/50 border-orange-200"
+                  : "bg-gradient-to-r from-emerald-50/90 via-white to-emerald-50/50 border-emerald-200"
+              }`}
+            >
+              <div className="flex items-center gap-3">
+                <div
+                  className={`p-2.5 rounded-xl text-white shrink-0 shadow-2xs ${
+                    activeService.isForm ? "bg-[#C45B2A]" : "bg-emerald-600"
+                  }`}
+                >
+                  <activeService.icon className="w-5 h-5" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                      {isRTL ? "الخدمة المحددة حالياً:" : "Current Selection:"}
+                    </span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${activeService.badgeBg}`}>
+                      {activeService.tag}
+                    </span>
+                  </div>
+                  <h4 className="text-sm sm:text-base font-black text-gray-900 mt-0.5">
+                    {activeService.title}
+                  </h4>
+                  <p className="text-xs text-gray-600 mt-0.5">
+                    {activeService.isForm
+                      ? (isRTL ? "متابعة إدخال بيانات الاستلام والتسليم ومواصفات الشحنة." : "Proceed to fill cargo, pickup and delivery specifications.")
+                      : (isRTL ? "خدمة استشارية وتنسيق مباشر — اضغط على زر واتساب أدناه للتواصل الفوري مع مسؤولي العمليات." : "Direct consultation service — Click WhatsApp button below for instant support.")}
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 2: PICKUP DETAILS */}
+        {step === 2 && (
           <div className="space-y-5 animate-fade-up">
-            <div className="border-b border-gray-100 pb-2">
+            <div className="border-b border-gray-100 pb-2 flex items-center justify-between">
               <h3 className="text-base font-bold text-[#251516] flex items-center gap-2">
                 <MapPin className="w-4 h-4 text-[#C45B2A]" />
                 <span>{isRTL ? "بيانات وموقع الاستلام (المنشأ)" : "Pickup Location & Contact"}</span>
               </h3>
+              <span className="text-[11px] font-bold text-gray-500">{isRTL ? "الخطوة 2 من 5" : "Step 2 of 5"}</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -869,52 +1275,44 @@ export default function ShipmentRequestWizard() {
           </div>
         )}
 
-        {/* STEP 2: DELIVERY DETAILS */}
-        {step === 2 && (
+        {/* STEP 3: DELIVERY DETAILS */}
+        {step === 3 && (
           <div className="space-y-5 animate-fade-up">
-            <div className="border-b border-gray-100 pb-2">
+            <div className="border-b border-gray-100 pb-2 flex items-center justify-between">
               <h3 className="text-base font-bold text-[#251516] flex items-center gap-2">
                 <Truck className="w-4 h-4 text-[#C45B2A]" />
-                <span>{isRTL ? "بيانات وموقع التسليم (الوجهة الدولية)" : "Delivery Destination & Consignee"}</span>
+                <span>{isRTL ? "بيانات وموقع التسليم (الوجهة)" : "Delivery Destination & Consignee"}</span>
               </h3>
+              <span className="text-[11px] font-bold text-gray-500">{isRTL ? "الخطوة 3 من 5" : "Step 3 of 5"}</span>
             </div>
 
-            {/* Quick Destination Country Selector */}
+            {/* Popular Destination Chips */}
             <div className="space-y-1.5">
-              <span className="text-[11px] font-bold text-gray-500 uppercase block">
-                {isRTL ? "وجهات سريعة شائعة:" : "Popular Destinations:"}
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {POPULAR_DESTINATIONS.map((dest, idx) => {
-                  const isSelected =
-                    formData.deliveryCountry === dest.country ||
-                    formData.deliveryCountry === dest.countryAr;
-
-                  return (
-                    <button
-                      key={idx}
-                      type="button"
-                      onClick={() => {
-                        handleChange("deliveryCountry", isRTL ? dest.countryAr : dest.country);
-                      }}
-                      className={`px-3 py-1 rounded-lg text-xs font-bold border transition-all cursor-pointer flex items-center gap-1.5 ${
-                        isSelected
-                          ? "bg-orange-50 border-[#C45B2A] text-[#C45B2A] ring-1 ring-[#C45B2A]/30"
-                          : "bg-gray-50 border-gray-200 text-gray-700 hover:bg-gray-100"
-                      }`}
-                    >
-                      <span className="px-1 py-0.2 rounded bg-gray-200 text-[10px] font-mono text-gray-800 font-extrabold">{dest.code}</span>
-                      <span>{isRTL ? dest.countryAr : dest.country}</span>
-                    </button>
-                  );
-                })}
+              <label className="block text-[11px] font-bold uppercase tracking-wider text-gray-500">
+                {isRTL ? "الوجهات الدولية الشائعة:" : "Popular Destinations:"}
+              </label>
+              <div className="flex flex-wrap gap-2">
+                {POPULAR_DESTINATIONS.map((dest) => (
+                  <button
+                    key={dest.code}
+                    type="button"
+                    onClick={() => handleChange("deliveryCountry", dest.country)}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
+                      formData.deliveryCountry.toLowerCase() === dest.country.toLowerCase()
+                        ? "bg-[#C45B2A] text-white border-[#C45B2A] shadow-xs"
+                        : "bg-gray-50 hover:bg-gray-100 text-gray-700 border-gray-200"
+                    }`}
+                  >
+                    <span>{isRTL ? dest.countryAr : dest.country}</span>
+                  </button>
+                ))}
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  {isRTL ? "دولة التسليم" : "Destination Country"} <span className="text-rose-500">*</span>
+                  {isRTL ? "دولة التسليم (الوجهة)" : "Destination Country"} <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative flex items-center">
                   <Globe className={`absolute ${isRTL ? "right-3" : "left-3"} h-4 w-4 text-gray-400 pointer-events-none`} />
@@ -922,7 +1320,7 @@ export default function ShipmentRequestWizard() {
                     type="text"
                     value={formData.deliveryCountry}
                     onChange={(e) => handleChange("deliveryCountry", e.target.value)}
-                    placeholder={isRTL ? "الإمارات العربية المتحدة" : "United Arab Emirates"}
+                    placeholder="United Arab Emirates"
                     className={`w-full h-10 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold rounded-xl border outline-none transition-all ${
                       fieldErrors.deliveryCountry ? "border-rose-400 ring-2 ring-rose-100" : "border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20"
                     } ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
@@ -942,7 +1340,7 @@ export default function ShipmentRequestWizard() {
                     type="text"
                     value={formData.deliveryCity}
                     onChange={(e) => handleChange("deliveryCity", e.target.value)}
-                    placeholder={isRTL ? "مثال: دبي، الرياض..." : "e.g. Dubai, Riyadh..."}
+                    placeholder={isRTL ? "دبي، الرياض، لندن..." : "Dubai, Riyadh, London..."}
                     className={`w-full h-10 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold rounded-xl border outline-none transition-all ${
                       fieldErrors.deliveryCity ? "border-rose-400 ring-2 ring-rose-100" : "border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20"
                     } ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
@@ -950,6 +1348,27 @@ export default function ShipmentRequestWizard() {
                   />
                 </div>
                 {fieldErrors.deliveryCity && <p className="text-[11px] font-bold text-rose-600 mt-1">{fieldErrors.deliveryCity}</p>}
+              </div>
+
+              {/* Short Address / Postal Code */}
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-gray-700 mb-1 flex items-center justify-between">
+                  <span>{isRTL ? "العنوان الوطني المختصر / الرمز البريدي" : "Short National Address / Postal Code"}</span>
+                  <span className="text-[11px] text-[#C45B2A] font-bold">{isRTL ? "هام للشحنات للخليج والسعودية" : "Recommended for GCC"}</span>
+                </label>
+                <div className="relative flex items-center">
+                  <Hash className={`absolute ${isRTL ? "right-3" : "left-3"} h-4 w-4 text-gray-400 pointer-events-none`} />
+                  <input
+                    type="text"
+                    value={formData.deliveryShortAddress}
+                    onChange={(e) => handleChange("deliveryShortAddress", e.target.value)}
+                    placeholder={isRTL ? "مثال: RRRD2929 أو 12345" : "e.g. RRRD2929 or 12345"}
+                    dir="ltr"
+                    className={`w-full h-10 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all ${
+                      isRTL ? "pr-9 pl-3 text-right" : "pl-9 pr-3 text-left"
+                    }`}
+                  />
+                </div>
               </div>
 
               <div className="sm:col-span-2">
@@ -960,54 +1379,13 @@ export default function ShipmentRequestWizard() {
                   type="text"
                   value={formData.deliveryAddress}
                   onChange={(e) => handleChange("deliveryAddress", e.target.value)}
-                  placeholder={isRTL ? "الشارع، المنطقة، رقم المبنى..." : "Street address, area, building..."}
+                  placeholder={isRTL ? "اسم الشارع، الحي، رقم المبنى، الشقة أو المكتب" : "Street name, district, building, apt/suite..."}
                   className={`w-full h-10 px-3.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold rounded-xl border outline-none transition-all ${
                     fieldErrors.deliveryAddress ? "border-rose-400 ring-2 ring-rose-100" : "border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20"
                   }`}
                   required
                 />
                 {fieldErrors.deliveryAddress && <p className="text-[11px] font-bold text-rose-600 mt-1">{fieldErrors.deliveryAddress}</p>}
-              </div>
-
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <label className="block text-xs font-bold text-gray-700">
-                    {isRTL ? "العنوان الوطني المختصر / الرمز البريدي" : "Short National Address / Postal Code"}
-                  </label>
-                  <span className="text-[10px] text-gray-400 font-bold">
-                    {isRTL ? "(اختياري - موصى به)" : "(Optional)"}
-                  </span>
-                </div>
-                <div className="relative flex items-center">
-                  <Hash className={`absolute ${isRTL ? "right-3" : "left-3"} h-4 w-4 text-[#C45B2A] pointer-events-none`} />
-                  <input
-                    type="text"
-                    value={formData.deliveryShortAddress}
-                    onChange={(e) => handleChange("deliveryShortAddress", e.target.value.toUpperCase())}
-                    placeholder={isRTL ? "مثال: RRRD2929 أو 11564" : "e.g. RRRD2929 or ZIP code"}
-                    className={`w-full h-10 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all ${
-                      isRTL ? "pr-9 pl-3" : "pl-9 pr-3"
-                    }`}
-                  />
-                </div>
-                <p className="text-[10px] text-gray-500 mt-1">
-                  {isRTL
-                    ? "العنوان الوطني المختصر في السعودية (مثل RRRD2929) أو الرمز البريدي لتسريع التوصيل."
-                    : "National short address (e.g. Saudi SPL short code) or postal/ZIP code for swift routing."}
-                </p>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  {isRTL ? "ملاحظات أو إرشادات التسليم (اختياري)" : "Delivery Instructions (Optional)"}
-                </label>
-                <input
-                  type="text"
-                  value={formData.deliveryNotes}
-                  onChange={(e) => handleChange("deliveryNotes", e.target.value)}
-                  placeholder={isRTL ? "رقم الطابق، اسم البرج، كود البوابة..." : "Floor, tower name, gate code..."}
-                  className="w-full h-10 px-3.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all"
-                />
               </div>
 
               <div>
@@ -1020,7 +1398,7 @@ export default function ShipmentRequestWizard() {
                     type="text"
                     value={formData.consigneeName}
                     onChange={(e) => handleChange("consigneeName", e.target.value)}
-                    placeholder={isRTL ? "اسم المستلم أو الشركة" : "Receiver Name"}
+                    placeholder="Mohammed Ali"
                     className={`w-full h-10 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold rounded-xl border outline-none transition-all ${
                       fieldErrors.consigneeName ? "border-rose-400 ring-2 ring-rose-100" : "border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20"
                     } ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
@@ -1050,98 +1428,112 @@ export default function ShipmentRequestWizard() {
                 </div>
                 {fieldErrors.consigneePhone && <p className="text-[11px] font-bold text-rose-600 mt-1">{fieldErrors.consigneePhone}</p>}
               </div>
+
+              <div className="sm:col-span-2">
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  {isRTL ? "تعليمات التوصيل والتسليم (اختياري)" : "Delivery Instructions (Optional)"}
+                </label>
+                <input
+                  type="text"
+                  value={formData.deliveryNotes}
+                  onChange={(e) => handleChange("deliveryNotes", e.target.value)}
+                  placeholder={isRTL ? "الاتصال قبل التوصيل بنصف ساعة..." : "Call before arrival, leave with reception..."}
+                  className="w-full h-10 px-3.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all"
+                />
+              </div>
             </div>
           </div>
         )}
 
-        {/* STEP 3: CARGO DETAILS */}
-        {step === 3 && (
+        {/* STEP 4: CARGO & SPECIFICATIONS */}
+        {step === 4 && (
           <div className="space-y-5 animate-fade-up">
-            <div className="border-b border-gray-100 pb-2">
+            <div className="border-b border-gray-100 pb-2 flex items-center justify-between">
               <h3 className="text-base font-bold text-[#251516] flex items-center gap-2">
                 <Package className="w-4 h-4 text-[#C45B2A]" />
-                <span>{isRTL ? "مواصفات وأبعاد الشحنة" : "Cargo & Package Specifications"}</span>
+                <span>{isRTL ? "مواصفات ومحتويات الشحنة" : "Cargo Specifications & Dimensions"}</span>
               </h3>
+              <span className="text-[11px] font-bold text-gray-500">{isRTL ? "الخطوة 4 من 5" : "Step 4 of 5"}</span>
             </div>
 
-            {/* Shipment Type Selection */}
+            {/* Shipment Category Selector */}
             <div className="space-y-1.5">
               <label className="block text-xs font-bold text-gray-700">
-                {isRTL ? "نوع الشحنة" : "Shipment Type"} <span className="text-rose-500">*</span>
+                {isRTL ? "نوع وطبيعة الشحنة" : "Shipment Nature"} <span className="text-rose-500">*</span>
               </label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 {[
-                  { value: "Documents", label: isRTL ? "مستندات ووثائق" : "Documents", icon: FileText },
-                  { value: "Parcel", label: isRTL ? "طرد شخصي" : "Parcel", icon: Package },
-                  { value: "Commercial Goods", label: isRTL ? "بضائع وشحن تجاري" : "Commercial", icon: Building },
-                  { value: "Other", label: isRTL ? "أخرى (مخصص)" : "Other", icon: Edit3 },
-                ].map((item) => {
-                  const IconComp = item.icon;
-                  const isSelected = formData.shipmentType === item.value;
-                  return (
-                    <button
-                      key={item.value}
-                      type="button"
-                      onClick={() => handleChange("shipmentType", item.value)}
-                      className={`p-3 rounded-xl border text-center transition-all cursor-pointer flex flex-col items-center justify-center gap-1.5 ${
-                        isSelected
-                          ? "bg-orange-50/90 border-[#C45B2A] ring-1 ring-[#C45B2A]/30 text-[#C45B2A] font-extrabold"
-                          : "bg-gray-50 hover:bg-gray-100/80 border-gray-200 text-gray-700 font-bold"
-                      }`}
-                    >
-                      <IconComp className={`w-4 h-4 ${isSelected ? "text-[#C45B2A]" : "text-gray-500"}`} />
-                      <span className="text-xs">{item.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
-
-              {formData.shipmentType === "Other" && (
-                <div className="pt-2 animate-fade-up">
-                  <input
-                    type="text"
-                    value={formData.customShipmentType}
-                    onChange={(e) => handleChange("customShipmentType", e.target.value)}
-                    placeholder={isRTL ? "اكتب نوع الشحنة المخصص..." : "Specify custom shipment type..."}
-                    className={`w-full h-10 px-3.5 bg-orange-50/50 hover:bg-orange-50/80 focus:bg-white text-[#251516] text-xs font-bold rounded-xl border outline-none transition-all ${
-                      fieldErrors.customShipmentType ? "border-rose-400 ring-2 ring-rose-100" : "border-orange-300 focus:border-[#C45B2A]"
+                  { id: "Documents", title: isRTL ? "مستندات ووثائق" : "Documents" },
+                  { id: "Parcel", title: isRTL ? "طرد شخصي" : "Personal Parcel" },
+                  { id: "Commercial Goods", title: isRTL ? "بضائع وشحن تجاري" : "Commercial Goods" },
+                  { id: "Other", title: isRTL ? "أخرى (مخصص)" : "Other (Custom)" },
+                ].map((type) => (
+                  <button
+                    key={type.id}
+                    type="button"
+                    onClick={() => handleChange("shipmentType", type.id)}
+                    className={`p-3 rounded-xl border text-center transition-all cursor-pointer ${
+                      formData.shipmentType === type.id
+                        ? "bg-[#251516] text-white border-[#251516] shadow-xs"
+                        : "bg-gray-50 hover:bg-gray-100 text-gray-800 border-gray-200"
                     }`}
-                    required
-                    autoFocus
-                  />
-                  {fieldErrors.customShipmentType && <p className="text-[11px] font-bold text-rose-600 mt-1">{fieldErrors.customShipmentType}</p>}
-                </div>
-              )}
+                  >
+                    <span className="text-xs font-bold">{type.title}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="sm:col-span-3">
+            {/* Custom Type Input if 'Other' */}
+            {formData.shipmentType === "Other" && (
+              <div className="animate-fade-up">
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  {isRTL ? "محتويات الشحنة بالتفصيل" : "Detailed Cargo Contents"} <span className="text-rose-500">*</span>
+                  {isRTL ? "حدد نوع الشحنة الخاصة" : "Specify Custom Shipment Type"} <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="text"
-                  value={formData.contents}
-                  onChange={(e) => handleChange("contents", e.target.value)}
-                  placeholder={isRTL ? "مثال: 50 قطعة ملابس، قطع غيار، أوراق..." : "e.g. Clothing, auto spare parts, legal papers..."}
+                  value={formData.customShipmentType}
+                  onChange={(e) => handleChange("customShipmentType", e.target.value)}
+                  placeholder={isRTL ? "مثال: عينات مخبرية، قطع غيار خاصة..." : "e.g. Lab samples, spare parts..."}
                   className={`w-full h-10 px-3.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold rounded-xl border outline-none transition-all ${
-                    fieldErrors.contents ? "border-rose-400 ring-2 ring-rose-100" : "border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20"
+                    fieldErrors.customShipmentType ? "border-rose-400 ring-2 ring-rose-100" : "border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20"
                   }`}
                   required
                 />
-                {fieldErrors.contents && <p className="text-[11px] font-bold text-rose-600 mt-1">{fieldErrors.contents}</p>}
+                {fieldErrors.customShipmentType && <p className="text-[11px] font-bold text-rose-600 mt-1">{fieldErrors.customShipmentType}</p>}
               </div>
+            )}
 
+            {/* Contents Description */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1">
+                {isRTL ? "وصف محتويات الشحنة بالتفصيل" : "Detailed Description of Contents"} <span className="text-rose-500">*</span>
+              </label>
+              <textarea
+                rows={2}
+                value={formData.contents}
+                onChange={(e) => handleChange("contents", e.target.value)}
+                placeholder={isRTL ? "مثال: ملابس جاهزة، أجهزة إلكترونية، مستندات قانونية، عينات تجارية..." : "e.g. Garments, electronics, legal contracts, spare parts..."}
+                className={`w-full p-3 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold rounded-xl border outline-none transition-all resize-none ${
+                  fieldErrors.contents ? "border-rose-400 ring-2 ring-rose-100" : "border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20"
+                }`}
+                required
+              />
+              {fieldErrors.contents && <p className="text-[11px] font-bold text-rose-600 mt-1">{fieldErrors.contents}</p>}
+            </div>
+
+            {/* Weight, Packages & Declared Value */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  {isRTL ? "عدد الطرود" : "Package Count"} <span className="text-rose-500">*</span>
+                  {isRTL ? "عدد الطرود" : "Number of Packages"} <span className="text-rose-500">*</span>
                 </label>
                 <input
                   type="number"
                   min="1"
                   value={formData.packageCount}
-                  onChange={(e) => handleChange("packageCount", e.target.value === "" ? "" : Math.max(1, Number(e.target.value)))}
-                  className={`w-full h-10 px-3.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border outline-none transition-all text-center ${
+                  onChange={(e) => handleChange("packageCount", e.target.value)}
+                  className={`w-full h-10 px-3.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border outline-none transition-all ${
                     fieldErrors.packageCount ? "border-rose-400 ring-2 ring-rose-100" : "border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20"
                   }`}
                   required
@@ -1151,134 +1543,135 @@ export default function ShipmentRequestWizard() {
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  {isRTL ? "الوزن الفعلي (كجم)" : "Actual Weight (KG)"} <span className="text-rose-500">*</span>
+                  {isRTL ? "الوزن الفعلي الإجمالي (كجم)" : "Actual Total Weight (KG)"} <span className="text-rose-500">*</span>
                 </label>
-                <div className="relative flex items-center">
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0.1"
-                    value={formData.weight}
-                    onChange={(e) => handleChange("weight", e.target.value === "" ? "" : Number(e.target.value))}
-                    className={`w-full h-10 px-3.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border outline-none transition-all text-center ${
-                      fieldErrors.weight ? "border-rose-400 ring-2 ring-rose-100" : "border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20"
-                    }`}
-                    required
-                  />
-                  <span className={`absolute ${isRTL ? "left-3" : "right-3"} text-xs font-bold text-gray-400 pointer-events-none`}>
-                    {isRTL ? "كجم" : "KG"}
-                  </span>
-                </div>
+                <input
+                  type="number"
+                  step="0.1"
+                  min="0.1"
+                  value={formData.weight}
+                  onChange={(e) => handleChange("weight", e.target.value)}
+                  className={`w-full h-10 px-3.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border outline-none transition-all ${
+                    fieldErrors.weight ? "border-rose-400 ring-2 ring-rose-100" : "border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20"
+                  }`}
+                  required
+                />
                 {fieldErrors.weight && <p className="text-[11px] font-bold text-rose-600 mt-1">{fieldErrors.weight}</p>}
               </div>
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  {isRTL ? "القيمة المعلنة ($)" : "Declared Value ($)"}
+                  {isRTL ? "القيمة المصرح بها ($ USD)" : "Declared Value ($ USD)"}
                 </label>
-                <div className="relative flex items-center">
-                  <input
-                    type="number"
-                    value={formData.declaredValue}
-                    onChange={(e) => handleChange("declaredValue", e.target.value === "" ? "" : Number(e.target.value))}
-                    placeholder="500"
-                    className="w-full h-10 px-3.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all text-center"
-                  />
-                  <span className={`absolute ${isRTL ? "left-3" : "right-3"} text-xs font-bold text-gray-400 pointer-events-none`}>
-                    USD
-                  </span>
-                </div>
+                <input
+                  type="number"
+                  min="0"
+                  value={formData.declaredValue}
+                  onChange={(e) => handleChange("declaredValue", e.target.value)}
+                  className="w-full h-10 px-3.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all"
+                />
               </div>
             </div>
 
-            {/* Dimensions (Optional) */}
+            {/* Package Dimensions & Volumetric Weight (IATA) */}
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                <label className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
                   <Layers className="w-4 h-4 text-[#C45B2A]" />
-                  <span className="text-xs font-bold text-gray-900">
-                    {isRTL ? "أبعاد الطرد (سم) - اختياري" : "Package Dimensions (cm) - Optional"}
-                  </span>
-                </div>
-                {volumetricWeight && Number(volumetricWeight) > 0 && (
-                  <span className="text-[11px] font-mono font-bold bg-white px-2.5 py-1 rounded-lg border border-gray-200 text-[#C45B2A] flex items-center gap-1">
-                    <Maximize2 className="w-3 h-3" />
-                    <span>{isRTL ? "الحجمي:" : "Vol:"} {volumetricWeight} KG</span>
+                  <span>{isRTL ? "أبعاد الطرد (سم) - لحساب الوزن الحجمي:" : "Package Dimensions (cm) - For Volumetric Weight:"}</span>
+                </label>
+                {volumetricWeight && (
+                  <span className="font-mono text-xs font-bold text-[#C45B2A] bg-orange-100 px-2.5 py-0.5 rounded-lg border border-orange-200">
+                    {isRTL ? `الوزن الحجمي (IATA): ${volumetricWeight} كجم` : `IATA Volumetric Wt: ${volumetricWeight} KG`}
                   </span>
                 )}
               </div>
 
-              <div className="grid grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <input
                     type="number"
                     min="1"
+                    placeholder={isRTL ? "الطول L" : "Length (L)"}
                     value={formData.length}
-                    onChange={(e) => handleChange("length", e.target.value === "" ? "" : Number(e.target.value))}
-                    placeholder={isRTL ? "الطول (سم)" : "Length (cm)"}
-                    className="w-full h-9 px-2 bg-white text-[#251516] text-xs font-bold font-mono rounded-lg border border-gray-300 focus:border-[#C45B2A] outline-none text-center"
+                    onChange={(e) => handleChange("length", e.target.value)}
+                    className="w-full h-10 px-3 bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all"
                   />
                 </div>
                 <div>
                   <input
                     type="number"
                     min="1"
+                    placeholder={isRTL ? "العرض W" : "Width (W)"}
                     value={formData.width}
-                    onChange={(e) => handleChange("width", e.target.value === "" ? "" : Number(e.target.value))}
-                    placeholder={isRTL ? "العرض (سم)" : "Width (cm)"}
-                    className="w-full h-9 px-2 bg-white text-[#251516] text-xs font-bold font-mono rounded-lg border border-gray-300 focus:border-[#C45B2A] outline-none text-center"
+                    onChange={(e) => handleChange("width", e.target.value)}
+                    className="w-full h-10 px-3 bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all"
                   />
                 </div>
                 <div>
                   <input
                     type="number"
                     min="1"
+                    placeholder={isRTL ? "الارتفاع H" : "Height (H)"}
                     value={formData.height}
-                    onChange={(e) => handleChange("height", e.target.value === "" ? "" : Number(e.target.value))}
-                    placeholder={isRTL ? "الارتفاع (سم)" : "Height (cm)"}
-                    className="w-full h-9 px-2 bg-white text-[#251516] text-xs font-bold font-mono rounded-lg border border-gray-300 focus:border-[#C45B2A] outline-none text-center"
+                    onChange={(e) => handleChange("height", e.target.value)}
+                    className="w-full h-10 px-3 bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all"
                   />
                 </div>
               </div>
             </div>
 
-            {/* Handling Options */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <label className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                formData.isFragile ? "bg-amber-50 border-amber-300" : "bg-gray-50 border-gray-200 hover:bg-gray-100/70"
-              }`}>
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
-                  <span className="text-xs font-bold text-gray-900">{isRTL ? "قابلة للكسر (عناية خاصة)" : "Fragile Goods"}</span>
-                </div>
+            {/* Special Handling Options */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+              <label className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-all select-none">
                 <input
                   type="checkbox"
                   checked={formData.isFragile}
                   onChange={(e) => handleChange("isFragile", e.target.checked)}
-                  className="w-4 h-4 text-[#C45B2A] rounded border-gray-300 cursor-pointer"
+                  className="w-4 h-4 text-[#C45B2A] rounded border-gray-300 focus:ring-[#C45B2A]"
                 />
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-amber-600" />
+                  <span className="text-xs font-bold text-gray-800">
+                    {isRTL ? "شحنة قابلة للكسر (عناية فائقة)" : "Fragile Goods (Handle with Care)"}
+                  </span>
+                </div>
               </label>
 
-              <label className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer transition-all ${
-                formData.isTemperatureControlled ? "bg-sky-50 border-sky-300" : "bg-gray-50 border-gray-200 hover:bg-gray-100/70"
-              }`}>
-                <div className="flex items-center gap-2">
-                  <ThermometerSnowflake className="w-4 h-4 text-sky-600 shrink-0" />
-                  <span className="text-xs font-bold text-gray-900">{isRTL ? "شحن مبرد / تحكم حراري" : "Cold Chain / Refrig."}</span>
-                </div>
+              <label className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 cursor-pointer transition-all select-none">
                 <input
                   type="checkbox"
                   checked={formData.isTemperatureControlled}
                   onChange={(e) => handleChange("isTemperatureControlled", e.target.checked)}
-                  className="w-4 h-4 text-sky-600 rounded border-gray-300 cursor-pointer"
+                  className="w-4 h-4 text-[#C45B2A] rounded border-gray-300 focus:ring-[#C45B2A]"
                 />
+                <div className="flex items-center gap-2">
+                  <ThermometerSnowflake className="w-4 h-4 text-sky-600" />
+                  <span className="text-xs font-bold text-gray-800">
+                    {isRTL ? "شحن مبرد / سلسلة تبريد" : "Cold Chain / Refrig."}
+                  </span>
+                </div>
               </label>
+            </div>
+
+            {/* Special Instructions */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1">
+                {isRTL ? "تعليمات خاصة أو متطلبات جمركية إضافية (اختياري)" : "Special Instructions / Customs Notes (Optional)"}
+              </label>
+              <input
+                type="text"
+                value={formData.specialInstructions}
+                onChange={(e) => handleChange("specialInstructions", e.target.value)}
+                placeholder={isRTL ? "مثال: عدم قلب الصندوق، تجهيز شهادة منشأ..." : "e.g. Keep upright, certificate of origin required..."}
+                className="w-full h-10 px-3.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all"
+              />
             </div>
           </div>
         )}
 
-        {/* STEP 4: REVIEW & CONFIRM */}
-        {step === 4 && (
+        {/* STEP 5: REVIEW & CONFIRM */}
+        {step === 5 && (
           <form onSubmit={handleSubmit} className="space-y-6 animate-fade-up">
             <div className="border-b border-gray-100 pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
               <div>
@@ -1294,7 +1687,7 @@ export default function ShipmentRequestWizard() {
               </div>
 
               <span className="self-start sm:self-auto text-[11px] font-bold px-3 py-1 rounded-full bg-orange-100/70 border border-orange-200 text-[#C45B2A]">
-                {isRTL ? "الخطوة الأخيرة قبل الإرسال" : "Final Step Before Submit"}
+                {isRTL ? "الخطوة الأخيرة 5 من 5" : "Final Step 5 of 5"}
               </span>
             </div>
 
@@ -1332,9 +1725,38 @@ export default function ShipmentRequestWizard() {
               </div>
             </div>
 
-            {/* 4 Spacious, Fully-Readable Section Cards (2 Columns) */}
+            {/* Summary Cards Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {/* Card 1: Pickup / Origin */}
+              {/* Card 1: Service Type */}
+              <div className="bg-gray-50/80 hover:bg-gray-50 border border-gray-200 rounded-2xl p-4 sm:p-5 space-y-3 transition-colors md:col-span-2">
+                <div className="flex items-center justify-between border-b border-gray-200/80 pb-2.5">
+                  <div className="flex items-center gap-2">
+                    <div className="p-1.5 rounded-lg bg-orange-100/80 text-[#C45B2A]">
+                      <Layers className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-sm text-[#251516]">
+                        {isRTL ? "1. نوع الخدمة اللوجستية المطلوبة" : "1. Selected Logistics Service"}
+                      </h4>
+                      <p className="text-[11px] text-gray-500">{activeService.title}</p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => updateStep(1)}
+                    className="min-h-[44px] min-w-[44px] px-3 py-1.5 rounded-xl bg-white hover:bg-orange-50 text-[#C45B2A] border border-gray-200 hover:border-orange-300 font-bold text-xs flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
+                    title={isRTL ? "تعديل نوع الخدمة" : "Edit Service Type"}
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>{isRTL ? "تعديل" : "Edit"}</span>
+                  </button>
+                </div>
+                <p className="text-xs text-gray-700 bg-white p-3 rounded-xl border border-gray-200/80 leading-relaxed">
+                  {activeService.desc}
+                </p>
+              </div>
+
+              {/* Card 2: Pickup */}
               <div className="bg-gray-50/80 hover:bg-gray-50 border border-gray-200 rounded-2xl p-4 sm:p-5 space-y-3 transition-colors">
                 <div className="flex items-center justify-between border-b border-gray-200/80 pb-2.5">
                   <div className="flex items-center gap-2">
@@ -1343,14 +1765,14 @@ export default function ShipmentRequestWizard() {
                     </div>
                     <div>
                       <h4 className="font-extrabold text-sm text-[#251516]">
-                        {isRTL ? "1. بيانات وموقع الاستلام (المنشأ)" : "1. Pickup Location & Origin"}
+                        {isRTL ? "2. بيانات وموقع الاستلام (المنشأ)" : "2. Pickup Location & Origin"}
                       </h4>
                       <p className="text-[11px] text-gray-500">{formData.pickupCity}، {formData.pickupCountry}</p>
                     </div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => updateStep(1)}
+                    onClick={() => updateStep(2)}
                     className="min-h-[44px] min-w-[44px] px-3 py-1.5 rounded-xl bg-white hover:bg-orange-50 text-[#C45B2A] border border-gray-200 hover:border-orange-300 font-bold text-xs flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
                     title={isRTL ? "تعديل بيانات الاستلام" : "Edit Pickup Details"}
                   >
@@ -1404,7 +1826,7 @@ export default function ShipmentRequestWizard() {
                 </div>
               </div>
 
-              {/* Card 2: Delivery / Destination */}
+              {/* Card 3: Delivery */}
               <div className="bg-gray-50/80 hover:bg-gray-50 border border-gray-200 rounded-2xl p-4 sm:p-5 space-y-3 transition-colors">
                 <div className="flex items-center justify-between border-b border-gray-200/80 pb-2.5">
                   <div className="flex items-center gap-2">
@@ -1413,14 +1835,14 @@ export default function ShipmentRequestWizard() {
                     </div>
                     <div>
                       <h4 className="font-extrabold text-sm text-[#251516]">
-                        {isRTL ? "2. بيانات وموقع التسليم (الوجهة)" : "2. Delivery Destination & Consignee"}
+                        {isRTL ? "3. بيانات وموقع التسليم (الوجهة)" : "3. Delivery Destination & Consignee"}
                       </h4>
                       <p className="text-[11px] text-gray-500">{formData.deliveryCity}، {formData.deliveryCountry}</p>
                     </div>
                   </div>
                   <button
                     type="button"
-                    onClick={() => updateStep(2)}
+                    onClick={() => updateStep(3)}
                     className="min-h-[44px] min-w-[44px] px-3 py-1.5 rounded-xl bg-white hover:bg-orange-50 text-[#C45B2A] border border-gray-200 hover:border-orange-300 font-bold text-xs flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
                     title={isRTL ? "تعديل بيانات التسليم" : "Edit Delivery Details"}
                   >
@@ -1439,7 +1861,6 @@ export default function ShipmentRequestWizard() {
                     </p>
                   </div>
 
-                  {/* Short Address Badge / Callout */}
                   {formData.deliveryShortAddress ? (
                     <div className="bg-orange-50 border border-orange-200 rounded-xl p-2.5 flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5">
@@ -1487,7 +1908,7 @@ export default function ShipmentRequestWizard() {
                 </div>
               </div>
 
-              {/* Card 3: Cargo & Specifications */}
+              {/* Card 4: Cargo */}
               <div className="bg-gray-50/80 hover:bg-gray-50 border border-gray-200 rounded-2xl p-4 sm:p-5 space-y-3 transition-colors">
                 <div className="flex items-center justify-between border-b border-gray-200/80 pb-2.5">
                   <div className="flex items-center gap-2">
@@ -1496,7 +1917,7 @@ export default function ShipmentRequestWizard() {
                     </div>
                     <div>
                       <h4 className="font-extrabold text-sm text-[#251516]">
-                        {isRTL ? "3. مواصفات ومحتويات الشحنة" : "3. Cargo & Specifications"}
+                        {isRTL ? "4. مواصفات ومحتويات الشحنة" : "4. Cargo & Specifications"}
                       </h4>
                       <p className="text-[11px] text-gray-500">
                         {getShipmentTypeLabel(formData.shipmentType, formData.customShipmentType)}
@@ -1505,7 +1926,7 @@ export default function ShipmentRequestWizard() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => updateStep(3)}
+                    onClick={() => updateStep(4)}
                     className="min-h-[44px] min-w-[44px] px-3 py-1.5 rounded-xl bg-white hover:bg-orange-50 text-[#C45B2A] border border-gray-200 hover:border-orange-300 font-bold text-xs flex items-center gap-1.5 transition-all shadow-2xs cursor-pointer"
                     title={isRTL ? "تعديل تفاصيل الشحنة" : "Edit Cargo Details"}
                   >
@@ -1524,7 +1945,6 @@ export default function ShipmentRequestWizard() {
                     </p>
                   </div>
 
-                  {/* Specifications Grid */}
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-1">
                     <div className="bg-white p-2.5 rounded-xl border border-gray-200/70 text-center">
                       <span className="text-[10px] uppercase font-bold text-gray-400 block">
@@ -1554,7 +1974,6 @@ export default function ShipmentRequestWizard() {
                     </div>
                   </div>
 
-                  {/* Dimensions & Volumetric Weight if present */}
                   {formData.length && formData.width && formData.height ? (
                     <div className="bg-white p-2.5 rounded-xl border border-gray-200/80 flex items-center justify-between text-xs">
                       <div className="flex items-center gap-1.5 text-gray-700 font-medium">
@@ -1572,7 +1991,6 @@ export default function ShipmentRequestWizard() {
                     </div>
                   ) : null}
 
-                  {/* Handling Tags */}
                   {(formData.isFragile || formData.isTemperatureControlled || formData.specialInstructions) && (
                     <div className="space-y-1.5 pt-1">
                       <div className="flex flex-wrap gap-1.5">
@@ -1601,7 +2019,7 @@ export default function ShipmentRequestWizard() {
                 </div>
               </div>
 
-              {/* Card 4: Shipper Account / Requester */}
+              {/* Card 5: Shipper Account */}
               <div className="bg-gray-50/80 hover:bg-gray-50 border border-gray-200 rounded-2xl p-4 sm:p-5 space-y-3 transition-colors">
                 <div className="flex items-center justify-between border-b border-gray-200/80 pb-2.5">
                   <div className="flex items-center gap-2">
@@ -1610,7 +2028,7 @@ export default function ShipmentRequestWizard() {
                     </div>
                     <div>
                       <h4 className="font-extrabold text-sm text-[#251516]">
-                        {isRTL ? "4. بيانات العميل مقدم الطلب" : "4. Shipper Account & Contact"}
+                        {isRTL ? "5. بيانات العميل مقدم الطلب" : "5. Shipper Account & Contact"}
                       </h4>
                       <p className="text-[11px] text-gray-500">{isRTL ? "الحساب المعتمد لتلقي عرض السعر" : "Account authorized for rate quote"}</p>
                     </div>
@@ -1659,7 +2077,7 @@ export default function ShipmentRequestWizard() {
               </div>
             </div>
 
-            {/* Reassuring Confirmation Checkbox Card */}
+            {/* Confirmation Checkbox */}
             <div
               className={`p-4 sm:p-5 rounded-2xl border transition-all ${
                 confirmedCorrect
@@ -1690,7 +2108,7 @@ export default function ShipmentRequestWizard() {
               </label>
             </div>
 
-            {/* Step 4 Navigation Actions */}
+            {/* Step 5 Navigation Actions */}
             <div className="flex flex-col-reverse sm:flex-row justify-between items-stretch sm:items-center gap-3 pt-2">
               <button
                 type="button"
@@ -1701,51 +2119,82 @@ export default function ShipmentRequestWizard() {
                 <span>{isRTL ? "الرجوع لتعديل الشحنة" : "Back to Cargo"}</span>
               </button>
 
-              <button
-                id="wizard-submit-btn"
-                type="submit"
-                disabled={isSubmitting || !confirmedCorrect}
-                className="h-12 px-8 rounded-xl bg-[#C45B2A] hover:bg-[#A8481B] text-white text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none active:scale-98"
-              >
-                {isSubmitting ? (
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    <span>{isRTL ? "جاري تسجيل الطلب وإرساله..." : "Submitting Request..."}</span>
-                  </div>
-                ) : (
-                  <>
-                    <span>{isRTL ? "تأكيد وإرسال طلب الشحن" : "Confirm & Submit Request"}</span>
-                    <ArrowRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
-                  </>
-                )}
-              </button>
+              <div className="flex flex-col sm:flex-row items-center gap-2.5">
+                <button
+                  id="wizard-submit-btn"
+                  type="submit"
+                  disabled={isSubmitting || !confirmedCorrect}
+                  className="w-full sm:w-auto h-12 px-8 rounded-xl bg-[#C45B2A] hover:bg-[#A8481B] text-white text-xs sm:text-sm font-extrabold flex items-center justify-center gap-2.5 shadow-md hover:shadow-lg transition-all cursor-pointer disabled:opacity-50 disabled:pointer-events-none active:scale-98"
+                >
+                  {isSubmitting ? (
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>{isRTL ? "جاري تسجيل الطلب وإرساله..." : "Submitting Request..."}</span>
+                    </div>
+                  ) : (
+                    <>
+                      <span>{isRTL ? "تأكيد وإرسال طلب الشحن" : "Confirm & Submit Request"}</span>
+                      <ArrowRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </form>
         )}
 
-        {/* Stepper Navigation Buttons (Steps 1 to 3) */}
-        {step < 4 && (
+        {/* Stepper Navigation Footer Buttons (Steps 1 to 4) */}
+        {step < 5 && (
           <div className="flex justify-between items-center pt-4 border-t border-gray-100">
             {step > 1 ? (
               <button
                 type="button"
                 onClick={handleBack}
-                className="h-10 px-5 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                className="h-10 px-5 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
               >
                 <ArrowLeft className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
                 <span>{isRTL ? "رجوع" : "Back"}</span>
               </button>
-            ) : <div />}
+            ) : (
+              <div />
+            )}
 
-            <button
-              id="wizard-next-btn"
-              type="button"
-              onClick={handleNext}
-              className="h-10 px-6 rounded-xl bg-[#C45B2A] hover:bg-[#A8481B] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
-            >
-              <span>{isRTL ? "التالي" : "Next"}</span>
-              <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
-            </button>
+            {step === 1 ? (
+              <div className="flex items-center justify-end w-full">
+                {activeService.isForm ? (
+                  <button
+                    id="wizard-next-btn"
+                    type="button"
+                    onClick={handleNext}
+                    className="h-11 px-7 rounded-xl bg-[#C45B2A] hover:bg-[#A8481B] text-white text-xs sm:text-sm font-extrabold flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-98"
+                  >
+                    <span>{isRTL ? "المتابعة إلى بيانات الاستلام والتسليم" : "Continue to Pickup"}</span>
+                    <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
+                  </button>
+                ) : (
+                  <a
+                    href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(activeService.whatsappMsg || "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="h-11 px-7 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-extrabold flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-98"
+                  >
+                    <MessageSquare className="w-4 h-4" />
+                    <span>{isRTL ? "تواصل فوري عبر واتساب" : "Chat on WhatsApp"}</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                )}
+              </div>
+            ) : (
+              <button
+                id="wizard-next-btn"
+                type="button"
+                onClick={handleNext}
+                className="h-10 px-6 rounded-xl bg-[#C45B2A] hover:bg-[#A8481B] text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+              >
+                <span>{isRTL ? "التالي" : "Next"}</span>
+                <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
+              </button>
+            )}
           </div>
         )}
       </div>

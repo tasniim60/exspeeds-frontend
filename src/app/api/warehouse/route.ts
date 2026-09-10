@@ -1,11 +1,15 @@
 import { NextResponse } from "next/server";
 import { ServerStore } from "@/lib/serverStore";
 import { WarehouseItem } from "@/lib/adminData";
+import { requireAdmin } from "@/lib/apiAuth";
 
 export const dynamic = "force-dynamic";
 
 export async function GET() {
   try {
+    const auth = await requireAdmin();
+    if ("errorResponse" in auth) return auth.errorResponse;
+
     const items = ServerStore.getWarehouseItems();
     return NextResponse.json({ success: true, data: items });
   } catch (error: any) {
@@ -18,6 +22,9 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const auth = await requireAdmin();
+    if ("errorResponse" in auth) return auth.errorResponse;
+
     const body: WarehouseItem = await request.json();
     if (!body.sku) {
       body.sku = `SKU-PAL-${Math.floor(1000 + Math.random() * 9000)}`;
@@ -57,6 +64,9 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    const auth = await requireAdmin();
+    if ("errorResponse" in auth) return auth.errorResponse;
+
     const body = await request.json();
     const { id, ...patch } = body;
     if (!id) {
@@ -74,6 +84,9 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const auth = await requireAdmin();
+    if ("errorResponse" in auth) return auth.errorResponse;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     if (!id) {

@@ -79,12 +79,14 @@ function calculateWaitingDuration(updatedAt: string, createdAt: string, status: 
 }
 
 export const SUPPORTED_CURRENCIES = [
-  { code: "EGP", labelAr: "ج.م (EGP)", labelEn: "EGP", nameAr: "جنيه مصري", nameEn: "Egyptian Pound" },
-  { code: "USD", labelAr: "$ (USD)", labelEn: "USD ($)", nameAr: "دولار أمريكي", nameEn: "US Dollar" },
-  { code: "EUR", labelAr: "€ (EUR)", labelEn: "EUR (€)", nameAr: "يورو", nameEn: "Euro" },
-  { code: "SAR", labelAr: "ر.س (SAR)", labelEn: "SAR", nameAr: "ريال سعودي", nameEn: "Saudi Riyal" },
-  { code: "AED", labelAr: "د.إ (AED)", labelEn: "AED", nameAr: "درهم إماراتي", nameEn: "UAE Dirham" },
-  { code: "GBP", labelAr: "£ (GBP)", labelEn: "GBP (£)", nameAr: "جنيه إسترليني", nameEn: "British Pound" },
+  { code: "EGP", labelAr: "ج.م", labelEn: "EGP", nameAr: "جنيه مصري", nameEn: "Egyptian Pound" },
+  { code: "USD", labelAr: "$", labelEn: "USD ($)", nameAr: "دولار أمريكي", nameEn: "US Dollar" },
+  { code: "EUR", labelAr: "€", labelEn: "EUR (€)", nameAr: "يورو", nameEn: "Euro" },
+  { code: "SAR", labelAr: "ر.س", labelEn: "SAR", nameAr: "ريال سعودي", nameEn: "Saudi Riyal" },
+  { code: "AED", labelAr: "د.إ", labelEn: "AED", nameAr: "درهم إماراتي", nameEn: "UAE Dirham" },
+  { code: "GBP", labelAr: "£", labelEn: "GBP (£)", nameAr: "جنيه إسترليني", nameEn: "British Pound" },
+  { code: "KWD", labelAr: "د.ك", labelEn: "KWD", nameAr: "دينار كويتي", nameEn: "Kuwaiti Dinar" },
+  { code: "QAR", labelAr: "ر.ق", labelEn: "QAR", nameAr: "ريال قطري", nameEn: "Qatari Riyal" },
 ];
 
 const getLocalizedStatus = (status: ShipmentRequest["status"] | string, isRTL: boolean) => {
@@ -102,7 +104,7 @@ const getLocalizedStatus = (status: ShipmentRequest["status"] | string, isRTL: b
     case "Customer Confirmed":
       return "معتمد (تم الاتفاق)";
     case "Awaiting Customer Response":
-      return "قيد الاتفاق عبر واتساب";
+      return "بانتظار رد العميل";
     case "Converted to Shipment":
       return "تم التحويل لبوليصة";
     case "Cancelled":
@@ -116,7 +118,7 @@ const getLocalizedShipmentType = (type: string, isRTL: boolean) => {
   if (!isRTL) return type;
   switch (type) {
     case "Documents":
-      return "مستندات ووثائق";
+      return "مستندات وأوراق";
     case "Parcel":
       return "طرد / شحنة عادية";
     case "Commercial Goods":
@@ -131,7 +133,7 @@ const getLocalizedShipmentType = (type: string, isRTL: boolean) => {
 };
 
 export default function ShipmentRequestsView({ onTriggerNotification }: ShipmentRequestsViewProps) {
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, formatDate, formatTime, formatDateTime } = useLanguage();
   const [requests, setRequests] = useState<ShipmentRequest[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
@@ -1176,9 +1178,9 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
       {/* ─── 4. REQUEST DETAILS & QUOTING MODAL ─── */}
       <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
         {selectedRequest && (
-          <DialogContent className="max-w-3xl space-y-6 text-start">
+          <DialogContent className="max-w-4xl w-[95vw] sm:w-full space-y-4 sm:space-y-5 text-start p-4 sm:p-6 md:p-7" onClose={() => setSelectedRequest(null)}>
             {/* Modal Header */}
-            <div className="flex justify-between items-start border-b border-gray-100 pb-4">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 border-b border-gray-100 pb-4">
               <div>
                 <div className="flex items-center gap-2">
                   <span className="bg-orange-100 text-[#C45B2A] text-[10px] font-extrabold uppercase px-2.5 py-0.5 rounded-md">
@@ -1204,16 +1206,19 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     {getLocalizedStatus(selectedRequest.status, isRTL)}
                   </span>
                 </div>
-                <h3 className="text-2xl font-black text-[#251516] mt-1 font-mono" dir="ltr">
+                <h3 className="text-xl sm:text-2xl font-black text-[#251516] mt-1 font-mono" dir="ltr">
                   {selectedRequest.requestNumber}
                 </h3>
-                <p className="text-xs text-gray-500">
-                  {t("admin.requests.modal.submittedOn")} {selectedRequest.createdAt}
+                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1.5 flex-wrap">
+                  <span>{t("admin.requests.modal.submittedOn")}</span>
+                  <span className="font-bold text-gray-700">
+                    {formatDateTime(selectedRequest.createdAt) || selectedRequest.createdAt}
+                  </span>
                 </p>
               </div>
 
               {/* Header Action: WhatsApp Message Button */}
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 self-start sm:self-auto">
                 {selectedRequest.phone && (
                   <a
                     href={`https://wa.me/${selectedRequest.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
@@ -1223,7 +1228,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     rel="noreferrer"
                     className="px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold text-xs flex items-center gap-1.5 hover:bg-emerald-100 transition-colors shadow-2xs"
                   >
-                    <MessageSquare className="w-4 h-4 text-emerald-600" />
+                    <MessageSquare className="w-4 h-4 text-emerald-600 shrink-0" />
                     <span>{isRTL ? "مراسلة واتساب" : "WhatsApp"}</span>
                   </a>
                 )}
@@ -1231,93 +1236,151 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
             </div>
 
             {/* Quick Status Action Buttons Bar */}
-            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2">
+            <div className="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-200 space-y-2">
               <span className="text-[11px] font-bold uppercase text-gray-600 tracking-wider block">
                 {t("admin.requests.modal.quickStatusUpdates")}
               </span>
-              <div className="flex flex-wrap gap-2">
+              <div className="grid grid-cols-1 xs:grid-cols-3 sm:flex sm:flex-wrap gap-2">
                 <button
                   type="button"
                   onClick={() => handleQuickStatusChange("Contacted", isRTL ? "تم التواصل مع العميل عبر واتساب" : "Contacted customer via WhatsApp")}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold bg-cyan-50 text-cyan-800 border border-cyan-200 hover:bg-cyan-100 flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="px-3 py-2 sm:py-1.5 rounded-lg text-xs font-bold bg-cyan-50 text-cyan-800 border border-cyan-200 hover:bg-cyan-100 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  <PhoneCall className="w-3.5 h-3.5" />
+                  <MessageSquare className="w-3.5 h-3.5 shrink-0" />
                   <span>{t("admin.requests.modal.markContacted")}</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleQuickStatusChange("Approved", isRTL ? "تم الاتفاق على السعر واعتماد الطلب" : "Rate agreed and request approved")}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="px-3 py-2 sm:py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  <CheckCheck className="w-3.5 h-3.5" />
-                  <span>{isRTL ? "اعتماد السعر والموافقة" : "Approve & Confirm Rate"}</span>
+                  <CheckCheck className="w-3.5 h-3.5 shrink-0" />
+                  <span>{t("admin.requests.modal.markApproved")}</span>
                 </button>
 
                 <button
                   type="button"
                   onClick={() => handleQuickStatusChange("Cancelled", isRTL ? "تم إلغاء الطلب" : "Request cancelled")}
-                  className="px-3 py-1.5 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 flex items-center gap-1.5 transition-colors cursor-pointer"
+                  className="px-3 py-2 sm:py-1.5 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
-                  <XCircle className="w-3.5 h-3.5" />
+                  <XCircle className="w-3.5 h-3.5 shrink-0" />
                   <span>{t("admin.requests.modal.cancelRequest")}</span>
                 </button>
               </div>
             </div>
 
             {/* Audit Trail & Timestamps Card */}
-            <div className="bg-amber-50/60 p-4 rounded-xl border border-amber-200/80 space-y-2">
+            <div className="bg-amber-50/60 p-3.5 sm:p-4 rounded-xl border border-amber-200/80 space-y-2">
               <span className="text-[11px] font-bold uppercase text-amber-900 tracking-wider flex items-center gap-1.5">
-                <Clock className="w-4 h-4 text-amber-700" />
+                <Clock className="w-4 h-4 text-amber-700 shrink-0" />
                 <span>{t("admin.requests.modal.auditTrailTitle")}</span>
               </span>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs pt-1">
-                <div className="bg-white p-2.5 rounded-lg border border-amber-100 shadow-2xs">
-                  <span className="text-[10px] text-gray-500 font-bold uppercase block">{t("admin.requests.modal.createdAt")}</span>
-                  <p className="font-mono font-bold text-gray-900 mt-0.5">{selectedRequest.createdAt || "N/A"}</p>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 text-xs pt-1">
+                <div className="bg-white p-2.5 rounded-lg border border-amber-100 shadow-2xs flex flex-col justify-between">
+                  <span className="text-[10px] text-gray-500 font-bold uppercase block truncate">{t("admin.requests.modal.createdAt")}</span>
+                  <div className="mt-1">
+                    <p className="font-bold text-gray-900 text-xs leading-tight">
+                      {formatDate(selectedRequest.createdAt) || "N/A"}
+                    </p>
+                    {formatTime(selectedRequest.createdAt) && (
+                      <p className="text-[10px] text-gray-500 mt-0.5">
+                        {formatTime(selectedRequest.createdAt)}
+                      </p>
+                    )}
+                  </div>
                 </div>
 
-                <div className="bg-white p-2.5 rounded-lg border border-amber-100 shadow-2xs">
-                  <span className="text-[10px] text-gray-500 font-bold uppercase block">{t("admin.requests.modal.firstContacted")}</span>
-                  <p className="font-mono font-bold text-cyan-700 mt-0.5">{selectedRequest.contactedAt || "—"}</p>
+                <div className="bg-white p-2.5 rounded-lg border border-amber-100 shadow-2xs flex flex-col justify-between">
+                  <span className="text-[10px] text-gray-500 font-bold uppercase block truncate">{t("admin.requests.modal.firstContacted")}</span>
+                  <div className="mt-1">
+                    {selectedRequest.contactedAt ? (
+                      <>
+                        <p className="font-bold text-cyan-700 text-xs leading-tight">
+                          {formatDate(selectedRequest.contactedAt)}
+                        </p>
+                        {formatTime(selectedRequest.contactedAt) && (
+                          <p className="text-[10px] text-cyan-600 mt-0.5">
+                            {formatTime(selectedRequest.contactedAt)}
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <p className="font-mono font-bold text-gray-400 mt-0.5">—</p>
+                    )}
+                  </div>
                 </div>
 
-                <div className="bg-white p-2.5 rounded-lg border border-amber-100 shadow-2xs">
-                  <span className="text-[10px] text-gray-500 font-bold uppercase block">{isRTL ? "تاريخ الاعتماد" : "Approved At"}</span>
-                  <p className="font-mono font-bold text-emerald-700 mt-0.5">{selectedRequest.approvedAt || selectedRequest.customerConfirmedAt || selectedRequest.priceSentAt || "—"}</p>
+                <div className="bg-white p-2.5 rounded-lg border border-amber-100 shadow-2xs flex flex-col justify-between">
+                  <span className="text-[10px] text-gray-500 font-bold uppercase block truncate">{isRTL ? "تاريخ الاعتماد" : "Approved At"}</span>
+                  <div className="mt-1">
+                    {selectedRequest.approvedAt || selectedRequest.customerConfirmedAt || selectedRequest.priceSentAt ? (
+                      <>
+                        <p className="font-bold text-emerald-700 text-xs leading-tight">
+                          {formatDate(selectedRequest.approvedAt || selectedRequest.customerConfirmedAt || selectedRequest.priceSentAt)}
+                        </p>
+                        {formatTime(selectedRequest.approvedAt || selectedRequest.customerConfirmedAt || selectedRequest.priceSentAt) && (
+                          <p className="text-[10px] text-emerald-600 mt-0.5">
+                            {formatTime(selectedRequest.approvedAt || selectedRequest.customerConfirmedAt || selectedRequest.priceSentAt)}
+                          </p>
+                        )}
+                      </>
+                    ) : (
+                      <p className="font-mono font-bold text-gray-400 mt-0.5">—</p>
+                    )}
+                  </div>
                 </div>
 
-                <div className="bg-white p-2.5 rounded-lg border border-amber-100 shadow-2xs">
-                  <span className="text-[10px] text-gray-500 font-bold uppercase block">{isRTL ? "العملة المعتمدة" : "Agreed Currency"}</span>
-                  <p className="font-mono font-bold text-[#C45B2A] mt-0.5">{selectedRequest.currency || "EGP"}</p>
+                <div className="bg-white p-2.5 rounded-lg border border-amber-100 shadow-2xs flex flex-col justify-between">
+                  <span className="text-[10px] text-gray-500 font-bold uppercase block truncate">{isRTL ? "العملة المعتمدة" : "Agreed Currency"}</span>
+                  <div className="mt-1">
+                    <p className="font-mono font-black text-[#C45B2A] text-sm leading-tight">
+                      {selectedRequest.currency || "EGP"}
+                    </p>
+                    <span className="text-[10px] text-gray-500 font-semibold block mt-0.5 truncate">
+                      {SUPPORTED_CURRENCIES.find((c) => c.code === (selectedRequest.currency || "EGP"))?.nameAr || ""}
+                    </span>
+                  </div>
                 </div>
               </div>
 
               {selectedRequest.convertedAt && (
                 <div className="text-xs text-emerald-800 font-bold bg-emerald-50 p-2.5 rounded-lg border border-emerald-200 flex items-center gap-2">
                   <Truck className="w-4 h-4 text-emerald-700 shrink-0" />
-                  <span>{isRTL ? `تم التحويل لبوليصة شحن حية (${selectedRequest.linkedAwb}) في:` : `Converted to Live AWB (${selectedRequest.linkedAwb}) at:`} <strong>{selectedRequest.convertedAt}</strong></span>
+                  <span>
+                    {isRTL ? `تم التحويل لبوليصة شحن حية (${selectedRequest.linkedAwb}) في: ` : `Converted to Live AWB (${selectedRequest.linkedAwb}) at: `}
+                    <strong className="text-emerald-900">{formatDateTime(selectedRequest.convertedAt)}</strong>
+                  </span>
                 </div>
               )}
             </div>
 
             {/* Request Summary Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 text-xs">
               {/* Customer Info */}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200/80 space-y-1.5 shadow-2xs">
+              <div className="bg-gray-50 p-3.5 sm:p-4 rounded-xl border border-gray-200/80 space-y-2 shadow-2xs">
                 <span className="font-bold text-gray-400 uppercase text-[10px]">{t("admin.requests.modal.customerDetails")}</span>
                 <p className="font-bold text-gray-900 text-sm">{selectedRequest.customerName}</p>
                 <p className="text-gray-600">{t("admin.requests.modal.company")} <strong>{selectedRequest.companyName || "N/A"}</strong></p>
-                <p className="text-gray-600">{t("admin.requests.modal.phone")} <span className="font-mono" dir="ltr">{selectedRequest.phone}</span></p>
-                <p className="text-gray-600">{t("admin.requests.modal.whatsapp")} <span className="font-mono" dir="ltr">{selectedRequest.whatsapp}</span></p>
-                <p className="text-gray-600">{t("admin.requests.modal.email")} <span className="font-mono" dir="ltr">{selectedRequest.email}</span></p>
+                <p className="text-gray-600 flex items-center gap-1.5 flex-wrap">
+                  <span>{t("admin.requests.modal.phone")}</span>
+                  <bdi dir="ltr" className="font-mono font-bold text-gray-800">{selectedRequest.phone}</bdi>
+                </p>
+                <p className="text-gray-600 flex items-center gap-1.5 flex-wrap">
+                  <span>{t("admin.requests.modal.whatsapp")}</span>
+                  <bdi dir="ltr" className="font-mono font-bold text-gray-800">{selectedRequest.whatsapp || selectedRequest.phone}</bdi>
+                </p>
+                <p className="text-gray-600 flex items-center gap-1.5 flex-wrap">
+                  <span>{t("admin.requests.modal.email")}</span>
+                  <bdi dir="ltr" className="font-mono text-gray-800">{selectedRequest.email}</bdi>
+                </p>
               </div>
 
               {/* Route & Cargo */}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200/80 space-y-1.5 shadow-2xs">
+              <div className="bg-gray-50 p-3.5 sm:p-4 rounded-xl border border-gray-200/80 space-y-2 shadow-2xs">
                 <span className="font-bold text-gray-400 uppercase text-[10px]">{t("admin.requests.modal.cargoRoute")}</span>
-                <div className="font-bold text-gray-900 flex items-center gap-1.5">
+                <div className="font-bold text-gray-900 flex items-center gap-1.5 flex-wrap">
                   <span>{selectedRequest.pickupCity}, {selectedRequest.pickupCountry}</span>
                   <ArrowRight className={`w-3.5 h-3.5 text-[#C45B2A] shrink-0 ${isRTL ? "rotate-180" : ""}`} />
                   <span>{selectedRequest.deliveryCity}, {selectedRequest.deliveryCountry}</span>
@@ -1327,17 +1390,46 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                 <p className="text-gray-600">
                   {t("admin.requests.modal.weight")} <strong>{selectedRequest.weight} {isRTL ? "كجم" : "KG"}</strong> ({selectedRequest.packageCount} {isRTL ? "طرد" : "pkgs"})
                 </p>
+                {selectedRequest.length && selectedRequest.width && selectedRequest.height ? (
+                  <p className="text-gray-600 flex items-center gap-1.5 flex-wrap text-xs">
+                    <span className="font-semibold text-gray-700">{isRTL ? "الأبعاد والوزن الحجمي:" : "Dim & Vol. Weight:"}</span>
+                    <span className="font-mono font-bold text-gray-900" dir="ltr">{selectedRequest.length} × {selectedRequest.width} × {selectedRequest.height} cm</span>
+                    <span className="font-mono text-[#C45B2A] font-bold bg-orange-50 px-1.5 py-0.2 rounded border border-orange-200 text-[11px]" dir="ltr">
+                      {((Number(selectedRequest.length) * Number(selectedRequest.width) * Number(selectedRequest.height)) / 5000).toFixed(2)} KG IATA
+                    </span>
+                  </p>
+                ) : null}
+                {selectedRequest.declaredValue ? (
+                  <p className="text-gray-600">
+                    <span className="font-semibold text-gray-700">{isRTL ? "القيمة المعلنة:" : "Declared Value:"}</span>{" "}
+                    <strong className="text-emerald-700 font-mono">${selectedRequest.declaredValue} USD</strong>
+                  </p>
+                ) : null}
                 <p className="text-gray-600">
                   {t("admin.requests.modal.special")} {selectedRequest.isFragile ? t("admin.requests.modal.fragile") : t("admin.requests.modal.standard")} {selectedRequest.isTemperatureControlled ? `• ${t("admin.requests.modal.coldChain")}` : ""}
                 </p>
+                {selectedRequest.specialInstructions && (
+                  <p className="text-xs text-gray-700 bg-white p-1.5 rounded border border-gray-200/60">
+                    <span className="font-bold text-gray-900">{isRTL ? "تعليمات خاصة: " : "Special Notes: "}</span>{selectedRequest.specialInstructions}
+                  </p>
+                )}
               </div>
 
               {/* Pickup Address */}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200/80 space-y-1.5 shadow-2xs">
+              <div className="bg-gray-50 p-3.5 sm:p-4 rounded-xl border border-gray-200/80 space-y-2 shadow-2xs">
                 <span className="font-bold text-gray-400 uppercase text-[10px]">{t("admin.requests.modal.pickupHandoff")}</span>
                 <p className="font-semibold text-gray-900">{selectedRequest.pickupAddress}</p>
-                <p className="text-gray-600">{t("admin.requests.modal.contact")} {selectedRequest.pickupContactName} (<span className="font-mono" dir="ltr">{selectedRequest.pickupContactPhone}</span>)</p>
-                <p className="text-gray-600">{t("admin.requests.modal.date")} {selectedRequest.preferredPickupDate}</p>
+                <p className="text-gray-600 flex items-center gap-1.5 flex-wrap">
+                  <span>{t("admin.requests.modal.contact")}</span>
+                  <span className="font-semibold text-gray-900">{selectedRequest.pickupContactName}</span>
+                  {selectedRequest.pickupContactPhone && (
+                    <bdi dir="ltr" className="font-mono text-gray-600">({selectedRequest.pickupContactPhone})</bdi>
+                  )}
+                </p>
+                <p className="text-gray-600 flex items-center gap-1.5 flex-wrap">
+                  <span>{t("admin.requests.modal.date")}</span>
+                  <strong className="text-gray-900">{formatDate(selectedRequest.preferredPickupDate) || selectedRequest.preferredPickupDate}</strong>
+                </p>
                 {selectedRequest.pickupNotes && (
                   <p className="text-xs text-gray-500 bg-white p-1.5 rounded border border-gray-200/60">
                     <span className="font-bold">{isRTL ? "ملاحظات الاستلام: " : "Notes: "}</span>{selectedRequest.pickupNotes}
@@ -1346,7 +1438,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
               </div>
 
               {/* Delivery Address */}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200/80 space-y-1.5 shadow-2xs">
+              <div className="bg-gray-50 p-3.5 sm:p-4 rounded-xl border border-gray-200/80 space-y-2 shadow-2xs">
                 <span className="font-bold text-gray-400 uppercase text-[10px]">{t("admin.requests.modal.deliveryDestination")}</span>
                 <p className="font-semibold text-gray-900">{selectedRequest.deliveryAddress}</p>
                 {selectedRequest.deliveryShortAddress && (
@@ -1355,7 +1447,13 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     <span>{selectedRequest.deliveryShortAddress}</span>
                   </div>
                 )}
-                <p className="text-gray-600">{t("admin.requests.modal.consignee")} {selectedRequest.consigneeName} (<span className="font-mono" dir="ltr">{selectedRequest.consigneePhone}</span>)</p>
+                <p className="text-gray-600 flex items-center gap-1.5 flex-wrap">
+                  <span>{t("admin.requests.modal.consignee")}</span>
+                  <span className="font-semibold text-gray-900">{selectedRequest.consigneeName}</span>
+                  {selectedRequest.consigneePhone && (
+                    <bdi dir="ltr" className="font-mono text-gray-600">({selectedRequest.consigneePhone})</bdi>
+                  )}
+                </p>
                 {selectedRequest.deliveryNotes && (
                   <p className="text-xs text-gray-500 bg-white p-1.5 rounded border border-gray-200/60">
                     <span className="font-bold">{isRTL ? "ملاحظات التسليم: " : "Notes: "}</span>{selectedRequest.deliveryNotes}
@@ -1395,7 +1493,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     >
                       {SUPPORTED_CURRENCIES.map((c) => (
                         <option key={c.code} value={c.code}>
-                          {c.code} ({isRTL ? c.labelAr : c.labelEn})
+                          {c.code} ({isRTL ? `${c.nameAr} - ${c.labelAr}` : `${c.nameEn} - ${c.labelEn}`})
                         </option>
                       ))}
                     </select>
@@ -1439,34 +1537,34 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                 </div>
               </div>
 
-              {/* Action Buttons: Sticky Bottom Bar with Close and Save */}
-              <div className="sticky bottom-0 bg-white pt-4 pb-1 border-t border-gray-100 z-10 flex items-center justify-between gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setSelectedRequest(null)}
-                  className="h-10 px-5 rounded-xl font-bold border-gray-300 text-gray-800 hover:bg-gray-100 cursor-pointer shadow-2xs"
-                >
-                  {isRTL ? "إلغاء" : "Close"}
-                </Button>
+              {/* Action Buttons: Sticky Bottom Bar with Close, Convert, and Save */}
+              <div className="sticky bottom-0 bg-white pt-4 pb-1 border-t border-gray-100 z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3">
+                {selectedRequest.status !== "Converted to Shipment" && (
+                  <Button
+                    type="button"
+                    variant="default"
+                    onClick={() => openConvertModal(selectedRequest)}
+                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold h-10 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm cursor-pointer order-1 sm:order-2"
+                  >
+                    <Truck className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{t("admin.requests.modal.convertToLiveShipment")}</span>
+                  </Button>
+                )}
 
-                <div className="flex items-center gap-2.5">
-                  {selectedRequest.status !== "Converted to Shipment" && (
-                    <Button
-                      type="button"
-                      variant="default"
-                      onClick={() => openConvertModal(selectedRequest)}
-                      className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-10 px-5 rounded-xl text-xs flex items-center gap-1.5 shadow-sm cursor-pointer"
-                    >
-                      <Truck className="w-4 h-4" />
-                      <span>{t("admin.requests.modal.convertToLiveShipment")}</span>
-                    </Button>
-                  )}
+                <div className="grid grid-cols-2 gap-2 w-full sm:w-auto sm:flex sm:items-center sm:gap-2.5 order-2 sm:order-1">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setSelectedRequest(null)}
+                    className="w-full sm:w-auto h-10 px-4 rounded-xl font-bold border-gray-300 text-gray-800 hover:bg-gray-100 cursor-pointer shadow-2xs justify-center text-xs"
+                  >
+                    {isRTL ? "إلغاء" : "Close"}
+                  </Button>
 
                   <Button
                     type="submit"
                     variant="brand"
-                    className="h-10 px-6 text-xs font-extrabold rounded-xl bg-[#C45B2A] hover:bg-[#A8481B] text-white cursor-pointer shadow-xs"
+                    className="w-full sm:w-auto h-10 px-5 text-xs font-extrabold rounded-xl bg-[#C45B2A] hover:bg-[#A8481B] text-white cursor-pointer shadow-xs justify-center"
                   >
                     {t("admin.requests.modal.saveChanges")}
                   </Button>
@@ -1480,7 +1578,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
       {/* ─── 5. ACCEPT REQUEST & ENTER CARRIER AWB MODAL ─── */}
       <Dialog open={convertModalOpen} onOpenChange={setConvertModalOpen}>
         {requestToConvert && (
-          <DialogContent className="max-w-xl space-y-5 text-start" onClose={() => setConvertModalOpen(false)}>
+          <DialogContent className="max-w-xl space-y-4 sm:space-y-5 text-start p-4 sm:p-6" onClose={() => setConvertModalOpen(false)}>
             <DialogHeader>
               <div className="flex items-center gap-2.5">
                 <div className="p-2.5 rounded-xl bg-orange-100 text-[#C45B2A] shrink-0">
@@ -1611,7 +1709,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     >
                       {SUPPORTED_CURRENCIES.map((c) => (
                         <option key={c.code} value={c.code}>
-                          {c.code} ({isRTL ? c.labelAr : c.labelEn})
+                          {c.code} ({isRTL ? `${c.nameAr} - ${c.labelAr}` : `${c.nameEn} - ${c.labelEn}`})
                         </option>
                       ))}
                     </select>
@@ -1664,22 +1762,22 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
               </div>
 
               {/* Dialog Actions */}
-              <div className="flex justify-end gap-3 pt-3 border-t border-gray-100">
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end sm:gap-3 pt-3 border-t border-gray-100">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setConvertModalOpen(false)}
-                  className="rounded-xl text-xs font-bold"
+                  className="w-full sm:w-auto h-10 rounded-xl text-xs font-bold justify-center"
                 >
                   {isRTL ? "إلغاء" : "Cancel"}
                 </Button>
                 <Button
                   type="submit"
                   variant="brand"
-                  className="rounded-xl text-xs font-bold bg-[#C45B2A] hover:bg-[#A8481B] text-white flex items-center gap-1.5 shadow-md"
+                  className="w-full sm:w-auto h-10 rounded-xl text-xs font-bold bg-[#C45B2A] hover:bg-[#A8481B] text-white flex items-center justify-center gap-1.5 shadow-md"
                 >
-                  <CheckCircle2 className="w-4 h-4" />
-                  <span>{isRTL ? "تأكيد وإصدار البوليصة" : "Confirm & Issue AWB"}</span>
+                  <CheckCircle2 className="w-4 h-4 shrink-0" />
+                  <span className="truncate">{isRTL ? "تأكيد وإصدار البوليصة" : "Confirm & Issue AWB"}</span>
                 </Button>
               </div>
             </form>

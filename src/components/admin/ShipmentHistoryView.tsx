@@ -4,7 +4,8 @@ import React, { useState } from "react";
 import {
   History,
   Search,
-  Download,
+  FileSpreadsheet,
+  Loader2,
   Filter,
   Package,
   Calendar,
@@ -40,6 +41,7 @@ export const ShipmentHistoryView: React.FC<ShipmentHistoryViewProps> = ({
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [carrierFilter, setCarrierFilter] = useState("all");
+  const [isExportingExcel, setIsExportingExcel] = useState<boolean>(false);
 
   // Account Assignment Modal State
   const [selectedShipment, setSelectedShipment] = useState<Shipment | null>(null);
@@ -59,9 +61,14 @@ export const ShipmentHistoryView: React.FC<ShipmentHistoryViewProps> = ({
     return matchesSearch && matchesStatus && matchesCarrier;
   });
 
+  const handleOpenAssignModal = (shipment: Shipment) => {
+    setSelectedShipment(shipment);
+    setAssignAccount(shipment.account || shipment.company || "");
+  };
+
   const handleSaveAssign = () => {
     if (!selectedShipment || !onUpdateShipment || !assignAccount.trim()) return;
-    const updated = {
+    const updated: Shipment = {
       ...selectedShipment,
       account: assignAccount.trim(),
       company: assignAccount.trim(),
@@ -70,49 +77,106 @@ export const ShipmentHistoryView: React.FC<ShipmentHistoryViewProps> = ({
     setSelectedShipment(null);
   };
 
-  const exportCsv = () => {
-    const headers = [
-      "Date",
-      "Status",
-      "AWB",
-      "Account",
-      "Consignee",
-      "Contents",
-      "Destination",
-      "Carrier",
-      "Broker",
-      "Final Weight (KG)",
-      "Cost Price (EGP)",
-      "Selling Price (EGP)",
-      "Net Profit (EGP)",
-      "Agent",
-    ];
+  const handleExportExcel = async () => {
+    if (isExportingExcel) return;
+    try {
+      setIsExportingExcel(true);
+      const XLSX = await import("xlsx");
+      const wb = XLSX.utils.book_new();
 
-    const rows = filteredShipments.map((s) => [
-      s.date,
-      s.currentLocation || s.status,
-      s.awb,
-      `"${s.account}"`,
-      `"${s.receiverName}"`,
-      `"${s.contents || ""}"`,
-      `"${s.country}"`,
-      s.carrier,
-      s.broker || "XSpeed",
-      s.weight,
-      s.costPrice || 0,
-      s.sellingPrice || s.priceEgp,
-      s.netProfit || 0,
-      s.agentName || "مصطفي",
-    ]);
+      const dataList = filteredShipments;
+      const now = new Date();
+      const dateStamp = now.toISOString().split("T")[0];
 
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Shipment_History_Manifest_${new Date().toISOString().split("T")[0]}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+      // --- SHEET 1: Shipment History Manifest Ledger (Starts at Row 1 for instant mobile display) ---
+      const ledgerHeaders: string[] = [
+        isRTL ? "م" : "#",
+        isRTL ? "التاريخ" : "Date",
+        isRTL ? "الحالة / الموقع الحالي" : "Status / Location",
+        isRTL ? "رقم البوليصة (AWB)" : "AWB",
+        isRTL ? "اسم العميل / الحساب" : "Account",
+        isRTL ? "اسم المستلم" : "Consignee",
+        isRTL ? "محتويات الشحنة" : "Contents",
+        isRTL ? "البلد المستقبِلة" : "Destination",
+        isRTL ? "الشركة الناقلة" : "Carrier",
+        isRTL ? "الشركة الوسيطة" : "Broker",
+        isRTL ? "الوزن النهائي (كجم)" : "Final Weight (kg)",
+        isRTL ? "سعر التكلفة (EGP)" : "Cost Price (EGP)",
+        isRTL ? "سعر البيع (EGP)" : "Selling Price (EGP)",
+        isRTL ? "صافي الربح (EGP)" : "Net Profit (EGP)",
+        isRTL ? "المسؤول / المسجل" : "Agent"
+      ];
+
+      const ledgerRows: (string | number)[][] = [ledgerHeaders];
+
+      dataList.forEach((s, idx) => {
+        ledgerRows.push([
+          idx + 1,
+          s.date || "",
+          s.currentLocation || s.status || "",
+          s.awb || "",
+          s.account || s.company || "",
+          s.receiverName || "",
+          s.contents || "",
+          s.country || "",
+          s.carrier || "",
+          s.broker || "XSpeed",
+          Number((s.weight ?? 0).toFixed(2)),
+          Number((s.costPrice ?? 0).toFixed(2)),
+          Number((s.sellingPrice ?? s.priceEgp ?? 0).toFixed(2)),
+          Number((s.netProfit ?? 0).toFixed(2)),
+          s.agentName || "مصطفي"
+        ]);
+      });
+
+      const wsLedger = XLSX.utils.aoa_to_sheet(ledgerRows);
+      wsLedger["!cols"] = [
+        { wch: 6 },
+        { wch: 18 },
+        { wch: 30 },
+        { wch: 20 },
+        { wch: 24 },
+        { wch: 22 },
+        { wch: 20 },
+        { wch: 18 },
+        { wch: 16 },
+        { wch: 14 },
+        { wch: 18 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 16 },
+        { wch: 18 },
+      ];
+
+      XLSX.utils.book_append_sheet(wb, wsLedger, isRTL ? "سجل حركة الشحنات" : "Shipment History");
+
+      // --- SHEET 2: Manifest Metadata ---
+      const summaryRows: (string | number)[][] = [
+        [isRTL ? "شركة إكس سبيد لخدمات الشحن السريع واللوجستيات | XSPEED EXPRESS LOGISTICS" : "XSPEED Express Freight & Logistics Operations"],
+        [isRTL ? "سجل حركة وتتبع الشحنات والترانزيت (Shipments Movement & Transit History)" : "Shipments Movement & Transit Manifest History"],
+        [],
+        [isRTL ? "معلومات الاستخراج" : "Metadata"],
+        [isRTL ? "تاريخ ووقت الإصدار:" : "Issue Date:", now.toLocaleString(isRTL ? "ar-EG" : "en-US")],
+        [isRTL ? "إجمالي الشحنات المضمنة:" : "Total Shipments:", `${dataList.length} ${isRTL ? "شحنة" : "Shipments"}`]
+      ];
+
+      const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+      wsSummary["!cols"] = [
+        { wch: 38 },
+        { wch: 32 }
+      ];
+
+      XLSX.utils.book_append_sheet(wb, wsSummary, isRTL ? "بيانات السجل" : "Manifest Info");
+
+      // Set Right-to-Left (RTL) for Arabic sheets
+      wb.Workbook = { Views: [{ RTL: isRTL }] };
+
+      XLSX.writeFile(wb, `Shipment_History_Manifest_${dateStamp}.xlsx`);
+    } catch (error) {
+      console.error("Excel generation error:", error);
+    } finally {
+      setIsExportingExcel(false);
+    }
   };
 
   return (
@@ -133,13 +197,20 @@ export const ShipmentHistoryView: React.FC<ShipmentHistoryViewProps> = ({
 
         <div className="flex items-center gap-2">
           <Button
-            onClick={exportCsv}
-            variant="outline"
-            size="sm"
-            className="text-xs font-bold border-gray-300 hover:bg-gray-50 flex items-center gap-1.5 cursor-pointer"
+            onClick={handleExportExcel}
+            disabled={isExportingExcel}
+            className="h-10 px-4 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs gap-1.5 rounded-xl cursor-pointer disabled:opacity-70 shadow-xs transition-colors"
           >
-            <Download className="h-4 w-4 text-emerald-600" />
-            <span>{isRTL ? "تصدير CSV" : "Export Manifest CSV"}</span>
+            {isExportingExcel ? (
+              <Loader2 className="h-4 w-4 animate-spin text-white" />
+            ) : (
+              <FileSpreadsheet className="h-4 w-4 text-emerald-200" />
+            )}
+            <span>
+              {isExportingExcel
+                ? (isRTL ? "جاري التجهيز..." : "Exporting Excel...")
+                : (isRTL ? "تصدير إكسل (Excel)" : "Export Excel (.xlsx)")}
+            </span>
           </Button>
         </div>
       </div>
@@ -337,21 +408,21 @@ export const ShipmentHistoryView: React.FC<ShipmentHistoryViewProps> = ({
               </datalist>
             </div>
 
-            <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
+            <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-end pt-2 border-t border-gray-100">
               <Button
                 type="button"
                 variant="ghost"
                 onClick={() => setSelectedShipment(null)}
-                className="text-xs font-bold cursor-pointer"
+                className="w-full sm:w-auto h-10 text-xs font-bold cursor-pointer justify-center"
               >
                 {isRTL ? "إلغاء" : "Cancel"}
               </Button>
               <Button
                 type="button"
                 onClick={handleSaveAssign}
-                className="btn-primary text-xs font-bold cursor-pointer"
+                className="btn-primary w-full sm:w-auto h-10 text-xs font-bold cursor-pointer justify-center"
               >
-                {isRTL ? "حفظ وتأكيد الربط" : "Save & Confirm Assignment"}
+                <span className="truncate">{isRTL ? "حفظ وتأكيد الربط" : "Save & Confirm"}</span>
               </Button>
             </div>
           </div>

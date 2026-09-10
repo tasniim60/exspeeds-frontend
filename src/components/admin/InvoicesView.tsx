@@ -410,16 +410,16 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                 variant="brand"
                 size="sm"
                 onClick={() => window.print()}
-                className="text-xs font-bold cursor-pointer"
+                className="w-full sm:w-auto h-10 text-xs font-bold cursor-pointer justify-center"
               >
-                <Printer className="h-4 w-4" />
+                <Printer className="h-4 w-4 shrink-0" />
                 <span>{isRTL ? "طباعة الفاتورة" : "Print Official PDF"}</span>
               </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => setPrintableInvoice(null)}
-                className="text-xs cursor-pointer"
+                className="w-full sm:w-auto h-10 text-xs cursor-pointer justify-center"
               >
                 {t("common.close")}
               </Button>
@@ -431,7 +431,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
       {/* ── Record Payment Modal ── */}
       {paymentModalInvoice && (
         <Dialog open={!!paymentModalInvoice} onOpenChange={(o) => !o && setPaymentModalInvoice(null)}>
-          <DialogContent className="max-w-md text-start" onClose={() => setPaymentModalInvoice(null)}>
+          <DialogContent className="max-w-md text-start p-4 sm:p-6" onClose={() => setPaymentModalInvoice(null)}>
             <DialogHeader>
               <DialogTitle>
                 <CreditCard className="h-5 w-5 text-emerald-600" />
@@ -459,7 +459,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                 <select
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value as any)}
-                  className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700"
+                  className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700 cursor-pointer"
                 >
                   <option value="Bank Wire">{isRTL ? "تحويل بنكي" : "Bank Wire Transfer"}</option>
                   <option value="Cash on Delivery">{isRTL ? "الدفع عند الاستلام (COD)" : "Cash on Delivery (COD)"}</option>
@@ -474,7 +474,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                 type="button"
                 variant="outline"
                 onClick={() => setPaymentModalInvoice(null)}
-                className="text-xs cursor-pointer"
+                className="w-full sm:w-auto h-10 text-xs cursor-pointer justify-center"
               >
                 {t("common.cancel")}
               </Button>
@@ -482,10 +482,10 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                 type="button"
                 variant="brand"
                 onClick={handleConfirmPayment}
-                className="text-xs font-bold bg-emerald-600 hover:bg-emerald-700 cursor-pointer"
+                className="w-full sm:w-auto h-10 text-xs font-bold bg-emerald-600 hover:bg-emerald-700 cursor-pointer justify-center"
               >
-                <Check className="h-4 w-4" />
-                <span>{isRTL ? "تأكيد استلام الدفعة" : "Confirm Payment Received"}</span>
+                <Check className="h-4 w-4 shrink-0" />
+                <span className="truncate">{isRTL ? "تأكيد استلام الدفعة" : "Confirm Payment Received"}</span>
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -494,7 +494,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
 
       {/* ── Create Invoice Modal ── */}
       <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
-        <DialogContent className="max-w-xl text-start" onClose={() => setCreateModalOpen(false)}>
+        <DialogContent className="max-w-xl text-start p-4 sm:p-6" onClose={() => setCreateModalOpen(false)}>
           <DialogHeader>
             <DialogTitle>
               <FileText className="h-5 w-5 text-[#C45B2A]" />
@@ -506,7 +506,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
           </DialogHeader>
 
           <form onSubmit={handleCreateInvoice} className="space-y-3.5">
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
                   {t("admin.invoices.table.invoiceNo")}
@@ -525,7 +525,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                 <select
                   value={customerId}
                   onChange={(e) => setCustomerId(e.target.value)}
-                  className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700"
+                  className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700 cursor-pointer"
                 >
                   {customers.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -536,7 +536,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
                   {isRTL ? "رقم بوليصة الشحن (AWB)" : "Linked AWB Reference"}
@@ -562,7 +562,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
                   {t("admin.invoices.modal.subtotal")}
@@ -620,14 +620,14 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                 type="button"
                 variant="outline"
                 onClick={() => setCreateModalOpen(false)}
-                className="text-xs cursor-pointer"
+                className="w-full sm:w-auto h-10 text-xs cursor-pointer justify-center"
               >
                 {t("common.cancel")}
               </Button>
               <Button
                 type="submit"
                 variant="brand"
-                className="text-xs font-bold cursor-pointer"
+                className="w-full sm:w-auto h-10 text-xs font-bold cursor-pointer justify-center"
               >
                 {t("admin.invoices.modal.saveBtn")}
               </Button>

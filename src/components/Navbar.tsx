@@ -32,7 +32,7 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { user, logout } = useAuth();
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, locale, getLocalizedPath } = useLanguage();
 
   useEffect(() => {
     setMounted(true);
@@ -40,16 +40,16 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
 
   const handleLogout = async () => {
     await logout();
-    window.location.href = "/login";
+    window.location.href = getLocalizedPath("/login");
   };
 
   // Resolve variant: explicit prop wins, otherwise infer from the route.
   const isAuth =
     variant === "auth" ||
-    (!variant && (pathname.startsWith("/login") || pathname.startsWith("/register")));
+    (!variant && (pathname.includes("/login") || pathname.includes("/register")));
 
   // Hide public navbar inside full-screen Admin Dashboard
-  if (pathname.startsWith("/admin") || pathname.startsWith("/dashboard")) {
+  if (pathname.includes("/admin") || pathname.includes("/dashboard")) {
     return null;
   }
 
@@ -65,9 +65,9 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
   return (
     <header className="sticky top-0 z-50 bg-white/95 text-gray-900 border-b border-gray-100/90 shadow-xs backdrop-blur-md">
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 h-[68px] flex items-center justify-between">
-        <Link href="/" className="flex items-center group py-0.5">
+        <Link href={getLocalizedPath("/")} className="flex items-center group py-0.5">
           <img
-            src="/assets/xspeed_logo_earth_wide.jpg"
+            src="/assets/xspeed_logo_earth_light.jpg"
             alt="XSPEED - Fast & Secure"
             width={200}
             height={58}
@@ -78,15 +78,16 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
         {/* Desktop Navigation Links (Scaled cleanly for 1024px+ without wrapping) */}
         <nav className="hidden lg:flex items-center gap-1 xl:gap-1.5">
           {navLinks.map((link) => {
+            const localizedHref = getLocalizedPath(link.href);
             const isActive =
               link.href === "/"
-                ? pathname === "/"
-                : pathname.startsWith(link.href);
+                ? pathname === `/${locale}` || pathname === `/${locale}/` || pathname === "/"
+                : pathname.startsWith(`/${locale}${link.href}`) || pathname.startsWith(link.href);
 
             return (
               <Link
                 key={link.href}
-                href={link.href}
+                href={localizedHref}
                 className={`relative px-2.5 xl:px-4 py-2 text-xs xl:text-sm font-bold transition-all rounded-full whitespace-nowrap ${
                   isActive
                     ? "text-[#C45B2A] font-extrabold"
@@ -161,7 +162,7 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
                           {/* Menu Links */}
                           <div className="py-1.5 px-1 space-y-0.5">
                             <Link
-                              href="/profile"
+                              href={getLocalizedPath("/profile")}
                               onClick={() => setUserMenuOpen(false)}
                               className="flex items-center justify-between px-3 py-2.5 text-xs font-bold text-gray-700 hover:text-gray-950 hover:bg-gray-100 rounded-xl transition-colors"
                             >
@@ -173,7 +174,7 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
                             </Link>
 
                             <Link
-                              href="/ship"
+                              href={getLocalizedPath("/ship")}
                               onClick={() => setUserMenuOpen(false)}
                               className="flex items-center justify-between px-3 py-2.5 text-xs font-bold text-gray-700 hover:text-[#C45B2A] hover:bg-orange-50 rounded-xl transition-colors"
                             >
@@ -186,7 +187,7 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
 
                             {user.role === "admin" && (
                               <Link
-                                href="/admin"
+                                href={getLocalizedPath("/admin")}
                                 onClick={() => setUserMenuOpen(false)}
                                 className="flex items-center justify-between px-3 py-2.5 text-xs font-bold text-amber-700 hover:bg-amber-50 rounded-xl transition-colors"
                               >
@@ -223,13 +224,13 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
               ) : (
                 <div className={`flex items-center gap-2 xl:gap-3 ${isRTL ? "border-r pr-2 xl:pr-3" : "border-l pl-2 xl:pl-3"} border-gray-200`}>
                   <Link
-                    href="/login"
+                    href={getLocalizedPath("/login")}
                     className="text-xs font-bold text-gray-700 hover:text-[#C45B2A] transition-colors px-2.5 xl:px-3 py-2 hover:bg-gray-50 rounded-full whitespace-nowrap"
                   >
                     {t("nav.signIn")}
                   </Link>
                   <Link
-                    href="/register"
+                    href={getLocalizedPath("/register")}
                     className="bg-gradient-to-r from-[#C45B2A] to-[#E65100] hover:from-[#A34920] hover:to-[#C45B2A] text-white text-xs xl:text-sm font-bold py-2 xl:py-2.5 px-4 xl:px-6 rounded-full flex items-center gap-1.5 shadow-md shadow-orange-500/25 transition-all hover:scale-[1.02] cursor-pointer whitespace-nowrap"
                   >
                     <UserPlus className="w-4 h-4" />
@@ -251,7 +252,7 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
             <>
               {mounted && user ? (
                 <Link
-                  href="/profile"
+                  href={getLocalizedPath("/profile")}
                   className="flex items-center gap-2 bg-gray-50 hover:bg-gray-100 py-1.5 px-3 rounded-full border border-gray-200 text-xs font-bold text-gray-800 transition-all shadow-2xs"
                 >
                   <div className="w-6 h-6 rounded-full bg-[#C45B2A] text-white flex items-center justify-center font-black text-[11px] shrink-0">
@@ -262,13 +263,13 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
               ) : (
                 <div className="flex items-center gap-2">
                   <Link
-                    href="/login"
+                    href={getLocalizedPath("/login")}
                     className="text-xs font-bold text-gray-700 hover:text-[#C45B2A] px-2.5 py-1.5 rounded-full hover:bg-gray-50 transition-colors"
                   >
                     {t("nav.signIn")}
                   </Link>
                   <Link
-                    href="/ship"
+                    href={getLocalizedPath("/ship")}
                     className="inline-flex items-center gap-1.5 bg-gradient-to-r from-[#C45B2A] to-[#E65100] hover:from-[#A34920] hover:to-[#C45B2A] text-white text-xs font-bold py-2 px-3.5 rounded-full shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
                   >
                     <Plus className="w-3.5 h-3.5" />
@@ -312,14 +313,15 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
             {/* Navigation Links Grid: 1 col on phone, 2 cols on tablet */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
               {navLinks.map((link) => {
+                const localizedHref = getLocalizedPath(link.href);
                 const isActive =
                   link.href === "/"
-                    ? pathname === "/"
-                    : pathname.startsWith(link.href);
+                    ? pathname === `/${locale}` || pathname === `/${locale}/` || pathname === "/"
+                    : pathname.startsWith(`/${locale}${link.href}`) || pathname.startsWith(link.href);
                 return (
                   <Link
                     key={link.href}
-                    href={link.href}
+                    href={localizedHref}
                     onClick={() => setMobileOpen(false)}
                     className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold transition-all ${
                       isActive
@@ -342,7 +344,7 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
               {mounted && user ? (
                 <div className="space-y-3">
                   <Link
-                    href="/profile"
+                    href={getLocalizedPath("/profile")}
                     onClick={() => setMobileOpen(false)}
                     className="flex items-center justify-between p-3.5 bg-gray-50 hover:bg-gray-100 rounded-2xl text-xs transition-colors border border-gray-200 shadow-2xs"
                   >
@@ -363,7 +365,7 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     <Link
-                      href="/ship"
+                      href={getLocalizedPath("/ship")}
                       onClick={() => setMobileOpen(false)}
                       className="flex items-center justify-center gap-2 py-3 rounded-xl bg-[#C45B2A] text-white font-bold text-xs shadow-sm hover:bg-[#A34920] transition-colors"
                     >
@@ -373,7 +375,7 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
 
                     {user.role === "admin" ? (
                       <Link
-                        href="/admin"
+                        href={getLocalizedPath("/admin")}
                         onClick={() => setMobileOpen(false)}
                         className="flex items-center justify-center gap-2 py-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 font-bold text-xs hover:bg-amber-100 transition-colors"
                       >
@@ -397,14 +399,14 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
                 <div className="space-y-3">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                     <Link
-                      href="/login"
+                      href={getLocalizedPath("/login")}
                       onClick={() => setMobileOpen(false)}
                       className="block text-center py-3 rounded-2xl border border-gray-300 text-sm font-bold text-gray-800 hover:bg-gray-50 transition-colors"
                     >
                       {t("nav.signIn")}
                     </Link>
                     <Link
-                      href="/register"
+                      href={getLocalizedPath("/register")}
                       onClick={() => setMobileOpen(false)}
                       className="block text-center py-3 rounded-2xl bg-gradient-to-r from-[#C45B2A] to-[#E65100] text-white text-sm font-bold hover:from-[#A34920] hover:to-[#C45B2A] shadow-md shadow-orange-500/20 transition-all"
                     >

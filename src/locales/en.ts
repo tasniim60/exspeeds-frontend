@@ -226,6 +226,8 @@ export const en = {
     title: "Comprehensive Logistics Portfolio",
     subtitle: "End-to-end freight, warehousing, and customs services engineered for reliability.",
     requestQuoteBtn: "Request Quote for Service",
+    ctaShip: "Book a Shipment",
+    ctaTrack: "Track Consignment",
   },
   contact: {
     tag: "Get In Touch",
@@ -252,12 +254,12 @@ export const en = {
     successTitle: "Message Received!",
     successDesc: "Thank you for reaching out. A logistics specialist will contact you shortly.",
     info: {
-      cairoOffice: "Cairo Logistics Headquarters",
-      cairoAddress: "Building 14, Cargo Village, Cairo International Airport, Egypt",
+      cairoOffice: "Operations Headquarters",
+      cairoAddress: "7 Rokn El Safa, Off Khaled Amin, El Arish, Al Haram, Giza, Egypt",
       directPhone: "Direct Operations Desk",
       directPhoneVal: "+20 120 802 7171",
       emailSupport: "Email Support",
-      emailVal: "info@exspeeds.com",
+      emailVal: "sales@exspeeds.com",
       workingHours: "Operating Hours",
       workingHoursVal: "24/7 Dispatch Desk & Customer Support",
       whatsappDirect: "Direct WhatsApp Line",
@@ -1138,7 +1140,7 @@ export const en = {
         editAuthorProfile: "Author Profile",
         editFeaturedImage: "Featured Article Image",
         uploadNewImage: "Upload New Image",
-        editImagePlaceholder: "/assets/Home-pic1-C9kYJzAW.jpg or https://...",
+        editImagePlaceholder: "/assets/xspeed_about_showcase.jpg or https://...",
         editFullBody: "Full Article Body (HTML / Formatted Content)",
         editBodyPlaceholder: "Article paragraphs, headings (<h2>, <h3>), lists (<ul>, <li>), and blockquotes...",
         editFocusKeyword: "Focus Keyword (SEO)",
@@ -1279,7 +1281,7 @@ export const en = {
   },
   footer: {
     companySummary:
-      "XSPEED Express is Egypt and the Middle East's leading technology-driven express logistics, freight forwarding, and smart supply chain provider.",
+      "exspeeds.com is the official digital logistics platform of XSPEED Express Logistics, leading international freight forwarding, customs clearance, and supply chain solutions across Egypt and the MENA region.",
     quickLinks: "Quick Links",
     servicesTitle: "Services Portfolio",
     supportTitle: "24/7 Operations Desk",
@@ -1287,7 +1289,7 @@ export const en = {
     privacyPolicy: "Privacy Policy",
     termsOfService: "Terms of Service",
     securityPolicy: "Security Policy",
-    cairoAirportHub: "Cargo Village, Cairo Int. Airport, Egypt",
+    cairoAirportHub: "7 Rokn El Safa, Off Khaled Amin, El Arish, Al Haram, Giza, Egypt",
     directDesk: "24/7 Operations Desk: +20 120 802 7171",
   },
 };

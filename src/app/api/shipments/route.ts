@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { ServerStore } from "@/lib/serverStore";
 import { Shipment } from "@/lib/adminData";
+import { requireAdmin, getAuthenticatedUser } from "@/lib/apiAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -8,6 +9,11 @@ const LARAVEL_API_URL = process.env.NEXT_PUBLIC_LARAVEL_API_URL || "http://local
 
 export async function GET() {
   try {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     // 1. Try Laravel DB if available
     try {
       const res = await fetch(`${LARAVEL_API_URL}/admin/shipments`, {
@@ -48,6 +54,17 @@ export async function GET() {
               { status: "In Transit to Destination", location: "Cargo Terminal", timestamp: "Now", completed: true, current: true },
             ],
           }));
+
+          if (user.role !== "admin") {
+            const userEmail = (user.email || "").toLowerCase().trim();
+            const userName = (user.name || "").toLowerCase().trim();
+            const filtered = mapped.filter((s) => {
+              const comp = (s.company || s.senderName || "").toLowerCase().trim();
+              return comp.includes(userName) || comp.includes(userEmail);
+            });
+            return NextResponse.json({ success: true, data: filtered });
+          }
+
           return NextResponse.json({ success: true, data: mapped });
         }
       }
@@ -57,6 +74,16 @@ export async function GET() {
 
     // 2. Return real persisted store records
     const shipments = ServerStore.getShipments();
+    if (user.role !== "admin") {
+      const userEmail = (user.email || "").toLowerCase().trim();
+      const userName = (user.name || "").toLowerCase().trim();
+      const filtered = shipments.filter((s) => {
+        const comp = (s.company || s.senderName || "").toLowerCase().trim();
+        return comp.includes(userName) || comp.includes(userEmail);
+      });
+      return NextResponse.json({ success: true, data: filtered });
+    }
+
     return NextResponse.json({ success: true, data: shipments });
   } catch (error: any) {
     return NextResponse.json(
@@ -68,6 +95,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
+    const user = await getAuthenticatedUser();
+    if (!user) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+    }
+
     const body: Shipment = await request.json();
     if (!body.awb) {
       body.awb = `XS-${Math.floor(10000000 + Math.random() * 90000000)}`;
@@ -140,6 +172,9 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
+    const auth = await requireAdmin();
+    if ("errorResponse" in auth) return auth.errorResponse;
+
     const body = await request.json();
     const { id, ...patch } = body;
     if (!id) {
@@ -157,6 +192,9 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
+    const auth = await requireAdmin();
+    if ("errorResponse" in auth) return auth.errorResponse;
+
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
     if (!id) {

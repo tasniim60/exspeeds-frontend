@@ -4,6 +4,8 @@ export interface ShipmentRequest {
   customerId?: string;
   customerName: string;
   companyName: string;
+  serviceId?: string;
+  serviceTitle?: string;
   phone: string;
   whatsapp: string;
   email: string;
@@ -243,6 +245,17 @@ export interface NotificationItem {
   isRead: boolean;
   targetTab: string;
   referenceId?: string;
+}
+
+export interface BusinessExpense {
+  id: string;
+  title: string;
+  category: "Rent & Facilities" | "Salaries & Operations" | "Fuel & Linehaul" | "Packaging & Supplies" | "Customs & Port Demurrage" | "Software & Marketing" | "Other";
+  amount: number;
+  currency: "EGP" | "USD";
+  date: string; // ISO date string e.g. "2026-08-15"
+  notes?: string;
+  receiptNumber?: string;
 }
 
 export interface BlogPost {
@@ -2986,7 +2999,7 @@ export const initialBlogPosts: BlogPost[] = [
     focusKeyword: "automated courier dispatching",
     wordCount: 1850,
     wpEditUrl: "/wp-admin/post.php?post=101&action=edit",
-    imageUrl: "/assets/Home-pic1-C9kYJzAW.jpg",
+    imageUrl: "/assets/xspeed_about_showcase.jpg",
     excerpt: "Discover how AI-driven courier route algorithms, dynamic geofencing, and automated sorting centers reduce middle-mile transit time by up to 52%.",
     content: `
       <p class="lead">In the high-stakes world of global logistics and express air cargo, milliseconds translate directly into delivery benchmarks. As shipping volumes grow, legacy manual dispatch systems are rapidly falling behind.</p>
@@ -3015,7 +3028,7 @@ export const initialBlogPosts: BlogPost[] = [
     focusKeyword: "cold chain pharma logistics",
     wordCount: 2100,
     wpEditUrl: "/wp-admin/post.php?post=102&action=edit",
-    imageUrl: "/assets/plane-pic-7WwFXnsZ.jpg",
+    imageUrl: "/assets/xspeed_cold_chain.jpg",
     excerpt: "Maintaining unbroken 2-8°C cold chains for pharmaceutical shipments across Middle East climates using live IoT sensors and active thermal packaging.",
     content: `
       <p class="lead">Transporting sensitive biologicals, vaccines, and high-value pharmaceuticals across ambient desert temperatures exceeding 45°C demands uncompromising cold-chain rigor.</p>
@@ -3043,7 +3056,7 @@ export const initialBlogPosts: BlogPost[] = [
     focusKeyword: "egypt gcc freight customs",
     wordCount: 2400,
     wpEditUrl: "/wp-admin/post.php?post=103&action=edit",
-    imageUrl: "/assets/Home-pic2-YnTeaRfL.jpg",
+    imageUrl: "/assets/xspeed_customs_clearance.jpg",
     excerpt: "Navigating cross-border trade between Egypt, Saudi Arabia, and the UAE with expedited pre-clearance, digital documentation, and unified tariffs.",
     content: `
       <p class="lead">Cross-border freight trade between Egypt and the GCC represents one of the fastest-growing logistics corridors globally. Understanding pre-clearance protocols is essential for avoiding border friction.</p>
@@ -3084,7 +3097,7 @@ export const initialBlogPosts: BlogPost[] = [
     focusKeyword: "fast freight solutions egypt gcc",
     wordCount: 2250,
     wpEditUrl: "/wp-admin/post.php?post=105&action=edit",
-    imageUrl: "/assets/plane-pic-7WwFXnsZ.jpg",
+    imageUrl: "/assets/xspeed_plane.jpg",
     excerpt: "Comprehensive logistics strategies, air & sea express linehauls, and accelerated customs pre-clearance connecting Egypt with Saudi Arabia, UAE, and the wider GCC.",
     content: `
       <p class="lead">The trade highway connecting the Arab Republic of Egypt with the Gulf Cooperation Council (GCC) economies has entered a transformative era in 2026.</p>
@@ -3222,6 +3235,65 @@ export class AdminStorage {
   }
   static saveBlogPosts(data: BlogPost[]) {
     this.save("xspeed_admin_posts", data);
+  }
+
+  static getExpenses(): BusinessExpense[] {
+    return this.get("xspeed_admin_expenses", [
+      {
+        id: "exp-1",
+        title: "إيجار مستودع قرية البضائع - مطار القاهرة",
+        category: "Rent & Facilities",
+        amount: 4500,
+        currency: "EGP",
+        date: "2026-08-01",
+        notes: "الإيجار الشهري لمساحة المناولة الجمركية",
+        receiptNumber: "REC-2026-0801",
+      },
+      {
+        id: "exp-2",
+        title: "وقود وصيانة شاحنات النقل البري",
+        category: "Fuel & Linehaul",
+        amount: 2800,
+        currency: "EGP",
+        date: "2026-08-10",
+        notes: "كروت وقود أسطول السويس والإسكندرية",
+        receiptNumber: "REC-2026-0810",
+      },
+      {
+        id: "exp-3",
+        title: "مستلزمات تغليف وبوالص AWB وبطاقات تتبع",
+        category: "Packaging & Supplies",
+        amount: 1250,
+        currency: "EGP",
+        date: "2026-08-18",
+        notes: "كراتين مضلعة وبلاستيك هوائي وملصقات حرارية",
+        receiptNumber: "REC-2026-0818",
+      },
+      {
+        id: "exp-4",
+        title: "اشتراك سحابي لنظام نافذة وتتبع الشحنات",
+        category: "Software & Marketing",
+        amount: 1080,
+        currency: "EGP",
+        date: "2026-08-25",
+        notes: "تراخيص منصة التتبع الرقمية وتشفير البيانات",
+        receiptNumber: "REC-2026-0825",
+      },
+    ]);
+  }
+  static saveExpenses(data: BusinessExpense[]) {
+    this.save("xspeed_admin_expenses", data);
+  }
+  static addExpense(expense: BusinessExpense) {
+    const current = this.getExpenses();
+    const updated = [expense, ...current];
+    this.saveExpenses(updated);
+    return expense;
+  }
+  static deleteExpense(id: string) {
+    const current = this.getExpenses();
+    const updated = current.filter((e) => e.id !== id);
+    this.saveExpenses(updated);
   }
 }
 

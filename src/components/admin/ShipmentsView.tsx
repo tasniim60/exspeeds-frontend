@@ -6,7 +6,8 @@ import {
   Plus,
   Search,
   Filter,
-  Download,
+  FileSpreadsheet,
+  Loader2,
   Printer,
   ChevronRight,
   ChevronLeft,
@@ -86,7 +87,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
   onDeleteShipment,
   initialSelectedAwb,
 }) => {
-  const { t, isRTL, formatCurrency, formatDate } = useLanguage();
+  const { t, isRTL, formatCurrency, formatDate, formatDateTime } = useLanguage();
   const [search, setSearch] = useState("");
   const [accountFilter, setAccountFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -95,6 +96,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
   const [agentFilter, setAgentFilter] = useState<string>("all");
   const [countryFilter, setCountryFilter] = useState<string>("all");
   const [surchargeFilter, setSurchargeFilter] = useState<string>("all");
+  const [isExportingExcel, setIsExportingExcel] = useState<boolean>(false);
 
   // Modals & Drawers
   const [newModalOpen, setNewModalOpen] = useState(false);
@@ -254,120 +256,6 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
     setFormAwb(`EXP-${Math.floor(10000000 + Math.random() * 90000000)}`);
   };
 
-  const handleExportCsv = () => {
-    const arHeaders = [
-      "التاريخ",
-      "حالة الشحنة",
-      "رقم البوليصة (AWB)",
-      "اسم العميل",
-      "اسم المستلم",
-      "محتويات الشحنة",
-      "البلد المستقبِلة",
-      "الشركة الناقلة",
-      "الشركة الوسيطة",
-      "الوزن الفعلي",
-      "الطول",
-      "العرض",
-      "الارتفاع",
-      "الوزن الحجمي",
-      "الوزن النهائي",
-      "التكلفة",
-      "سعر البيع",
-      "مصاريف نقل (Trans)",
-      "صافي الربح",
-      "اسم المسجل",
-      "ملاحظات التشغيل",
-    ];
-
-    const enHeaders = [
-      "Date",
-      "Status",
-      "AWB Number",
-      "Client Account",
-      "Consignee",
-      "Contents",
-      "Destination Country",
-      "Carrier",
-      "Broker",
-      "Actual Wt (kg)",
-      "Length (cm)",
-      "Width (cm)",
-      "Height (cm)",
-      "Volumetric Wt (kg)",
-      "Final Chargeable Wt (kg)",
-      "Cost Price (EGP)",
-      "Selling Price (EGP)",
-      "Trans Expense (EGP)",
-      "Net Profit (EGP)",
-      "Agent Name",
-      "Operational Note",
-    ];
-
-    const headersList = isRTL ? arHeaders : enHeaders;
-    const headerRow = headersList.map((h) => `"${h.replace(/"/g, '""')}"`).join(",");
-
-    const dataList = filteredShipments.length > 0 ? filteredShipments : shipments;
-
-    const dataRows = dataList.map((s) => {
-      const dateStr = s.date || "";
-      const statusStr = s.status || "";
-      const awbStr = `="${s.awb || ""}"`;
-      const accountStr = s.account || s.company || "";
-      const receiverStr = s.receiverName || "";
-      const contentsStr = s.contents || "";
-      const countryStr = s.country || "";
-      const carrierStr = formatCarrierName(s.carrier);
-      const brokerStr = s.broker || "";
-      const actualWt = s.actualWeight ?? s.weight ?? 0;
-      const length = s.length ?? 0;
-      const width = s.width ?? 0;
-      const height = s.height ?? 0;
-      const volumetricWt = s.volumetricWeight ?? 0;
-      const finalWt = s.weight ?? 0;
-      const costPrice = s.costPrice ?? 0;
-      const sellingPrice = s.sellingPrice ?? s.priceEgp ?? 0;
-      const transExpense = s.transExpense ?? 0;
-      const netProfit = s.netProfit ?? (sellingPrice - costPrice - transExpense);
-      const agentStr = s.agentName || "";
-      const opNoteStr = s.opNote || "";
-
-      return [
-        `"${dateStr.replace(/"/g, '""')}"`,
-        `"${statusStr.replace(/"/g, '""')}"`,
-        awbStr,
-        `"${accountStr.replace(/"/g, '""')}"`,
-        `"${receiverStr.replace(/"/g, '""')}"`,
-        `"${contentsStr.replace(/"/g, '""')}"`,
-        `"${countryStr.replace(/"/g, '""')}"`,
-        `"${carrierStr.replace(/"/g, '""')}"`,
-        `"${brokerStr.replace(/"/g, '""')}"`,
-        actualWt,
-        length,
-        width,
-        height,
-        volumetricWt,
-        finalWt,
-        costPrice,
-        sellingPrice,
-        transExpense,
-        netProfit,
-        `"${agentStr.replace(/"/g, '""')}"`,
-        `"${opNoteStr.replace(/"/g, '""')}"`,
-      ].join(",");
-    });
-
-    const csvContent = "\uFEFF" + headerRow + "\n" + dataRows.join("\n");
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `XSPEED_Shipments_Ledger_${new Date().toISOString().split("T")[0]}.csv`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
   // Master option lists combined dynamically with shipment records
   const uniqueAccounts = useMemo(() => {
     const set = new Set([...MASTER_CLIENT_ACCOUNTS, ...shipments.map((s) => s.account || s.company).filter(Boolean)]);
@@ -517,6 +405,221 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
     setAgentFilter("all");
     setCountryFilter("all");
     setSurchargeFilter("all");
+  };
+
+  // Microsoft Excel (.xlsx) Export Handler with RTL and Numerical Precision
+  const handleExportExcel = async () => {
+    if (isExportingExcel) return;
+    try {
+      setIsExportingExcel(true);
+      const XLSX = await import("xlsx");
+      const wb = XLSX.utils.book_new();
+
+      const dataList = (hasActiveFilters || search.trim()) ? filteredShipments : shipments;
+
+      const now = new Date();
+      const nowFormattedDate = formatDate(now);
+      const nowFormattedTime = now.toLocaleTimeString(isRTL ? "ar-EG" : "en-US", { hour: "2-digit", minute: "2-digit" });
+      const nowFormatted = `${nowFormattedDate}، ${nowFormattedTime}`;
+      const docRefCode = `XS-SHP-${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, "0")}${String(now.getDate()).padStart(2, "0")}`;
+
+      const totalCount = dataList.length;
+      const totalActualWeight = dataList.reduce((acc, s) => acc + (s.actualWeight ?? s.weight ?? 0), 0);
+      const totalVolWeight = dataList.reduce((acc, s) => acc + (s.volumetricWeight ?? 0), 0);
+      const totalChargeableWeight = dataList.reduce((acc, s) => acc + (s.weight ?? 0), 0);
+      const totalCost = dataList.reduce((acc, s) => acc + (s.costPrice ?? 0), 0);
+      const totalSales = dataList.reduce((acc, s) => acc + (s.sellingPrice ?? s.priceEgp ?? 0), 0);
+      const totalTrans = dataList.reduce((acc, s) => acc + (s.transExpense ?? 0), 0);
+      const totalProfit = dataList.reduce(
+        (acc, s) => acc + (s.netProfit ?? ((s.sellingPrice ?? s.priceEgp ?? 0) - (s.costPrice ?? 0) - (s.transExpense ?? 0))),
+        0
+      );
+      const overallMarginPct = totalSales > 0 ? ((totalProfit / totalSales) * 100).toFixed(1) : "0.0";
+
+      // --- SHEET 1: Master Data Ledger (Starts directly at Row 1 for instant mobile display) ---
+      const ledgerHeaders: string[] = [
+        isRTL ? "م" : "#",
+        isRTL ? "التاريخ" : "Date",
+        isRTL ? "رقم البوليصة (AWB)" : "AWB Number",
+        isRTL ? "حالة الشحنة" : "Status",
+        isRTL ? "اسم العميل / الحساب" : "Client Account",
+        isRTL ? "اسم المستلم" : "Consignee",
+        isRTL ? "البلد المستقبِلة" : "Destination",
+        isRTL ? "الشركة الناقلة" : "Carrier",
+        isRTL ? "الشركة الوسيطة" : "Broker",
+        isRTL ? "محتويات الشحنة" : "Contents",
+        isRTL ? "الوزن الفعلي (كجم)" : "Actual Wt (kg)",
+        isRTL ? "الوزن الحجمي (كجم)" : "Volumetric Wt (kg)",
+        isRTL ? "الوزن المحتسب (كجم)" : "Chargeable Wt (kg)",
+        isRTL ? "الأبعاد (سم)" : "Dimensions (cm)",
+        isRTL ? "سعر التكلفة (EGP)" : "Cost Price (EGP)",
+        isRTL ? "سعر البيع (EGP)" : "Selling Price (EGP)",
+        isRTL ? "مصاريف النقل (EGP)" : "Trans Expense (EGP)",
+        isRTL ? "صافي الربح (EGP)" : "Net Profit (EGP)",
+        isRTL ? "نسبة هامش الربح" : "Profit Margin %",
+        isRTL ? "المسؤول / المسجل" : "Agent Name",
+        isRTL ? "ملاحظات التشغيل" : "Operational Notes"
+      ];
+
+      const ledgerRows: (string | number)[][] = [ledgerHeaders];
+
+      dataList.forEach((s, idx) => {
+        const selling = s.sellingPrice ?? s.priceEgp ?? 0;
+        const cost = s.costPrice ?? 0;
+        const trans = s.transExpense ?? 0;
+        const profit = s.netProfit ?? (selling - cost - trans);
+        const margin = selling > 0 ? ((profit / selling) * 100).toFixed(1) + "%" : "0%";
+        const dimStr = s.dim || (s.length && s.width && s.height ? `${s.length}x${s.width}x${s.height} cm` : "");
+
+        ledgerRows.push([
+          idx + 1,
+          s.date || "",
+          s.awb || "",
+          s.status || "",
+          s.account || s.company || "",
+          s.receiverName || "",
+          s.country || "",
+          formatCarrierName(s.carrier),
+          s.broker || "XSpeed",
+          s.contents || "",
+          Number((s.actualWeight ?? s.weight ?? 0).toFixed(2)),
+          Number((s.volumetricWeight ?? 0).toFixed(2)),
+          Number((s.weight ?? 0).toFixed(2)),
+          dimStr,
+          Number(cost.toFixed(2)),
+          Number(selling.toFixed(2)),
+          Number(trans.toFixed(2)),
+          Number(profit.toFixed(2)),
+          margin,
+          s.agentName || "",
+          s.opNote || ""
+        ]);
+      });
+
+      // Consolidated Grand Total Row at bottom of table
+      ledgerRows.push([
+        isRTL ? "المجموع" : "Total",
+        isRTL ? "المجموع الكلي الإجمالي (Grand Total)" : "Consolidated Grand Total",
+        `${totalCount} ${isRTL ? "شحنة" : "Shipments"}`,
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        "",
+        Number(totalActualWeight.toFixed(2)),
+        Number(totalVolWeight.toFixed(2)),
+        Number(totalChargeableWeight.toFixed(2)),
+        "",
+        Number(totalCost.toFixed(2)),
+        Number(totalSales.toFixed(2)),
+        Number(totalTrans.toFixed(2)),
+        Number(totalProfit.toFixed(2)),
+        `${overallMarginPct}%`,
+        "",
+        ""
+      ]);
+
+      const wsLedger = XLSX.utils.aoa_to_sheet(ledgerRows);
+
+      // Set optimal column widths
+      wsLedger["!cols"] = [
+        { wch: 6 },   // م
+        { wch: 18 },  // التاريخ
+        { wch: 22 },  // رقم البوليصة
+        { wch: 16 },  // حالة الشحنة
+        { wch: 28 },  // اسم العميل / الحساب
+        { wch: 24 },  // اسم المستلم
+        { wch: 18 },  // البلد المستقبِلة
+        { wch: 16 },  // الشركة الناقلة
+        { wch: 14 },  // الشركة الوسيطة
+        { wch: 22 },  // محتويات الشحنة
+        { wch: 16 },  // الوزن الفعلي
+        { wch: 16 },  // الوزن الحجمي
+        { wch: 18 },  // الوزن المحتسب
+        { wch: 16 },  // الأبعاد
+        { wch: 16 },  // سعر التكلفة
+        { wch: 16 },  // سعر البيع
+        { wch: 18 },  // مصاريف النقل
+        { wch: 18 },  // صافي الربح
+        { wch: 16 },  // نسبة هامش الربح
+        { wch: 18 },  // المسؤول / المسجل
+        { wch: 30 },  // ملاحظات التشغيل
+      ];
+
+      XLSX.utils.book_append_sheet(wb, wsLedger, isRTL ? "سجل الشحنات والعمليات" : "Shipments Ledger");
+
+      // --- SHEET 2: Executive Summary & KPIs ---
+      const summaryRows: (string | number)[][] = [
+        [isRTL ? "شركة إكس سبيد لخدمات الشحن السريع واللوجستيات | XSPEED EXPRESS LOGISTICS" : "XSPEED Express Freight & Logistics Operations"],
+        [isRTL ? "ملخص المؤشرات التشغيلية والمالية للشحنات (Operational & Financial KPIs)" : "Operational & Financial KPI Summary"],
+        [],
+        [isRTL ? "معلومات السجل والفلترة الحالية" : "Record Metadata & Scope"],
+        [
+          isRTL ? "الرقم المرجعي للوثيقة:" : "Document Reference:",
+          docRefCode
+        ],
+        [
+          isRTL ? "تاريخ ووقت الإصدار:" : "Issue Date & Time:",
+          nowFormatted
+        ],
+        [
+          isRTL ? "حساب العميل المحدد:" : "Client Filter:",
+          accountFilter !== "all" ? accountFilter : (isRTL ? "كافة الحسابات (الكل)" : "All Client Accounts")
+        ],
+        [
+          isRTL ? "الشركة الناقلة:" : "Carrier Filter:",
+          carrierFilter !== "all" ? carrierFilter : (isRTL ? "كافة الخطوط والناقلين" : "All Carriers")
+        ],
+        [
+          isRTL ? "حالة الشحنة المحددة:" : "Status Filter:",
+          statusFilter !== "all" ? statusFilter : (isRTL ? "كافة الحالات" : "All Statuses")
+        ],
+        [
+          isRTL ? "الوجهة / الدولة:" : "Destination Country:",
+          countryFilter !== "all" ? countryFilter : (isRTL ? "كافة الوجهات" : "All Destinations")
+        ],
+        [
+          isRTL ? "إجمالي الشحنات المضمنة:" : "Exported Records:",
+          `${totalCount} ${isRTL ? "شحنة مسجلة" : "Shipments"}`
+        ],
+        [
+          isRTL ? "العملة الرسمية:" : "Currency:",
+          isRTL ? "جنيه مصري (EGP)" : "Egyptian Pound (EGP)"
+        ],
+        [],
+        [isRTL ? "المؤشر التشغيلي / المالي" : "Metric / Indicator", isRTL ? "القيمة" : "Amount / Value", isRTL ? "الوحدة / الملاحظات" : "Unit / Notes"],
+        [isRTL ? "إجمالي عدد بوالص الشحن" : "Total Shipments Count", totalCount, isRTL ? "بوليصة شحن مسجلة" : "Registered AWBs"],
+        [isRTL ? "إجمالي الوزن الفعلي (Actual Weight)" : "Total Actual Weight", Number(totalActualWeight.toFixed(2)), isRTL ? "كجم إجمالي" : "KG Total"],
+        [isRTL ? "إجمالي الوزن الحجمي (Volumetric Weight)" : "Total Volumetric Weight", Number(totalVolWeight.toFixed(2)), isRTL ? "كجم حجمي" : "Volumetric KG"],
+        [isRTL ? "إجمالي الوزن المحتسب (Chargeable Weight)" : "Total Chargeable Weight", Number(totalChargeableWeight.toFixed(2)), isRTL ? "كجم خاضع للفوترة" : "Billable KG"],
+        [isRTL ? "إجمالي المبيعات المحصلة (Gross Billed Sales)" : "Total Billed Sales", Number(totalSales.toFixed(2)), isRTL ? "100% إجمالي فواتير الشحن" : "100% Gross Revenue"],
+        [isRTL ? "إجمالي التكلفة المباشرة (Direct Costs)" : "Total Direct Costs", Number(totalCost.toFixed(2)), `${totalSales > 0 ? ((totalCost / totalSales) * 100).toFixed(1) : 0}% ${isRTL ? "من المبيعات" : "of Sales"}`],
+        [isRTL ? "إجمالي مصاريف النقل (Transport Expense)" : "Total Transport Expense", Number(totalTrans.toFixed(2)), `${totalSales > 0 ? ((totalTrans / totalSales) * 100).toFixed(1) : 0}% ${isRTL ? "من المبيعات" : "of Sales"}`],
+        [isRTL ? "صافي الربح الإجمالي المحقق (Net Profit)" : "Total Net Profit", Number(totalProfit.toFixed(2)), `${isRTL ? "هامش الربح:" : "Net Margin:"} ${overallMarginPct}%`]
+      ];
+
+      const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+      wsSummary["!cols"] = [
+        { wch: 38 },
+        { wch: 24 },
+        { wch: 28 }
+      ];
+
+      XLSX.utils.book_append_sheet(wb, wsSummary, isRTL ? "ملخص المؤشرات" : "KPI Summary");
+
+      // Set Right-to-Left (RTL) for Arabic sheets
+      wb.Workbook = { Views: [{ RTL: isRTL }] };
+
+      const dateStamp = new Date().toISOString().split("T")[0];
+      const fileName = `XSPEED_Shipments_Ledger_${dateStamp}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    } catch (error) {
+      console.error("Excel generation error:", error);
+    } finally {
+      setIsExportingExcel(false);
+    }
   };
 
   // Pagination State
@@ -884,12 +987,20 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
 
             <Button
               size="sm"
-              variant="outline"
-              onClick={handleExportCsv}
-              className="h-11 px-4 text-xs font-bold border-gray-200 text-gray-800 bg-white hover:bg-gray-50 rounded-xl flex items-center gap-2 cursor-pointer shadow-2xs"
+              onClick={handleExportExcel}
+              disabled={isExportingExcel}
+              className="h-11 px-4 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs gap-2 rounded-xl cursor-pointer disabled:opacity-70 shadow-xs transition-colors"
             >
-              <Download className="h-4 w-4 text-[#C45B2A]" />
-              <span>{t("admin.shipments.exportCsv")}</span>
+              {isExportingExcel ? (
+                <Loader2 className="h-4 w-4 animate-spin text-white" />
+              ) : (
+                <FileSpreadsheet className="h-4 w-4 text-emerald-200" />
+              )}
+              <span>
+                {isExportingExcel
+                  ? (isRTL ? "جاري التجهيز..." : "Exporting Excel...")
+                  : (isRTL ? "تصدير إكسل (Excel)" : "Export Excel (.xlsx)")}
+              </span>
             </Button>
 
             <Button
@@ -1156,7 +1267,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                       {/* 1. التاريخ */}
                       <TableCell className="py-3 px-3 text-start whitespace-nowrap">
                         <span className="font-mono text-gray-600 bg-gray-50 border border-gray-200/80 px-2 py-0.5 rounded-md font-semibold text-[11px] inline-block" dir="ltr">
-                          {s.date?.split(" ")[0] || s.date}
+                          {formatDate(s.date) || s.date?.split(" ")[0] || s.date}
                         </span>
                       </TableCell>
 
@@ -1496,7 +1607,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
       {/* ─── 5. CENTERED DIALOG MODAL: INSPECT SHIPMENT DETAILS ─── */}
       <Dialog open={!!inspectShipment} onOpenChange={(open) => !open && setInspectShipment(null)}>
         {inspectShipment && (
-          <DialogContent className="max-w-3xl space-y-6 text-start p-6">
+          <DialogContent className="max-w-3xl space-y-4 sm:space-y-6 text-start p-4 sm:p-6">
             {/* Modal Header */}
             <div className="flex justify-between items-start border-b border-gray-100 pb-4">
               <div>
@@ -1512,7 +1623,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                   {inspectShipment.awb}
                 </h3>
                 <p className="text-xs text-gray-500 mt-0.5">
-                  {inspectShipment.date} • {formatCarrierName(inspectShipment.carrier)}
+                  {formatDateTime(inspectShipment.date) || inspectShipment.date} • {formatCarrierName(inspectShipment.carrier)}
                 </p>
               </div>
 
@@ -1633,7 +1744,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500">{isRTL ? "تاريخ ووقت القيد:" : "Recorded At:"}</span>
-                    <span className="font-mono text-gray-700" dir="ltr">{inspectShipment.date}</span>
+                    <span className="font-mono text-gray-700" dir="ltr">{formatDateTime(inspectShipment.date) || inspectShipment.date}</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-gray-500">{isRTL ? "حالة التسليم الحالية:" : "Delivery Status:"}</span>
@@ -1683,7 +1794,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                 type="button"
                 variant="outline"
                 onClick={() => setInspectShipment(null)}
-                className="h-10 px-6 rounded-xl font-bold border-gray-300 text-gray-800 hover:bg-gray-100 cursor-pointer shadow-2xs"
+                className="w-full sm:w-auto h-10 px-6 rounded-xl font-bold border-gray-300 text-gray-800 hover:bg-gray-100 cursor-pointer shadow-2xs justify-center text-xs sm:text-sm"
               >
                 {isRTL ? "إلغاء" : "Close"}
               </Button>
@@ -1694,7 +1805,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
 
       {/* ─── 6. MODAL: BOOK / REGISTER NEW OPERATIONAL SHIPMENT ─── */}
       <Dialog open={newModalOpen} onOpenChange={setNewModalOpen}>
-        <DialogContent className="max-w-2xl text-start" onClose={() => setNewModalOpen(false)}>
+        <DialogContent className="max-w-2xl text-start p-4 sm:p-6" onClose={() => setNewModalOpen(false)}>
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-gray-900">
               {t("admin.shipments.modal.createTitle")}
@@ -1835,11 +1946,17 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                       isRTL ? "pr-3 pl-8 text-right" : "pl-3 pr-8 text-left"
                     }`}
                   >
-                    <option value="Express">Express</option>
+                     <option value="Express">Express</option>
                     <option value="FEDEX">FedEx Priority</option>
                     <option value="Aramex">Aramex Air</option>
                     <option value="SMSA Express">SMSA Express</option>
-                    <option value="XSPEED Express">XSPEED Express</option>
+                    <option value="UPS">UPS</option>
+                    <option value="TNT Express">TNT Express</option>
+                    <option value="DB Schenker USA">DB Schenker USA</option>
+                    <option value="Container Tracking">Container Tracking</option>
+                    <option value="Bill Of Lading (B/L)">Bill Of Lading (B/L)</option>
+                    <option value="Post/EMS (with USPS)">Post/EMS (with USPS)</option>
+                    <option value="Air Cargo">Air Cargo</option>
                     <option value="Other">شركة شحن أخرى (Other)</option>
                   </select>
                   <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
@@ -1865,11 +1982,11 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
             </div>
 
             {/* Grid 4: Weights & Dimensions */}
-            <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 space-y-2.5">
+            <div className="bg-gray-50 p-3.5 sm:p-4 rounded-xl border border-gray-200 space-y-2.5">
               <span className="font-bold text-gray-900 text-xs block">
                 {t("admin.shipments.modal.weightDimSection")}
               </span>
-              <div className="grid grid-cols-4 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 <div>
                   <label className="text-[10px] text-gray-500 font-bold block mb-1">{t("admin.shipments.modal.actualWeightLabel")}</label>
                   <Input
@@ -1926,11 +2043,11 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
             </div>
 
             {/* Grid 5: Cost, Selling & Net Profit Breakdown */}
-            <div className="bg-emerald-50/60 p-4 rounded-xl border border-emerald-200 space-y-2.5">
+            <div className="bg-emerald-50/60 p-3.5 sm:p-4 rounded-xl border border-emerald-200 space-y-2.5">
               <span className="font-bold text-emerald-950 text-xs block">
                 {t("admin.shipments.modal.financialSection")}
               </span>
-              <div className="grid grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                 <div>
                   <label className="text-[10px] text-gray-700 font-bold block mb-1">{t("admin.shipments.modal.costPriceLabel")}</label>
                   <Input
@@ -1991,11 +2108,11 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
               </div>
             </div>
 
-            <DialogFooter className="pt-2 gap-2">
-              <Button type="button" variant="outline" onClick={() => setNewModalOpen(false)} className="rounded-xl font-bold">
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" onClick={() => setNewModalOpen(false)} className="rounded-xl font-bold h-10 w-full sm:w-auto justify-center text-xs sm:text-sm">
                 {t("admin.shipments.modal.cancelBtn")}
               </Button>
-              <Button type="submit" variant="brand" className="rounded-xl font-extrabold bg-[#C45B2A] hover:bg-[#A8481B] text-white">
+              <Button type="submit" variant="brand" className="rounded-xl font-extrabold bg-[#C45B2A] hover:bg-[#A8481B] text-white h-10 w-full sm:w-auto justify-center text-xs sm:text-sm">
                 {t("admin.shipments.modal.registerBtn")}
               </Button>
             </DialogFooter>

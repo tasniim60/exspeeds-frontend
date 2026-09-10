@@ -48,7 +48,10 @@ export async function PUT(request: Request) {
         : "Profile information updated successfully!",
     });
 
+    const isProduction = process.env.NODE_ENV === "production";
     response.cookies.set("xspeed_session", encodeURIComponent(sessionPayload), {
+      httpOnly: true,
+      secure: isProduction,
       path: "/",
       maxAge: 604800,
       sameSite: "lax",

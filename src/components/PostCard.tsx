@@ -2,15 +2,29 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { WPPost } from "@/lib/wordpress";
 import { useLanguage } from "@/context/LanguageContext";
+import { sanitizeHtml } from "@/lib/sanitize";
 import { Calendar, Clock, ArrowRight, User } from "lucide-react";
 
 export default function PostCard({ post }: { post: WPPost }) {
-  const { t, isRTL } = useLanguage();
+  const router = useRouter();
+  const { t, isRTL, getLocalizedPath } = useLanguage();
   const [imgSrc, setImgSrc] = useState(
     post.featured_image_url || "/assets/xspeed_about_showcase.jpg"
   );
+
+  const handleCardClick = () => {
+    router.push(getLocalizedPath(`/blog/${post.slug}`));
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleCardClick();
+    }
+  };
 
   const publishDateObj = post.date ? new Date(post.date) : null;
   const hasValidDate = Boolean(publishDateObj && !isNaN(publishDateObj.getTime()));
@@ -56,7 +70,14 @@ export default function PostCard({ post }: { post: WPPost }) {
   };
 
   return (
-    <article className="bg-white/95 backdrop-blur-md rounded-[28px] border border-orange-100/90 overflow-hidden shadow-[0_10px_30px_rgba(37,21,22,0.04)] hover:shadow-[0_20px_50px_rgba(196,91,42,0.12)] hover:border-[#C45B2A]/40 transition-all duration-300 flex flex-col group text-start">
+    <article
+      className="bg-white/95 backdrop-blur-md rounded-[28px] border border-orange-100/90 overflow-hidden shadow-[0_10px_30px_rgba(37,21,22,0.04)] hover:shadow-[0_20px_50px_rgba(196,91,42,0.12)] hover:border-[#C45B2A]/40 transition-all duration-300 flex flex-col group text-start cursor-pointer"
+      onClick={handleCardClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={0}
+      role="link"
+      aria-label={typeof post.title.rendered === "string" ? post.title.rendered.replace(/<[^>]*>/g, "") : "Open blog post"}
+    >
       {/* Featured Image */}
       <div className="relative h-56 w-full bg-gray-100 overflow-hidden">
         <img
@@ -107,15 +128,18 @@ export default function PostCard({ post }: { post: WPPost }) {
 
           {/* Title */}
           <h3 className="text-lg sm:text-xl font-display font-black text-gray-950 leading-snug tracking-tight group-hover:text-[#C45B2A] transition-colors">
-            <Link href={`/blog/${post.slug}`}>
-              <span dangerouslySetInnerHTML={{ __html: post.title.rendered }} />
+            <Link
+              href={getLocalizedPath(`/blog/${post.slug}`)}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.title.rendered) }} />
             </Link>
           </h3>
 
           {/* Excerpt */}
           <p
             className="text-xs sm:text-sm text-gray-600 line-clamp-3 leading-relaxed font-medium"
-            dangerouslySetInnerHTML={{ __html: rawExcerpt }}
+            dangerouslySetInnerHTML={{ __html: sanitizeHtml(rawExcerpt) }}
           />
         </div>
 
@@ -131,7 +155,8 @@ export default function PostCard({ post }: { post: WPPost }) {
           </div>
 
           <Link
-            href={`/blog/${post.slug}`}
+            href={getLocalizedPath(`/blog/${post.slug}`)}
+            onClick={(e) => e.stopPropagation()}
             className="inline-flex items-center gap-1.5 text-xs font-bold text-[#C45B2A] hover:text-[#A34920] transition-colors group-hover:translate-x-1"
           >
             <span>{t("blogPage.readArticle") || (isRTL ? "اقرأ المقال" : "Read Article")}</span>

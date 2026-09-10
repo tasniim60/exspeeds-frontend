@@ -38,6 +38,7 @@ import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/compone
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { BlogPost } from "@/lib/adminData";
 import { useLanguage } from "@/context/LanguageContext";
+import { RichPostEditor } from "@/components/admin/RichPostEditor";
 
 interface PostsViewProps {
   posts: BlogPost[];
@@ -48,53 +49,60 @@ interface PostsViewProps {
 
 const LOGISTICS_IMAGE_PRESETS = [
   {
-    id: "courier",
-    label: "Courier Delivery",
-    tag: "Last-Mile",
-    url: "/assets/Home-pic1-C9kYJzAW.jpg",
-    description: "Door-to-door express parcel courier",
+    id: "air",
+    label: "Air Cargo Express",
+    tag: "Priority Air",
+    url: "/assets/xspeed_plane.jpg",
+    description: "Priority air freighter & runway jet operations",
+  },
+  {
+    id: "ocean_multimodal",
+    label: "Ocean & Linehaul",
+    tag: "Multimodal",
+    url: "/assets/xspeed_ship_truck.jpg",
+    description: "Container freight vessel & highway fleet",
+  },
+  {
+    id: "smart_warehouse",
+    label: "Smart Warehousing",
+    tag: "Fulfillment",
+    url: "/assets/xspeed_boxes.jpg",
+    description: "High-density automated racking & pallet storage",
+  },
+  {
+    id: "customs",
+    label: "Customs Clearance",
+    tag: "Trade & Duty",
+    url: "/assets/xspeed_customs_clearance.jpg",
+    description: "Airport cargo inspection & digital Nafeza manifests",
+  },
+  {
+    id: "ecom",
+    label: "eCommerce Fulfillment",
+    tag: "Sorting & COD",
+    url: "/assets/xspeed_ecom_fulfillment.jpg",
+    description: "Automated conveyor sorting & fast dispatch bays",
+  },
+  {
+    id: "cold_chain",
+    label: "Pharma Cold Chain",
+    tag: "Healthcare",
+    url: "/assets/xspeed_cold_chain.jpg",
+    description: "Temperature-controlled active telemetry containers",
+  },
+  {
+    id: "operations",
+    label: "Operations Hub",
+    tag: "Cross-Docking",
+    url: "/assets/xspeed_about_showcase.jpg",
+    description: "Logistics control center & parcel handling",
   },
   {
     id: "fleet",
-    label: "Cargo Fleet",
-    tag: "Linehaul",
-    url: "/assets/Home-pic2-YnTeaRfL.jpg",
-    description: "Intercity freight trucks & road transit",
-  },
-  {
-    id: "air",
-    label: "Air Cargo",
-    tag: "Priority Air",
-    url: "/assets/plane-pic-7WwFXnsZ.jpg",
-    description: "Priority air freight & cargo aircraft",
-  },
-  {
-    id: "warehouse",
-    label: "Smart Warehouse",
-    tag: "Storage",
-    url: "/assets/bg-home-BYMxMBP3.jpg",
-    description: "Automated racking & fulfillment facility",
-  },
-  {
-    id: "freight1",
-    label: "Global Freight",
+    label: "Linehaul Fleet",
     tag: "Cross-Border",
-    url: "/assets/CardImg1-CdBNo1i7.Jpg",
-    description: "Multimodal logistics & customs clearance",
-  },
-  {
-    id: "freight2",
-    label: "Logistics Hub",
-    tag: "Dispatch",
-    url: "/assets/cardImg2-Dm2V1F7w.Jpg",
-    description: "Sorting terminal & express cross-docking",
-  },
-  {
-    id: "freight3",
-    label: "Ocean & Air",
-    tag: "Heavy Cargo",
-    url: "/assets/cardImg3-DBReHElf.Jpg",
-    description: "Container freight & oversized shipments",
+    url: "/assets/bg-home-BYMxMBP3.jpg",
+    description: "GPS-monitored intercity highway transport",
   },
 ];
 
@@ -126,7 +134,8 @@ export const PostsView: React.FC<PostsViewProps> = ({
   const [focusKeyword, setFocusKeyword] = useState("");
   const [metaDesc, setMetaDesc] = useState("");
   const [content, setContent] = useState("");
-  const [imageUrl, setImageUrl] = useState("/assets/Home-pic1-C9kYJzAW.jpg");
+  const [imageUrl, setImageUrl] = useState("/assets/xspeed_about_showcase.jpg");
+  const [postStatus, setPostStatus] = useState<"published" | "draft">("published");
 
   // Live Auto-Generated Slug
   const computedSlug = useMemo(() => {
@@ -236,8 +245,8 @@ export const PostsView: React.FC<PostsViewProps> = ({
     reader.readAsDataURL(file);
   };
 
-  const handleCreatePost = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreatePost = async (e?: React.FormEvent, targetStatus: "published" | "draft" = postStatus) => {
+    if (e) e.preventDefault();
     setIsPublishing(true);
 
     const finalSlug = computedSlug || `article-${Date.now()}`;
@@ -252,7 +261,8 @@ export const PostsView: React.FC<PostsViewProps> = ({
       excerpt: metaDesc || `${title}. Analysis and logistics insights.`,
       content: content || `<p>${title}. Comprehensive industry analysis by <strong>${author}</strong> covering <em>${focusKeyword}</em>.</p>`,
       seoScore: seoAudit.score,
-      imageUrl: imageUrl || "/assets/Home-pic1-C9kYJzAW.jpg",
+      status: targetStatus,
+      imageUrl: imageUrl || "/assets/xspeed_about_showcase.jpg",
     };
 
     try {
@@ -271,13 +281,13 @@ export const PostsView: React.FC<PostsViewProps> = ({
         author: author,
         category: category,
         date: new Date().toISOString(),
-        status: "published",
+        status: targetStatus,
         views: 1,
         seoScore: seoAudit.score,
         focusKeyword: payload.focusKeyword,
         wordCount: wordCountTotal,
         wpEditUrl: `/wp-admin/post.php?post=${data.wpId || 101}&action=edit`,
-        imageUrl: imageUrl || "/assets/Home-pic1-C9kYJzAW.jpg",
+        imageUrl: imageUrl || "/assets/xspeed_about_showcase.jpg",
         excerpt: payload.excerpt,
         content: payload.content,
       };
@@ -292,13 +302,13 @@ export const PostsView: React.FC<PostsViewProps> = ({
         author: author,
         category: category,
         date: new Date().toISOString(),
-        status: "published",
+        status: targetStatus,
         views: 1,
         seoScore: seoAudit.score,
         focusKeyword: payload.focusKeyword,
         wordCount: wordCountTotal,
         wpEditUrl: `/wp-admin/post-new.php`,
-        imageUrl: imageUrl || "/assets/Home-pic1-C9kYJzAW.jpg",
+        imageUrl: imageUrl || "/assets/xspeed_about_showcase.jpg",
         excerpt: payload.excerpt,
         content: payload.content,
       };
@@ -313,8 +323,9 @@ export const PostsView: React.FC<PostsViewProps> = ({
       setFocusKeyword("");
       setMetaDesc("");
       setContent("");
-      setImageUrl("/assets/Home-pic1-C9kYJzAW.jpg");
+      setImageUrl("/assets/xspeed_about_showcase.jpg");
       setCreateModalTab("content");
+      setPostStatus("published");
     }
   };
 
@@ -515,7 +526,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
                       <div className="flex items-center gap-3">
                         <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-gray-200 bg-gray-100 shadow-2xs">
                           <img
-                            src={post.imageUrl || "/assets/Home-pic1-C9kYJzAW.jpg"}
+                            src={post.imageUrl || "/assets/xspeed_about_showcase.jpg"}
                             alt={post.title}
                             className="w-full h-full object-cover"
                           />
@@ -838,7 +849,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
                       </div>
                       <button
                         type="button"
-                        onClick={() => setImageUrl("/assets/Home-pic1-C9kYJzAW.jpg")}
+                        onClick={() => setImageUrl("/assets/xspeed_about_showcase.jpg")}
                         className="p-1 rounded-lg text-gray-400 hover:text-red-600 hover:bg-gray-100 transition-colors"
                         title={isRTL ? "إعادة تعيين للصورة الافتراضية" : "Reset to default image"}
                       >
@@ -973,42 +984,19 @@ export const PostsView: React.FC<PostsViewProps> = ({
                   </div>
 
                   {/* Article Body Content */}
-                  <div>
-                    <div className="flex items-center justify-between mb-1.5">
-                      <label className="block text-[11px] font-bold uppercase text-gray-700">
-                        {isRTL ? "محتوى المقال والتحليل اللوجستي" : "Article Body & Logistics Analysis"} <span className="text-red-500">*</span>
-                      </label>
-                      <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
-                        <span>{isRTL ? "أدوات التنسيق:" : "Formatting Helpers:"}</span>
-                        <button
-                          type="button"
-                          onClick={() => setContent((prev) => prev + (isRTL ? `\n<h2>النتائج الاستراتيجية الرئيسية</h2>\n<p>تفاصيل التحليل اللوجستي...</p>` : `\n<h2>Key Strategic Finding</h2>\n<p>Analysis details...</p>`))}
-                          className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded font-semibold text-gray-700 cursor-pointer"
-                        >
-                          {isRTL ? "+ عنوان H2" : "+ H2 Heading"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setContent((prev) => prev + (isRTL ? `\n<ul>\n  <li><strong>النقطة الأولى:</strong> الوصف والتفاصيل</li>\n  <li><strong>النقطة الثانية:</strong> الوصف والتفاصيل</li>\n</ul>` : `\n<ul>\n  <li><strong>Point 1:</strong> Description</li>\n  <li><strong>Point 2:</strong> Description</li>\n</ul>`))}
-                          className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded font-semibold text-gray-700 cursor-pointer"
-                        >
-                          {isRTL ? "+ قائمة نقطية" : "+ Bullet List"}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setContent((prev) => prev + (isRTL ? `\n<blockquote>\n  "الكفاءة اللوجستية هي الركيزة الأساسية للتجارة الدولية وسلاسل الإمداد."\n</blockquote>` : `\n<blockquote>\n  "Logistics efficiency is the backbone of global commerce."\n</blockquote>`))}
-                          className="px-1.5 py-0.5 bg-gray-100 hover:bg-gray-200 rounded font-semibold text-gray-700 cursor-pointer"
-                        >
-                          {isRTL ? "+ اقتباس" : "+ Quote"}
-                        </button>
-                      </div>
-                    </div>
-                    <textarea
-                      rows={8}
+                  <div className="space-y-2">
+                    <label className="block text-[11px] font-bold uppercase text-gray-700">
+                      {isRTL ? "محتوى المقال والتحليل اللوجستي" : "Article Body & Logistics Analysis"} <span className="text-red-500">*</span>
+                    </label>
+                    <RichPostEditor
                       value={content}
-                      onChange={(e) => setContent(e.target.value)}
-                      placeholder={isRTL ? "اكتب ملخص المقال، رؤى لوجستية، نقاط رئيسية، ومقاييس التوصيل الإقليمي..." : "Write your article summary, logistics insights, key takeaways, and regional delivery metrics..."}
-                      className="w-full rounded-xl border border-gray-200 bg-white p-3 text-xs font-normal text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-[#C45B2A] leading-relaxed"
+                      onChange={setContent}
+                      placeholder={
+                        isRTL
+                          ? "اكتب محتوى المقال، الرؤى اللوجستية، والتحليلات. استخدم أزرار شريط الأدوات لإضافة العناوين، الجداول، والصور..."
+                          : "Write article content, logistics intelligence, and strategic insights. Use toolbar buttons to format headings, tables, and images..."
+                      }
+                      minHeight="260px"
                     />
                   </div>
                 </div>
@@ -1144,8 +1132,8 @@ export const PostsView: React.FC<PostsViewProps> = ({
             </div>
 
             {/* Fixed Sticky Footer */}
-            <div className="px-6 py-3 border-t border-gray-100 bg-gray-50/80 backdrop-blur-xs flex items-center justify-between shrink-0">
-              <div className="flex items-center gap-4 text-xs text-gray-500">
+            <div className="px-4 sm:px-6 py-3 border-t border-gray-100 bg-gray-50/80 backdrop-blur-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 shrink-0">
+              <div className="hidden sm:flex items-center gap-4 text-xs text-gray-500">
                 <span className="flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5 text-gray-400" />
                   <span>{Math.max(1, Math.ceil(seoAudit.words / 200))} {isRTL ? "دقيقة قراءة" : "min read"}</span>
@@ -1154,46 +1142,59 @@ export const PostsView: React.FC<PostsViewProps> = ({
                 <span>{seoAudit.words} {isRTL ? "كلمة" : "words"}</span>
               </div>
 
-              <div className="flex items-center gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-2 w-full sm:w-auto">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setNewModalOpen(false)}
-                  className="text-xs cursor-pointer"
+                  className="w-full sm:w-auto h-10 text-xs cursor-pointer justify-center"
                 >
                   {isRTL ? "إلغاء" : "Cancel"}
                 </Button>
 
-                {createModalTab === "content" && (
+                {createModalTab === "content" ? (
                   <Button
                     type="button"
                     variant="outline"
                     onClick={() => setCreateModalTab("seo")}
-                    className="text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                    className="w-full sm:w-auto h-10 text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer"
                   >
                     <span>{isRTL ? "SEO والمعاينة" : "SEO & Preview"}</span>
-                    <ChevronRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
+                    <ChevronRight className={`w-3.5 h-3.5 shrink-0 ${isRTL ? "rotate-180" : ""}`} />
                   </Button>
-                )}
+                ) : (
+                  <>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      disabled={isPublishing}
+                      onClick={() => handleCreatePost(undefined, "draft")}
+                      className="w-full sm:w-auto h-10 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer text-gray-700 hover:bg-gray-100"
+                    >
+                      <span>{isRTL ? "حفظ كمسودة" : "Save as Draft"}</span>
+                    </Button>
 
-                <Button
-                  type="submit"
-                  variant="brand"
-                  disabled={isPublishing}
-                  className="text-xs font-bold flex items-center gap-1.5 cursor-pointer"
-                >
-                  {isPublishing ? (
-                    <>
-                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span>{isRTL ? "جاري المزامنة والنشر..." : "Syncing & Publishing..."}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-3.5 w-3.5" />
-                      <span>{isRTL ? "نشر ومزامنة مع قاعدة البيانات" : "Publish & Sync to Database"}</span>
-                    </>
-                  )}
-                </Button>
+                    <Button
+                      type="submit"
+                      variant="brand"
+                      disabled={isPublishing}
+                      onClick={() => setPostStatus("published")}
+                      className="w-full sm:w-auto h-10 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                    >
+                      {isPublishing ? (
+                        <>
+                          <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                          <span className="truncate">{isRTL ? "جاري النشر..." : "Publishing..."}</span>
+                        </>
+                      ) : (
+                        <>
+                          <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                          <span className="truncate">{isRTL ? "نشر ومزامنة" : "Publish & Sync"}</span>
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </form>
@@ -1366,7 +1367,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
                       <div className="flex items-center gap-3 bg-white p-2.5 rounded-lg border border-gray-200">
                         <div className="w-16 h-12 rounded-lg overflow-hidden shrink-0 border border-gray-100 bg-gray-100">
                           <img
-                            src={editingPost.imageUrl || "/assets/Home-pic1-C9kYJzAW.jpg"}
+                            src={editingPost.imageUrl || "/assets/xspeed_about_showcase.jpg"}
                             alt="Edit preview"
                             className="w-full h-full object-cover"
                           />
@@ -1374,7 +1375,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
                         <Input
                           value={editingPost.imageUrl || ""}
                           onChange={(e) => setEditingPost({ ...editingPost, imageUrl: e.target.value })}
-                          placeholder={isRTL ? "/assets/Home-pic1-C9kYJzAW.jpg أو https://..." : "/assets/Home-pic1-C9kYJzAW.jpg or https://..."}
+                          placeholder={isRTL ? "/assets/xspeed_about_showcase.jpg أو https://..." : "/assets/xspeed_about_showcase.jpg or https://..."}
                           className="font-mono text-xs bg-white ltr-preserve"
                           dir="ltr"
                         />
@@ -1418,16 +1419,37 @@ export const PostsView: React.FC<PostsViewProps> = ({
                       </div>
                     </div>
 
-                    <div>
-                      <label className="block text-[11px] font-bold uppercase text-gray-700 mb-1">
-                        {isRTL ? "محتوى المقال الكامل (HTML / محتوى منسق)" : "Full Article Body (HTML / Formatted Content)"}
-                      </label>
-                      <textarea
-                        rows={8}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <label className="block text-[11px] font-bold uppercase text-gray-700">
+                          {isRTL ? "محتوى المقال الكامل (HTML / محتوى منسق)" : "Full Article Body (HTML / Formatted Content)"}
+                        </label>
+                        <div className="flex items-center gap-2">
+                          <label className="text-[11px] font-bold text-gray-500">{isRTL ? "الحالة:" : "Status:"}</label>
+                          <select
+                            value={editingPost.status || "published"}
+                            onChange={(e) =>
+                              setEditingPost({
+                                ...editingPost,
+                                status: e.target.value as "published" | "draft",
+                              })
+                            }
+                            className="text-xs bg-white border border-gray-200 rounded-lg px-2 py-1 font-bold text-gray-800"
+                          >
+                            <option value="published">{isRTL ? "منشور" : "Published"}</option>
+                            <option value="draft">{isRTL ? "مسودة" : "Draft"}</option>
+                          </select>
+                        </div>
+                      </div>
+                      <RichPostEditor
                         value={editingPost.content || ""}
-                        onChange={(e) => setEditingPost({ ...editingPost, content: e.target.value })}
-                        placeholder={isRTL ? "فقرات المقال، العناوين (<h2>، <h3>)، القوائم (<ul>، <li>)، والاقتباسات..." : "Article paragraphs, headings (<h2>, <h3>), lists (<ul>, <li>), and blockquotes..."}
-                        className="w-full rounded-xl border border-gray-200 bg-white p-3 text-xs font-normal text-gray-800 focus:outline-none focus:ring-1 focus:ring-[#C45B2A] leading-relaxed"
+                        onChange={(val) => setEditingPost({ ...editingPost, content: val })}
+                        placeholder={
+                          isRTL
+                            ? "محتوى المقال الكامل مع التنسيقات والجداول والصور..."
+                            : "Full article body with headings, tables, blockquotes, and media..."
+                        }
+                        minHeight="280px"
                       />
                     </div>
                   </div>
@@ -1481,19 +1503,19 @@ export const PostsView: React.FC<PostsViewProps> = ({
               </div>
 
               {/* Sticky Edit Footer */}
-              <div className="px-6 py-3 border-t border-gray-100 bg-gray-50/80 backdrop-blur-xs flex items-center justify-end gap-2 shrink-0">
+              <div className="px-4 sm:px-6 py-3 border-t border-gray-100 bg-gray-50/80 backdrop-blur-xs grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end shrink-0">
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => setEditingPost(null)}
-                  className="text-xs cursor-pointer"
+                  className="w-full sm:w-auto h-10 text-xs cursor-pointer justify-center"
                 >
                   {isRTL ? "إلغاء" : "Cancel"}
                 </Button>
                 <Button
                   type="submit"
                   variant="brand"
-                  className="text-xs font-bold flex items-center gap-1.5 cursor-pointer"
+                  className="w-full sm:w-auto h-10 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
                 >
                   <Check className="h-3.5 w-3.5" />
                   <span>{isRTL ? "حفظ التغييرات" : "Save Changes"}</span>

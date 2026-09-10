@@ -228,6 +228,8 @@ export const ar: typeof en = {
     title: "محفظة خدمات الشحن المتكاملة",
     subtitle: "حلول شحن ومستودعات وتخليص جمركي شاملة ومصممة بأعلى معايير الدقة والأمان.",
     requestQuoteBtn: "طلب عرض سعر للخدمة",
+    ctaShip: "اطلب شحن فوري",
+    ctaTrack: "تتبع شحنة",
   },
   contact: {
     tag: "تواصل معنا",
@@ -254,12 +256,12 @@ export const ar: typeof en = {
     successTitle: "تم استلام رسالتك بنجاح!",
     successDesc: "شكراً لتواصلك معنا. سيقوم أحد مسؤولي الشحن بالتواصل معك في أقرب وقت.",
     info: {
-      cairoOffice: "المقر الرئيسي للعمليات - القاهرة",
-      cairoAddress: "مبنى 14، قرية البضائع، مطار القاهرة الدولي، مصر",
+      cairoOffice: "المقر الرئيسي للعمليات",
+      cairoAddress: "٧ ركن الصفا من خالد امين، العريش، الهرم، الجيزة، مصر",
       directPhone: "مكتب العمليات المباشر",
       directPhoneVal: "+20 120 802 7171",
       emailSupport: "البريد الإلكتروني للدعم",
-      emailVal: "info@exspeeds.com",
+      emailVal: "sales@exspeeds.com",
       workingHours: "ساعات العمل",
       workingHoursVal: "مكتب التوزيع والدعم متواجد 24 ساعة يومياً",
       whatsappDirect: "خط الواتساب المباشر",
@@ -1140,7 +1142,7 @@ export const ar: typeof en = {
         editAuthorProfile: "الملف التعريفي للكاتب",
         editFeaturedImage: "الصورة البارزة للمقال",
         uploadNewImage: "رفع صورة جديدة",
-        editImagePlaceholder: "/assets/Home-pic1-C9kYJzAW.jpg أو https://...",
+        editImagePlaceholder: "/assets/xspeed_about_showcase.jpg أو https://...",
         editFullBody: "محتوى المقال الكامل (HTML / محتوى منسق)",
         editBodyPlaceholder: "فقرات المقال، العناوين (<h2>، <h3>)، القوائم (<ul>، <li>)، والاقتباسات...",
         editFocusKeyword: "الكلمة المفتاحية (SEO)",
@@ -1281,7 +1283,7 @@ export const ar: typeof en = {
   },
   footer: {
     companySummary:
-      "تعتبر XSPEED Express الرائدة في مصر والشرق الأوسط في تقديم خدمات الشحن السريع، التخليص الجمركي، وإدارة سلاسل الإمداد المدعومة بأحدث التقنيات الرقمية.",
+      "منصة إكس سبيد (exspeeds.com) هي البوابة الرقمية الرسمية لشركة XSPEED Express للخدمات اللوجستية والشحن الدولي والتخليص الجمركي وإدارة سلاسل الإمداد بمصر والشرق الأوسط.",
     quickLinks: "روابط سريعة",
     servicesTitle: "خدماتنا اللوجستية",
     supportTitle: "مكتب العمليات 24/7",
@@ -1289,7 +1291,7 @@ export const ar: typeof en = {
     privacyPolicy: "سياسة الخصوصية",
     termsOfService: "الشروط والأحكام",
     securityPolicy: "سياسة الأمان",
-    cairoAirportHub: "قرية البضائع، مطار القاهرة الدولي، مصر",
+    cairoAirportHub: "٧ ركن الصفا من خالد امين، العريش، الهرم، الجيزة، مصر",
     directDesk: "مكتب العمليات على مدار الساعة: 7171 802 120 20+",
   },
 };

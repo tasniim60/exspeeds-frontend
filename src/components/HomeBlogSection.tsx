@@ -15,12 +15,14 @@ interface HomeBlogSectionProps {
 
 export default function HomeBlogSection({ initialPosts }: HomeBlogSectionProps) {
   const [posts, setPosts] = useState<WPPost[]>(initialPosts);
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, getLocalizedPath } = useLanguage();
 
   useEffect(() => {
     const adminPosts = AdminStorage.getBlogPosts();
     if (adminPosts && adminPosts.length > 0) {
       setPosts(mergeAdminPosts(initialPosts, adminPosts));
+    } else {
+      setPosts(initialPosts);
     }
   }, [initialPosts]);
 
@@ -40,7 +42,7 @@ export default function HomeBlogSection({ initialPosts }: HomeBlogSectionProps) 
         ))}
       </div>
       <div className="text-center pt-4">
-        <Link href="/blog" className="btn-secondary inline-flex items-center gap-2">
+        <Link href={getLocalizedPath("/blog")} className="btn-secondary inline-flex items-center gap-2">
           <span>{isRTL ? "عرض جميع المقالات اللوجستية" : "View All Blog Articles"}</span>
           <ArrowRight className={`w-4 h-4 transition-transform group-hover:translate-x-1 rtl:group-hover:-translate-x-1 ${isRTL ? "rotate-180" : ""}`} />
         </Link>

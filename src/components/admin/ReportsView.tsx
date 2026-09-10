@@ -1,9 +1,8 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   FileSpreadsheet,
-  Download,
   FileDown,
   Filter,
   Users,
@@ -17,12 +16,21 @@ import {
   ChevronDown,
   RotateCcw,
   Building2,
+  Plus,
+  Trash2,
+  Receipt,
+  Percent,
+  RefreshCw,
+  X,
+  Check,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell } from "@/components/ui/table";
-import { Shipment, Invoice, Customer } from "@/lib/adminData";
+import { Shipment, Invoice, Customer, BusinessExpense, AdminStorage } from "@/lib/adminData";
 import { useLanguage } from "@/context/LanguageContext";
 
 interface ReportsViewProps {
@@ -39,10 +47,71 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
   const { isRTL } = useLanguage();
 
   // Filters State
-  const [selectedMonth, setSelectedMonth] = useState<string>("8");
+  const [filterMode, setFilterMode] = useState<"preset" | "custom">("preset");
+  const [selectedMonth, setSelectedMonth] = useState<string>("all");
   const [selectedYear, setSelectedYear] = useState<string>("2026");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
   const [selectedClient, setSelectedClient] = useState<string>("all");
+
+  // Currency & VAT State
+  const [selectedCurrency, setSelectedCurrency] = useState<"EGP" | "USD">("EGP");
+  const [usdExchangeRate, setUsdExchangeRate] = useState<number>(50.0);
+  const [includeVat, setIncludeVat] = useState<boolean>(true);
+
+  // Expense Management State
+  const [expenses, setExpenses] = useState<BusinessExpense[]>([]);
+  const [isAddExpenseOpen, setIsAddExpenseOpen] = useState<boolean>(false);
+  const [expenseTitle, setExpenseTitle] = useState("");
+  const [expenseCategory, setExpenseCategory] = useState<BusinessExpense["category"]>("Rent & Facilities");
+  const [expenseAmount, setExpenseAmount] = useState<string>("");
+  const [expenseCurrency, setExpenseCurrency] = useState<"EGP" | "USD">("EGP");
+  const [expenseDate, setExpenseDate] = useState<string>(new Date().toISOString().split("T")[0]);
+  const [expenseReceipt, setExpenseReceipt] = useState("");
+  const [expenseNotes, setExpenseNotes] = useState("");
+
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
+  const [isExportingExcel, setIsExportingExcel] = useState<boolean>(false);
+
+  // Load expenses on mount
+  useEffect(() => {
+    setExpenses(AdminStorage.getExpenses());
+  }, []);
+
+  // Helper currency conversion
+  const convertAmount = (amountInEgp: number): number => {
+    if (selectedCurrency === "USD") {
+      return amountInEgp / (usdExchangeRate || 50.0);
+    }
+    return amountInEgp;
+  };
+
+  const formatCurrency = (amountInEgp: number): string => {
+    const val = convertAmount(amountInEgp);
+    return val.toLocaleString("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+  };
+
+  const currencySymbol = selectedCurrency === "EGP" ? (isRTL ? "ج.م" : "EGP") : "$";
+
+  // Month Labels Mapping
+  const monthLabels: Record<string, string> = {
+    all: isRTL ? "جميع الشهور" : "All Months",
+    "1": isRTL ? "يناير" : "January",
+    "2": isRTL ? "فبراير" : "February",
+    "3": isRTL ? "مارس" : "March",
+    "4": isRTL ? "أبريل" : "April",
+    "5": isRTL ? "مايو" : "May",
+    "6": isRTL ? "يونيو" : "June",
+    "7": isRTL ? "يوليو" : "July",
+    "8": isRTL ? "أغسطس" : "August",
+    "9": isRTL ? "سبتمبر" : "September",
+    "10": isRTL ? "أكتوبر" : "October",
+    "11": isRTL ? "نوفمبر" : "November",
+    "12": isRTL ? "ديسمبر" : "December",
+  };
 
   // Get unique client account names for filter dropdown
   const clientOptions = useMemo(() => {
@@ -54,19 +123,37 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
     return Array.from(set).sort();
   }, [shipments]);
 
-  // Filter shipments by selected Month, Year, and Client
+  // Date Check Helper
+  const isDateInFilter = (dateStr?: string) => {
+    if (!dateStr) return true;
+    if (filterMode === "custom") {
+      if (!startDate && !endDate) return true;
+      const d = new Date(dateStr).getTime();
+      if (startDate && d < new Date(startDate).getTime()) return false;
+      if (endDate && d > new Date(endDate + "T23:59:59").getTime()) return false;
+      return true;
+    } else {
+      // Preset Month & Year check
+      const parts = dateStr.split(/[-/]/);
+      if (parts.length >= 2) {
+        let y = parts[0];
+        let m = parseInt(parts[1], 10).toString();
+        // Handle d/m/y format fallback
+        if (parts[0].length <= 2 && parts[2]?.length === 4) {
+          y = parts[2];
+          m = parseInt(parts[0], 10).toString();
+        }
+        if (selectedYear !== "all" && y !== selectedYear) return false;
+        if (selectedMonth !== "all" && m !== selectedMonth) return false;
+      }
+      return true;
+    }
+  };
+
+  // Filter shipments
   const filteredShipments = useMemo(() => {
     return shipments.filter((s) => {
-      // Month & Year check
-      if (s.date) {
-        const parts = s.date.split("-");
-        if (parts.length >= 2) {
-          const y = parts[0];
-          const m = parseInt(parts[1], 10).toString();
-          if (selectedYear !== "all" && y !== selectedYear) return false;
-          if (selectedMonth !== "all" && m !== selectedMonth) return false;
-        }
-      }
+      if (!isDateInFilter(s.date)) return false;
 
       // Client check
       if (selectedClient !== "all") {
@@ -76,9 +163,14 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
 
       return true;
     });
-  }, [shipments, selectedMonth, selectedYear, selectedClient]);
+  }, [shipments, filterMode, selectedMonth, selectedYear, startDate, endDate, selectedClient]);
 
-  // Aggregate Client P&L Statistics (Exact table breakdown matching XSPEED sheet)
+  // Filter general expenses by active date range
+  const filteredExpenses = useMemo(() => {
+    return expenses.filter((e) => isDateInFilter(e.date));
+  }, [expenses, filterMode, selectedMonth, selectedYear, startDate, endDate]);
+
+  // Aggregate Client P&L Statistics
   const clientPnlRows = useMemo(() => {
     const map: Record<
       string,
@@ -124,7 +216,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
     return Object.values(map).sort((a, b) => b.totalSales - a.totalSales);
   }, [filteredShipments, isRTL]);
 
-  // Totals for top cards & table summary footer
+  // Financial Totals
   const grandTotalSales = useMemo(() => {
     return clientPnlRows.reduce((acc, r) => acc + r.totalSales, 0);
   }, [clientPnlRows]);
@@ -141,42 +233,207 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
     return sumTotalCost + sumTransExpense;
   }, [sumTotalCost, sumTransExpense]);
 
+  // General Expenses: Real sum of recorded operational expenses in EGP
   const grandTotalGeneralExpenses = useMemo(() => {
-    const rowExtra = clientPnlRows.reduce((acc, r) => acc + r.extraExpense, 0);
-    return rowExtra > 0 ? rowExtra : 9630;
-  }, [clientPnlRows]);
+    return filteredExpenses.reduce((acc, e) => {
+      const inEgp = e.currency === "USD" ? e.amount * (usdExchangeRate || 50) : e.amount;
+      return acc + inEgp;
+    }, 0);
+  }, [filteredExpenses, usdExchangeRate]);
 
+  // 14% VAT
+  const vatAmount = useMemo(() => {
+    if (!includeVat) return 0;
+    return grandTotalSales * 0.14;
+  }, [grandTotalSales, includeVat]);
+
+  // Final Net Profit = Total Revenue - (Direct Costs + Recorded Expenses + VAT)
   const grandTotalNetProfit = useMemo(() => {
-    return grandTotalSales - grandTotalDirectCosts - grandTotalGeneralExpenses;
-  }, [grandTotalSales, grandTotalDirectCosts, grandTotalGeneralExpenses]);
+    return grandTotalSales - grandTotalDirectCosts - grandTotalGeneralExpenses - vatAmount;
+  }, [grandTotalSales, grandTotalDirectCosts, grandTotalGeneralExpenses, vatAmount]);
 
   const totalShipmentsCount = useMemo(() => {
     return clientPnlRows.reduce((acc, r) => acc + r.shipmentCount, 0);
   }, [clientPnlRows]);
 
-  const overallMarginPct = grandTotalSales > 0 ? ((grandTotalNetProfit / grandTotalSales) * 100).toFixed(1) : "0";
+  const overallMarginPct =
+    grandTotalSales > 0 ? ((grandTotalNetProfit / grandTotalSales) * 100).toFixed(1) : "0";
 
-  // CSV Export Handler
-  const handleExportCsv = () => {
-    let csv = "\uFEFF";
-    csv += "اسم العميل,عدد الشحنات,إجمالي التكلفة,إجمالي المبيعات,مصاريف النقل,مصاريف إضافية,صافي ربح العميل,هامش الربح\n";
+  const handleAddExpense = (e: React.FormEvent) => {
+    e.preventDefault();
+    const parsedAmount = parseFloat(expenseAmount);
+    if (!expenseTitle.trim() || isNaN(parsedAmount) || parsedAmount <= 0) return;
 
-    clientPnlRows.forEach((r) => {
-      const margin = r.totalSales > 0 ? ((r.netProfit / r.totalSales) * 100).toFixed(1) + "%" : "0%";
-      csv += `"${r.clientName}",${r.shipmentCount},${r.totalCost.toFixed(2)},${r.totalSales.toFixed(2)},${r.transExpense.toFixed(2)},${r.extraExpense.toFixed(2)},${r.netProfit.toFixed(2)},${margin}\n`;
-    });
+    const newExp: BusinessExpense = {
+      id: `exp-${Date.now()}`,
+      title: expenseTitle.trim(),
+      category: expenseCategory,
+      amount: parsedAmount,
+      currency: expenseCurrency,
+      date: expenseDate || new Date().toISOString().split("T")[0],
+      notes: expenseNotes.trim() || undefined,
+      receiptNumber: expenseReceipt.trim() || undefined,
+    };
 
-    csv += `\n"المجموع الكلي",${totalShipmentsCount},${sumTotalCost.toFixed(2)},${grandTotalSales.toFixed(2)},${sumTransExpense.toFixed(2)},${grandTotalGeneralExpenses.toFixed(2)},${grandTotalNetProfit.toFixed(2)},${overallMarginPct}%\n`;
+    AdminStorage.addExpense(newExp);
+    setExpenses(AdminStorage.getExpenses());
+    setIsAddExpenseOpen(false);
 
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `XSPEED_Monthly_Profit_Report_${selectedYear}_${selectedMonth}.csv`;
-    link.click();
+    // Reset Form
+    setExpenseTitle("");
+    setExpenseAmount("");
+    setExpenseReceipt("");
+    setExpenseNotes("");
   };
 
-  // Direct PDF Download Handler (Generates formal corporate statement document)
+  const handleDeleteExpense = (id: string) => {
+    if (confirm(isRTL ? "هل أنت متأكد من حذف هذا المصروف؟" : "Delete this expense record?")) {
+      AdminStorage.deleteExpense(id);
+      setExpenses(AdminStorage.getExpenses());
+    }
+  };
+
+  const handleResetFilters = () => {
+    setFilterMode("preset");
+    setSelectedMonth("all");
+    setSelectedYear("2026");
+    setStartDate("");
+    setEndDate("");
+    setSelectedClient("all");
+  };
+
+  const hasActiveFilters =
+    filterMode === "custom"
+      ? Boolean(startDate || endDate || selectedClient !== "all")
+      : selectedMonth !== "all" || selectedYear !== "all" || selectedClient !== "all";
+
+  const nowFormattedDate = useMemo(() => {
+    return new Date().toLocaleDateString(isRTL ? "ar-EG-u-nu-latn" : "en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  }, [isRTL]);
+
+  const nowFormattedTime = useMemo(() => {
+    return new Date().toLocaleTimeString(isRTL ? "ar-EG-u-nu-latn" : "en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+  }, [isRTL]);
+
+  const docRefCode = useMemo(() => {
+    const y = selectedYear !== "all" ? selectedYear : "ALL";
+    const m = selectedMonth !== "all" ? selectedMonth.padStart(2, "0") : "ALL";
+    return `XS-FIN-${y}-${m}`;
+  }, [selectedYear, selectedMonth]);
+
+  // Native Microsoft Excel (.xlsx) Export Handler
+  const handleExportExcel = async () => {
+    if (isExportingExcel) return;
+    try {
+      setIsExportingExcel(true);
+      const XLSX = await import("xlsx");
+      const wb = XLSX.utils.book_new();
+
+      const periodLabel =
+        filterMode === "custom"
+          ? `${startDate || "START"} to ${endDate || "NOW"}`
+          : `${monthLabels[selectedMonth]} ${selectedYear !== "all" ? selectedYear : ""}`.trim();
+      const accountScopeLabel =
+        selectedClient === "all"
+          ? isRTL
+            ? "كافة حسابات العملاء"
+            : "All Client Accounts"
+          : selectedClient;
+
+      // SHEET 1: Client Ledger
+      const ledgerHeaders: string[] = [
+        isRTL ? "م" : "#",
+        isRTL ? "اسم العميل / الحساب" : "Client Account Name",
+        isRTL ? "عدد الشحنات" : "Shipments Count",
+        `${isRTL ? "إجمالي التكلفة" : "Total Cost"} (${selectedCurrency})`,
+        `${isRTL ? "إجمالي المبيعات" : "Total Sales"} (${selectedCurrency})`,
+        `${isRTL ? "مصاريف النقل" : "Transport Exp"} (${selectedCurrency})`,
+        `${isRTL ? "صافي ربح العميل" : "Client Net Profit"} (${selectedCurrency})`,
+        isRTL ? "نسبة هامش الربح" : "Profit Margin %",
+      ];
+
+      const ledgerRows: (string | number)[][] = [ledgerHeaders];
+
+      clientPnlRows.forEach((r, idx) => {
+        const margin = r.totalSales > 0 ? ((r.netProfit / r.totalSales) * 100).toFixed(1) + "%" : "0%";
+        ledgerRows.push([
+          idx + 1,
+          r.clientName,
+          r.shipmentCount,
+          Number(convertAmount(r.totalCost).toFixed(2)),
+          Number(convertAmount(r.totalSales).toFixed(2)),
+          Number(convertAmount(r.transExpense).toFixed(2)),
+          Number(convertAmount(r.netProfit).toFixed(2)),
+          margin,
+        ]);
+      });
+
+      ledgerRows.push([
+        isRTL ? "المجموع الكلي" : "Total",
+        isRTL ? "المجموع الكلي الإجمالي" : "Consolidated Grand Total",
+        totalShipmentsCount,
+        Number(convertAmount(sumTotalCost).toFixed(2)),
+        Number(convertAmount(grandTotalSales).toFixed(2)),
+        Number(convertAmount(sumTransExpense).toFixed(2)),
+        Number(convertAmount(grandTotalNetProfit).toFixed(2)),
+        `${overallMarginPct}%`,
+      ]);
+
+      const wsLedger = XLSX.utils.aoa_to_sheet(ledgerRows);
+      XLSX.utils.book_append_sheet(wb, wsLedger, isRTL ? "كشف حسابات العملاء" : "Client Accounts P&L");
+
+      // SHEET 2: General Expenses
+      const expHeaders = [
+        isRTL ? "م" : "#",
+        isRTL ? "بند المصروف" : "Expense Title",
+        isRTL ? "التصنيف" : "Category",
+        isRTL ? "التاريخ" : "Date",
+        isRTL ? "رقم الإيصال" : "Receipt No",
+        `${isRTL ? "المبلغ" : "Amount"} (${selectedCurrency})`,
+        isRTL ? "ملاحظات" : "Notes",
+      ];
+      const expRows: (string | number)[][] = [expHeaders];
+      filteredExpenses.forEach((e, idx) => {
+        const amtInSelected =
+          e.currency === selectedCurrency
+            ? e.amount
+            : selectedCurrency === "USD"
+            ? e.amount / usdExchangeRate
+            : e.amount * usdExchangeRate;
+        expRows.push([
+          idx + 1,
+          e.title,
+          e.category,
+          e.date,
+          e.receiptNumber || "-",
+          Number(amtInSelected.toFixed(2)),
+          e.notes || "-",
+        ]);
+      });
+      const wsExp = XLSX.utils.aoa_to_sheet(expRows);
+      XLSX.utils.book_append_sheet(wb, wsExp, isRTL ? "سجل المصروفات العامة" : "General Expenses");
+
+      // Set Right-to-Left (RTL) for Arabic sheets
+      wb.Workbook = { Views: [{ RTL: isRTL }] };
+
+      const fileName = `XSPEED_Financial_Report_${Date.now()}.xlsx`;
+      XLSX.writeFile(wb, fileName);
+    } catch (error) {
+      console.error("Excel generation error:", error);
+    } finally {
+      setIsExportingExcel(false);
+    }
+  };
+
+  // Direct High-Resolution Corporate PDF Generator
   const handleExportPdf = async () => {
     if (isDownloadingPdf) return;
     try {
@@ -192,7 +449,19 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
         useCORS: true,
         logging: false,
         backgroundColor: "#FFFFFF",
-        windowWidth: 1150,
+        windowWidth: 1300,
+        onclone: (clonedDoc) => {
+          clonedDoc.body.style.background = "#FFFFFF";
+          const el = clonedDoc.getElementById("formal-pnl-pdf-report");
+          if (el) {
+            el.style.position = "static";
+            el.style.left = "0px";
+            el.style.top = "0px";
+            el.style.display = "block";
+            el.style.visibility = "visible";
+            el.style.opacity = "1";
+          }
+        },
       });
 
       const imgData = canvas.toDataURL("image/jpeg", 0.98);
@@ -204,26 +473,9 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
 
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      const pageHeight = pdf.internal.pageSize.getHeight();
+      pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
 
-      if (pdfHeight > pageHeight) {
-        let heightLeft = pdfHeight;
-        let position = 0;
-        pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, pdfHeight, undefined, "FAST");
-        heightLeft -= pageHeight;
-
-        while (heightLeft > 0) {
-          position = heightLeft - pdfHeight;
-          pdf.addPage();
-          pdf.addImage(imgData, "JPEG", 0, position, pdfWidth, pdfHeight, undefined, "FAST");
-          heightLeft -= pageHeight;
-        }
-      } else {
-        pdf.addImage(imgData, "JPEG", 0, 0, pdfWidth, pdfHeight, undefined, "FAST");
-      }
-
-      const fileName = `XSPEED_Financial_Report_${selectedYear}_${selectedMonth}.pdf`;
-      pdf.save(fileName);
+      pdf.save(`XSPEED_Financial_Report_${Date.now()}.pdf`);
     } catch (error) {
       console.error("PDF generation error:", error);
     } finally {
@@ -231,160 +483,197 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
     }
   };
 
-  const monthLabels: Record<string, string> = {
-    all: isRTL ? "جميع الشهور" : "All Months",
-    "1": isRTL ? "يناير (1)" : "January (1)",
-    "2": isRTL ? "فبراير (2)" : "February (2)",
-    "3": isRTL ? "مارس (3)" : "March (3)",
-    "4": isRTL ? "أبريل (4)" : "April (4)",
-    "5": isRTL ? "مايو (5)" : "May (5)",
-    "6": isRTL ? "يونيو (6)" : "June (6)",
-    "7": isRTL ? "يوليو (7)" : "July (7)",
-    "8": isRTL ? "أغسطس (8)" : "August (8)",
-    "9": isRTL ? "سبتمبر (9)" : "September (9)",
-    "10": isRTL ? "أكتوبر (10)" : "October (10)",
-    "11": isRTL ? "نوفمبر (11)" : "November (11)",
-    "12": isRTL ? "ديسمبر (12)" : "December (12)",
-  };
-
-  const handleResetFilters = () => {
-    setSelectedMonth("8");
-    setSelectedYear("2026");
-    setSelectedClient("all");
-  };
-
-  const hasActiveFilters = selectedMonth !== "8" || selectedYear !== "2026" || selectedClient !== "all";
-
   return (
-    <div className="space-y-6 text-start">
-      {/* ── 1. MAIN BANNER & ACTION CTAS ── */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-gray-200/90 shadow-2xs">
+    <div className="space-y-6" dir={isRTL ? "rtl" : "ltr"}>
+      {/* ── 1. HEADER & ACTION TOOLBAR ── */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-gray-200/90 shadow-2xs">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-orange-100 text-[#C45B2A] flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-2xl bg-orange-50 text-[#C45B2A] flex items-center justify-center shrink-0 shadow-2xs">
             <FileSpreadsheet className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-[#251516]">
-              {isRTL ? "التقرير المالي للأرباح والمصروفات" : "Financial Profit & Loss Report"}
+            <h1 className="text-xl font-bold text-gray-950">
+              {isRTL ? "التقرير المالي وصافي الأرباح والمصروفات" : "Financial Profit & Loss Statement"}
             </h1>
             <p className="text-xs text-gray-500 mt-0.5">
               {isRTL
-                ? "سجل كشف الحسابات الإجمالي، تكاليف خطوط الشحن، ومصافي أرباح العملاء"
-                : "Consolidated P&L Ledger, Carrier Costs, Transport Expenses & Client Margins"}
+                ? "حسابات دقيقة: صافي الربح = الإيرادات - (التكاليف المباشرة + المصروفات المسجلة + ضريبة القيمة المضافة 14%)"
+                : "Real Accounting: Net Profit = Revenue - (Direct Costs + General Expenses + 14% VAT)"}
             </p>
           </div>
         </div>
 
-        {/* Action Buttons */}
+        {/* Currency Toggle & Action Buttons */}
         <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+          {/* Currency Toggle Pill */}
+          <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200 text-xs font-bold">
+            <button
+              type="button"
+              onClick={() => setSelectedCurrency("EGP")}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                selectedCurrency === "EGP" ? "bg-white text-[#C45B2A] shadow-2xs" : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              {isRTL ? "جنيه (EGP)" : "EGP"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedCurrency("USD")}
+              className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                selectedCurrency === "USD" ? "bg-white text-[#C45B2A] shadow-2xs" : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              USD ($)
+            </button>
+          </div>
+
+          {/* Add Expense Button */}
           <Button
             size="sm"
-            onClick={handleExportCsv}
-            className="h-10 px-4 bg-[#C45B2A] hover:bg-[#A34920] text-white font-bold text-xs gap-1.5 rounded-xl cursor-pointer shadow-xs"
+            onClick={() => setIsAddExpenseOpen(true)}
+            className="h-10 px-3.5 bg-gray-900 hover:bg-gray-800 text-white font-bold text-xs gap-1.5 rounded-xl cursor-pointer shadow-2xs"
           >
-            <Download className="h-4 w-4" />
-            <span>{isRTL ? "تصدير CSV" : "Export Sheet CSV"}</span>
+            <Plus className="w-4 h-4 text-orange-400" />
+            <span>{isRTL ? "تسجيل مصروف جديد" : "Add Expense"}</span>
           </Button>
 
+          {/* Microsoft Excel (.xlsx) Export */}
           <Button
             size="sm"
-            variant="outline"
+            onClick={handleExportExcel}
+            disabled={isExportingExcel}
+            className="h-10 px-3.5 bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs gap-1.5 rounded-xl cursor-pointer disabled:opacity-70 shadow-2xs transition-colors"
+          >
+            {isExportingExcel ? (
+              <Loader2 className="h-4 w-4 animate-spin text-white" />
+            ) : (
+              <FileSpreadsheet className="h-4 w-4 text-emerald-200" />
+            )}
+            <span>{isRTL ? "تصدير إكسل" : "Export Excel"}</span>
+          </Button>
+
+          {/* Official PDF Statement */}
+          <Button
+            size="sm"
             disabled={isDownloadingPdf}
             onClick={handleExportPdf}
-            className="h-10 px-4 bg-gray-50 hover:bg-gray-100 text-gray-800 border-gray-200 font-bold text-xs gap-1.5 rounded-xl cursor-pointer disabled:opacity-70 shadow-2xs"
+            className="h-10 px-3.5 bg-[#C45B2A] hover:bg-[#A34920] text-white font-bold text-xs gap-1.5 rounded-xl cursor-pointer disabled:opacity-70 shadow-2xs transition-colors"
           >
             {isDownloadingPdf ? (
-              <Loader2 className="h-4 w-4 animate-spin text-[#C45B2A]" />
+              <Loader2 className="h-4 w-4 animate-spin text-white" />
             ) : (
-              <FileDown className="h-4 w-4 text-[#C45B2A]" />
+              <FileDown className="h-4 w-4 text-orange-200" />
             )}
-            <span>
-              {isDownloadingPdf
-                ? (isRTL ? "جاري التجهيز..." : "Generating PDF...")
-                : (isRTL ? "تحميل PDF" : "Download PDF")}
-            </span>
+            <span>{isRTL ? "تحميل PDF" : "Download PDF"}</span>
           </Button>
         </div>
       </div>
 
       {/* ── 2. FILTER CONTROLS TOOLBAR ── */}
-      <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/90 shadow-2xs">
+      <div className="bg-white p-4 sm:p-5 rounded-3xl border border-gray-200/90 shadow-2xs space-y-4">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-gray-700">
-            {/* الشهر */}
-            <div className="flex items-center gap-2">
-              <span className="text-gray-500 flex items-center gap-1">
-                <Calendar className="w-3.5 h-3.5 text-[#C45B2A]" />
-                <span>{isRTL ? "الشهر:" : "Month:"}</span>
-              </span>
-              <div className="relative flex items-center">
-                <select
-                  value={selectedMonth}
-                  onChange={(e) => setSelectedMonth(e.target.value)}
-                  className={`h-10 bg-gray-50/90 hover:bg-gray-100/90 border border-gray-200 text-xs font-bold text-gray-900 rounded-xl focus:border-[#C45B2A] focus:bg-white focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all cursor-pointer shadow-2xs appearance-none ${
-                    isRTL ? "pr-3 pl-8 text-right" : "pl-3 pr-8 text-left"
-                  }`}
-                >
-                  <option value="all">{isRTL ? "جميع الشهور" : "All Months"}</option>
-                  <option value="1">1 (يناير)</option>
-                  <option value="2">2 (فبراير)</option>
-                  <option value="3">3 (مارس)</option>
-                  <option value="4">4 (أبريل)</option>
-                  <option value="5">5 (مايو)</option>
-                  <option value="6">6 (يونيو)</option>
-                  <option value="7">7 (يوليو)</option>
-                  <option value="8">8 (أغسطس)</option>
-                  <option value="9">9 (سبتمبر)</option>
-                  <option value="10">10 (أكتوبر)</option>
-                  <option value="11">11 (نوفمبر)</option>
-                  <option value="12">12 (ديسمبر)</option>
-                </select>
-                <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
-              </div>
+            {/* Filter Mode Switch */}
+            <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200">
+              <button
+                type="button"
+                onClick={() => setFilterMode("preset")}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  filterMode === "preset" ? "bg-white text-gray-900 shadow-2xs" : "text-gray-500 hover:text-gray-800"
+                }`}
+              >
+                {isRTL ? "فترة شهرية / سنوية" : "Month / Year"}
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterMode("custom")}
+                className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  filterMode === "custom" ? "bg-white text-gray-900 shadow-2xs" : "text-gray-500 hover:text-gray-800"
+                }`}
+              >
+                {isRTL ? "تاريخ مخصص (Custom Range)" : "Custom Date Range"}
+              </button>
             </div>
 
-            {/* السنة */}
-            <div className="flex items-center gap-2">
-              <span className="text-gray-500">{isRTL ? "السنة:" : "Year:"}</span>
-              <div className="relative flex items-center">
-                <select
-                  value={selectedYear}
-                  onChange={(e) => setSelectedYear(e.target.value)}
-                  className={`h-10 bg-gray-50/90 hover:bg-gray-100/90 border border-gray-200 text-xs font-bold text-gray-900 rounded-xl focus:border-[#C45B2A] focus:bg-white focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all cursor-pointer shadow-2xs appearance-none ${
-                    isRTL ? "pr-3 pl-8 text-right" : "pl-3 pr-8 text-left"
-                  }`}
-                >
-                  <option value="all">{isRTL ? "جميع السنين" : "All Years"}</option>
-                  <option value="2026">2026</option>
-                  <option value="2025">2025</option>
-                </select>
-                <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
-              </div>
-            </div>
+            {filterMode === "preset" ? (
+              <>
+                {/* الشهر */}
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500">{isRTL ? "الشهر:" : "Month:"}</span>
+                  <select
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                    className="h-10 bg-gray-50 border border-gray-200 text-xs font-bold text-gray-900 rounded-xl px-3 outline-none cursor-pointer"
+                  >
+                    <option value="all">{isRTL ? "جميع الشهور" : "All Months"}</option>
+                    <option value="1">1 (يناير)</option>
+                    <option value="2">2 (فبراير)</option>
+                    <option value="3">3 (مارس)</option>
+                    <option value="4">4 (أبريل)</option>
+                    <option value="5">5 (مايو)</option>
+                    <option value="6">6 (يونيو)</option>
+                    <option value="7">7 (يوليو)</option>
+                    <option value="8">8 (أغسطس)</option>
+                    <option value="9">9 (سبتمبر)</option>
+                    <option value="10">10 (أكتوبر)</option>
+                    <option value="11">11 (نوفمبر)</option>
+                    <option value="12">12 (ديسمبر)</option>
+                  </select>
+                </div>
 
-            {/* اسم العميل */}
-            <div className="flex items-center gap-2">
-              <span className="text-gray-500 flex items-center gap-1">
-                <Building2 className="w-3.5 h-3.5 text-gray-400" />
-                <span>{isRTL ? "حساب العميل:" : "Client:"}</span>
-              </span>
-              <div className="relative flex items-center">
-                <select
-                  value={selectedClient}
-                  onChange={(e) => setSelectedClient(e.target.value)}
-                  className={`h-10 bg-gray-50/90 hover:bg-gray-100/90 border border-gray-200 text-xs font-bold text-gray-900 min-w-[170px] rounded-xl focus:border-[#C45B2A] focus:bg-white focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all cursor-pointer shadow-2xs appearance-none ${
-                    isRTL ? "pr-3 pl-8 text-right" : "pl-3 pr-8 text-left"
-                  }`}
-                >
-                  <option value="all">{isRTL ? "جميع العملاء" : "All Clients"}</option>
-                  {clientOptions.map((client) => (
-                    <option key={client} value={client}>
-                      {client}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+                {/* السنة */}
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500">{isRTL ? "السنة:" : "Year:"}</span>
+                  <select
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(e.target.value)}
+                    className="h-10 bg-gray-50 border border-gray-200 text-xs font-bold text-gray-900 rounded-xl px-3 outline-none cursor-pointer"
+                  >
+                    <option value="all">{isRTL ? "جميع السنين" : "All Years"}</option>
+                    <option value="2026">2026</option>
+                    <option value="2025">2025</option>
+                  </select>
+                </div>
+              </>
+            ) : (
+              /* Custom Date Range Picker */
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1.5">
+                  <span className="text-gray-500">{isRTL ? "من:" : "From:"}</span>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="h-10 bg-gray-50 border border-gray-200 text-xs font-bold text-gray-900 rounded-xl px-3 outline-none cursor-pointer"
+                  />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-gray-500">{isRTL ? "إلى:" : "To:"}</span>
+                  <input
+                    type="date"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                    className="h-10 bg-gray-50 border border-gray-200 text-xs font-bold text-gray-900 rounded-xl px-3 outline-none cursor-pointer"
+                  />
+                </div>
               </div>
+            )}
+
+            {/* حساب العميل */}
+            <div className="flex items-center gap-2">
+              <span className="text-gray-500">{isRTL ? "العميل:" : "Client:"}</span>
+              <select
+                value={selectedClient}
+                onChange={(e) => setSelectedClient(e.target.value)}
+                className="h-10 bg-gray-50 border border-gray-200 text-xs font-bold text-gray-900 rounded-xl px-3 outline-none cursor-pointer max-w-[180px]"
+              >
+                <option value="all">{isRTL ? "جميع العملاء" : "All Clients"}</option>
+                {clientOptions.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {hasActiveFilters && (
@@ -392,7 +681,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                 size="sm"
                 variant="outline"
                 onClick={handleResetFilters}
-                className="h-10 px-3 text-xs font-bold border-rose-200 text-rose-700 bg-rose-50/60 hover:bg-rose-100 hover:text-rose-800 rounded-xl flex items-center gap-1.5 cursor-pointer shadow-2xs"
+                className="h-10 px-3 text-xs font-bold border-rose-200 text-rose-700 bg-rose-50/60 hover:bg-rose-100 rounded-xl flex items-center gap-1.5 cursor-pointer shadow-2xs"
               >
                 <RotateCcw className="w-3.5 h-3.5" />
                 <span>{isRTL ? "إعادة ضبط" : "Reset"}</span>
@@ -400,43 +689,53 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
             )}
           </div>
 
-          {/* Filter Summary Pill */}
-          <div className="flex items-center gap-2 text-xs text-gray-700 font-bold bg-orange-50/80 px-3.5 py-2 rounded-xl border border-orange-200/80 shadow-2xs">
-            <Filter className="h-3.5 w-3.5 text-[#C45B2A]" />
-            <span>
-              {isRTL
-                ? `الشحنات المفروزة: ${filteredShipments.length} شحنة (${clientPnlRows.length} عميل)`
-                : `Filtered: ${filteredShipments.length} AWBs (${clientPnlRows.length} clients)`}
-            </span>
+          {/* VAT Toggle & Summary */}
+          <div className="flex items-center gap-3">
+            <label className="flex items-center gap-2 text-xs font-bold text-gray-700 cursor-pointer select-none bg-gray-50 px-3 py-2 rounded-xl border border-gray-200">
+              <input
+                type="checkbox"
+                checked={includeVat}
+                onChange={(e) => setIncludeVat(e.target.checked)}
+                className="rounded text-[#C45B2A] focus:ring-[#C45B2A] w-4 h-4 cursor-pointer"
+              />
+              <span>{isRTL ? "خصم ضريبة القيمة المضافة (VAT 14%)" : "Deduct 14% VAT"}</span>
+            </label>
+
+            <div className="flex items-center gap-2 text-xs text-gray-700 font-bold bg-orange-50/80 px-3.5 py-2 rounded-xl border border-orange-200/80 shadow-2xs">
+              <Filter className="h-3.5 w-3.5 text-[#C45B2A]" />
+              <span>
+                {filteredShipments.length} {isRTL ? "شحنة" : "Shipments"}
+              </span>
+            </div>
           </div>
         </div>
       </div>
 
       {/* ── 3. EXECUTIVE FINANCIAL SUMMARY CARDS ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-3.5">
         {/* 1. إجمالي المبيعات */}
-        <Card className="p-4 bg-white border border-gray-200/90 shadow-2xs hover:shadow-xs transition-shadow space-y-1.5">
+        <Card className="p-4 bg-white border border-gray-200/90 shadow-2xs space-y-1.5 text-start">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-              {isRTL ? "إجمالي المبيعات" : "Gross Sales"}
+              {isRTL ? "إجمالي الإيرادات" : "Gross Revenue"}
             </span>
             <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5" dir="ltr">
-            <span className="text-2xl font-black font-mono text-gray-900">
-              {grandTotalSales.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <span className="text-xl sm:text-2xl font-black font-mono text-gray-950">
+              {formatCurrency(grandTotalSales)}
             </span>
-            <span className="text-xs font-bold text-gray-500">{isRTL ? "ج.م" : "EGP"}</span>
+            <span className="text-xs font-bold text-gray-500">{currencySymbol}</span>
           </div>
           <p className="text-[11px] text-gray-500 font-medium">
-            {isRTL ? "إجمالي الفواتير والمبيعات المحصلة" : "Gross billed client revenue"}
+            {isRTL ? "إجمالي الفواتير المحصلة" : "Gross billed client revenue"}
           </p>
         </Card>
 
-        {/* 2. إجمالي التكلفة والمصاريف المباشرة */}
-        <Card className="p-4 bg-white border border-gray-200/90 shadow-2xs hover:shadow-xs transition-shadow space-y-1.5">
+        {/* 2. التكلفة المباشرة */}
+        <Card className="p-4 bg-white border border-gray-200/90 shadow-2xs space-y-1.5 text-start">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
               {isRTL ? "التكلفة المباشرة" : "Direct Carrier Costs"}
@@ -446,54 +745,108 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
             </div>
           </div>
           <div className="flex items-baseline gap-1.5" dir="ltr">
-            <span className="text-2xl font-black font-mono text-gray-800">
-              {grandTotalDirectCosts.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <span className="text-xl sm:text-2xl font-black font-mono text-gray-800">
+              {formatCurrency(grandTotalDirectCosts)}
             </span>
-            <span className="text-xs font-bold text-gray-500">{isRTL ? "ج.م" : "EGP"}</span>
+            <span className="text-xs font-bold text-gray-500">{currencySymbol}</span>
           </div>
           <p className="text-[11px] text-gray-500 font-medium">
             {isRTL ? "تكاليف الناقلين ومصاريف النقل" : "Freight lines & trans expenses"}
           </p>
         </Card>
 
-        {/* 3. المصروفات العامة */}
-        <Card className="p-4 bg-white border border-gray-200/90 shadow-2xs hover:shadow-xs transition-shadow space-y-1.5">
+        {/* 3. المصروفات التشغيلية */}
+        <Card className="p-4 bg-white border border-gray-200/90 shadow-2xs space-y-1.5 text-start">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-              {isRTL ? "المصروفات العامة" : "Overhead & General"}
+              {isRTL ? "المصروفات المسجلة" : "General Expenses"}
             </span>
             <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center shrink-0">
               <Wallet className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5" dir="ltr">
-            <span className="text-2xl font-black font-mono text-gray-800">
-              {grandTotalGeneralExpenses.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <span className="text-xl sm:text-2xl font-black font-mono text-gray-800">
+              {formatCurrency(grandTotalGeneralExpenses)}
             </span>
-            <span className="text-xs font-bold text-gray-500">{isRTL ? "ج.م" : "EGP"}</span>
+            <span className="text-xs font-bold text-gray-500">{currencySymbol}</span>
           </div>
           <p className="text-[11px] text-gray-500 font-medium">
-            {isRTL ? "المصاريف التشغيلية والتسويق" : "Operating & overhead expenses"}
+            {filteredExpenses.length} {isRTL ? "مصروف مسجل فعلياً" : "Recorded items"}
           </p>
         </Card>
 
-        {/* 4. صافي الربح النهائي */}
-        <Card className="p-4 bg-emerald-50/60 border border-emerald-200 shadow-2xs hover:shadow-xs transition-shadow space-y-1.5">
+        {/* 4. ضريبة القيمة المضافة 14% */}
+        <Card className="p-4 bg-white border border-gray-200/90 shadow-2xs space-y-1.5 text-start">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-bold text-emerald-900 uppercase tracking-wider">
-              {isRTL ? "صافي الربح النهائي" : "Final Net Profit"}
+            <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+              {isRTL ? "ضريبة القيمة المضافة" : "VAT (14%)"}
             </span>
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+              <Percent className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="flex items-baseline gap-1.5" dir="ltr">
+            <span className="text-xl sm:text-2xl font-black font-mono text-gray-800">
+              {formatCurrency(vatAmount)}
+            </span>
+            <span className="text-xs font-bold text-gray-500">{currencySymbol}</span>
+          </div>
+          <p className="text-[11px] text-gray-500 font-medium">
+            {includeVat ? (isRTL ? "14% مستقطعة قانونياً" : "14% Deducted") : (isRTL ? "غير مخصومة" : "Excluded")}
+          </p>
+        </Card>
+
+        {/* 5. صافي الربح النهائي */}
+        <Card
+          className={`p-4 col-span-2 lg:col-span-1 shadow-2xs space-y-1.5 text-start border ${
+            grandTotalNetProfit >= 0
+              ? "bg-emerald-50/70 border-emerald-300"
+              : "bg-rose-50/70 border-rose-300"
+          }`}
+        >
+          <div className="flex items-center justify-between">
+            <span
+              className={`text-[10px] font-bold uppercase tracking-wider ${
+                grandTotalNetProfit >= 0 ? "text-emerald-900" : "text-rose-900"
+              }`}
+            >
+              {isRTL ? "صافي الربح الفعلي" : "Net Profit"}
+            </span>
+            <div
+              className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${
+                grandTotalNetProfit >= 0
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-rose-100 text-rose-700"
+              }`}
+            >
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5" dir="ltr">
-            <span className={`text-2xl font-black font-mono ${grandTotalNetProfit >= 0 ? "text-emerald-800" : "text-rose-600"}`}>
-              {grandTotalNetProfit.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <span
+              className={`text-2xl font-black font-mono ${
+                grandTotalNetProfit >= 0 ? "text-emerald-800" : "text-rose-700"
+              }`}
+            >
+              {grandTotalNetProfit >= 0 ? "+" : ""}
+              {formatCurrency(grandTotalNetProfit)}
             </span>
-            <span className="text-xs font-bold text-emerald-600">{isRTL ? "ج.م" : "EGP"}</span>
+            <span
+              className={`text-xs font-bold ${
+                grandTotalNetProfit >= 0 ? "text-emerald-600" : "text-rose-600"
+              }`}
+            >
+              {currencySymbol}
+            </span>
           </div>
-          <div className="inline-flex items-center gap-1 text-[11px] font-extrabold text-emerald-800 bg-emerald-100/90 px-2 py-0.5 rounded-md border border-emerald-300/60">
+          <div
+            className={`inline-flex items-center gap-1 text-[11px] font-black px-2 py-0.5 rounded-md border ${
+              grandTotalNetProfit >= 0
+                ? "text-emerald-800 bg-emerald-100 border-emerald-300"
+                : "text-rose-800 bg-rose-100 border-rose-300"
+            }`}
+          >
             <span>{isRTL ? `هامش الصافي: ${overallMarginPct}%` : `Net Margin: ${overallMarginPct}%`}</span>
           </div>
         </Card>
@@ -501,7 +854,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
 
       {/* ── 4. CLIENT P&L BREAKDOWN TABLE ── */}
       <Card className="shadow-2xs overflow-hidden border border-gray-200/90 bg-white">
-        <CardHeader className="bg-gray-50/95 border-b border-gray-200 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <CardHeader className="bg-gray-50/95 border-b border-gray-200 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-start">
           <div>
             <CardTitle className="text-sm font-bold text-gray-900 flex items-center gap-2">
               <Users className="h-4 w-4 text-[#C45B2A]" />
@@ -509,7 +862,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
             </CardTitle>
             <CardDescription className="text-xs text-gray-500 mt-0.5">
               {isRTL
-                ? "تفصيل أعداد الشحنات، التكلفة، المبيعات، مصاريف النقل، والمصاريف الإضافية لكل عميل"
+                ? "تفصيل أعداد الشحنات، التكلفة، المبيعات، مصاريف النقل، ومصافي أرباح كل عميل"
                 : "Itemized breakdown of shipment volumes, cost, sales, transport, and net profit per client account"}
             </CardDescription>
           </div>
@@ -519,16 +872,15 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
         </CardHeader>
 
         <div className="overflow-x-auto w-full">
-          <Table className="w-full min-w-[1050px] border-collapse text-xs">
+          <Table className="w-full min-w-[950px] border-collapse text-xs">
             <TableHeader>
               <TableRow className="bg-gray-50/95 text-gray-700 uppercase font-black border-b border-gray-200 select-none">
                 <TableHead className="font-black text-gray-700 text-start py-3.5 px-4">{isRTL ? "اسم العميل" : "Client Name"}</TableHead>
                 <TableHead className="font-black text-gray-700 text-center py-3.5 px-4">{isRTL ? "عدد الشحنات" : "Shipments"}</TableHead>
-                <TableHead className="font-black text-gray-700 text-end py-3.5 px-4">{isRTL ? "إجمالي التكلفة (EGP)" : "Total Cost (EGP)"}</TableHead>
-                <TableHead className="font-black text-gray-700 text-end py-3.5 px-4">{isRTL ? "إجمالي المبيعات (EGP)" : "Total Sales (EGP)"}</TableHead>
-                <TableHead className="font-black text-gray-700 text-end py-3.5 px-4">{isRTL ? "مصاريف النقل (EGP)" : "Transport Exp"}</TableHead>
-                <TableHead className="font-black text-gray-700 text-end py-3.5 px-4">{isRTL ? "مصاريف إضافية (EGP)" : "Extra Exp"}</TableHead>
-                <TableHead className="font-black text-gray-700 text-end py-3.5 px-4">{isRTL ? "صافي الربح (EGP)" : "Client Net Profit"}</TableHead>
+                <TableHead className="font-black text-gray-700 text-end py-3.5 px-4">{`${isRTL ? "التكلفة" : "Cost"} (${currencySymbol})`}</TableHead>
+                <TableHead className="font-black text-gray-700 text-end py-3.5 px-4">{`${isRTL ? "المبيعات" : "Sales"} (${currencySymbol})`}</TableHead>
+                <TableHead className="font-black text-gray-700 text-end py-3.5 px-4">{`${isRTL ? "النقل" : "Transport"} (${currencySymbol})`}</TableHead>
+                <TableHead className="font-black text-gray-700 text-end py-3.5 px-4">{`${isRTL ? "صافي ربح العميل" : "Net Profit"} (${currencySymbol})`}</TableHead>
                 <TableHead className="font-black text-gray-700 text-center py-3.5 px-4">{isRTL ? "هامش الربح" : "Margin %"}</TableHead>
               </TableRow>
             </TableHeader>
@@ -536,61 +888,49 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
             <TableBody className="divide-y divide-gray-100">
               {clientPnlRows.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-16 text-gray-500">
+                  <TableCell colSpan={7} className="text-center py-16 text-gray-500">
                     <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#C45B2A] flex items-center justify-center mx-auto mb-3 shadow-2xs">
                       <Package className="h-6 w-6" />
                     </div>
-                    <p className="text-base font-bold text-gray-900">{isRTL ? "لا توجد سجلات مالية للشهر المحدد" : "No client financial records found"}</p>
+                    <p className="text-base font-bold text-gray-900">{isRTL ? "لا توجد سجلات مالية للشهر أو النطاق المحدد" : "No client financial records found"}</p>
                     <p className="text-xs text-gray-500 mt-1">
-                      {isRTL ? "يرجى تغيير الشهر أو السنة من الفلاتر بالأعلى." : "Please adjust the month or year filters above."}
+                      {isRTL ? "يرجى تعديل الفلاتر أو تحديد فترة زمنية أخرى." : "Please adjust filter parameters above."}
                     </p>
                   </TableCell>
                 </TableRow>
               ) : (
-                clientPnlRows.map((r, idx) => {
+                clientPnlRows.map((r) => {
                   const isProfit = r.netProfit >= 0;
                   const marginPct = r.totalSales > 0 ? ((r.netProfit / r.totalSales) * 100).toFixed(1) : "0";
 
                   return (
                     <TableRow key={r.clientName} className="hover:bg-orange-50/20 transition-colors border-b border-gray-100">
-                      {/* 1. اسم العميل */}
                       <TableCell className="font-extrabold text-gray-900 whitespace-nowrap text-start py-3.5 px-4">
                         {r.clientName}
                       </TableCell>
 
-                      {/* 2. عدد الشحنات (Integer format without .00) */}
                       <TableCell className="font-mono font-bold text-center text-gray-800 whitespace-nowrap py-3.5 px-4">
                         <span className="bg-gray-100 px-2.5 py-1 rounded-md text-xs font-black">
                           {r.shipmentCount}
                         </span>
                       </TableCell>
 
-                      {/* 3. إجمالي التكلفة */}
                       <TableCell className="font-mono text-end text-gray-700 whitespace-nowrap py-3.5 px-4" dir="ltr">
-                        {r.totalCost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {formatCurrency(r.totalCost)}
                       </TableCell>
 
-                      {/* 4. إجمالي المبيعات */}
-                      <TableCell className="font-mono font-black text-end text-gray-900 whitespace-nowrap py-3.5 px-4" dir="ltr">
-                        {r.totalSales.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <TableCell className="font-mono font-black text-gray-900 whitespace-nowrap py-3.5 px-4" dir="ltr">
+                        {formatCurrency(r.totalSales)}
                       </TableCell>
 
-                      {/* 5. مصاريف النقل */}
                       <TableCell className="font-mono text-end text-gray-500 whitespace-nowrap py-3.5 px-4" dir="ltr">
-                        {r.transExpense.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {formatCurrency(r.transExpense)}
                       </TableCell>
 
-                      {/* 6. مصاريف إضافية */}
-                      <TableCell className="font-mono text-end text-gray-500 whitespace-nowrap py-3.5 px-4" dir="ltr">
-                        {r.extraExpense.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                      </TableCell>
-
-                      {/* 7. صافي ربح العميل */}
                       <TableCell className={`font-mono font-black text-end whitespace-nowrap py-3.5 px-4 ${isProfit ? "text-emerald-700" : "text-rose-600"}`} dir="ltr">
-                        {isProfit ? "+" : ""}{r.netProfit.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                        {isProfit ? "+" : ""}{formatCurrency(r.netProfit)}
                       </TableCell>
 
-                      {/* 8. هامش الربح */}
                       <TableCell className="text-center whitespace-nowrap py-3.5 px-4" dir="ltr">
                         <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md border ${
                           isProfit
@@ -606,46 +946,33 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
               )}
             </TableBody>
 
-            {/* ── Table Footer Summary Row ── */}
             {clientPnlRows.length > 0 && (
               <TableFooter className="bg-[#251516] text-white font-bold border-t-2 border-[#C45B2A]">
                 <TableRow className="bg-[#251516] hover:bg-[#251516] text-white font-bold">
-                  {/* Col 1: اسم العميل / المجموع الكلي */}
                   <TableCell className="font-black text-white text-start whitespace-nowrap py-4 px-4 text-xs">
-                    {isRTL ? "المجموع الكلي الإجمالي" : "Grand Total"}
+                    {isRTL ? "المجموع الكلي الإجمالي" : "Consolidated Grand Total"}
                   </TableCell>
 
-                  {/* Col 2: عدد الشحنات (Integer) */}
                   <TableCell className="font-mono font-black text-white text-center whitespace-nowrap py-4 px-4 text-xs">
                     {totalShipmentsCount}
                   </TableCell>
 
-                  {/* Col 3: إجمالي التكلفة */}
                   <TableCell className="font-mono font-bold text-gray-200 text-end whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
-                    {sumTotalCost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {formatCurrency(sumTotalCost)}
                   </TableCell>
 
-                  {/* Col 4: إجمالي المبيعات */}
                   <TableCell className="font-mono font-black text-[#F6AD55] text-end whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
-                    {grandTotalSales.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {formatCurrency(grandTotalSales)}
                   </TableCell>
 
-                  {/* Col 5: مصاريف النقل */}
                   <TableCell className="font-mono font-bold text-gray-200 text-end whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
-                    {sumTransExpense.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                    {formatCurrency(sumTransExpense)}
                   </TableCell>
 
-                  {/* Col 6: مصاريف إضافية */}
-                  <TableCell className="font-mono font-bold text-gray-200 text-end whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
-                    {grandTotalGeneralExpenses.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  <TableCell className={`font-mono font-black text-end whitespace-nowrap py-4 px-4 text-xs ${grandTotalNetProfit >= 0 ? "text-emerald-400" : "text-rose-400"}`} dir="ltr">
+                    {grandTotalNetProfit >= 0 ? "+" : ""}{formatCurrency(grandTotalNetProfit)}
                   </TableCell>
 
-                  {/* Col 7: صافي ربح العميل */}
-                  <TableCell className="font-mono font-black text-emerald-400 text-end whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
-                    +{grandTotalNetProfit.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                  </TableCell>
-
-                  {/* Col 8: نسبة الهامش الإجمالي */}
                   <TableCell className="font-mono font-black text-center whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
                     <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-md">
                       {overallMarginPct}%
@@ -658,7 +985,228 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
         </div>
       </Card>
 
-      {/* ── DEDICATED FORMAL PDF DOCUMENT (Rendered offscreen without scroll blowout, captured for PDF export) ── */}
+      {/* ── 5. OPERATIONAL EXPENSES LEDGER TABLE ── */}
+      <Card className="shadow-2xs overflow-hidden border border-gray-200/90 bg-white">
+        <CardHeader className="bg-gray-50/95 border-b border-gray-200 p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-start">
+          <div>
+            <CardTitle className="text-sm font-bold text-gray-900 flex items-center gap-2">
+              <Receipt className="h-4 w-4 text-[#C45B2A]" />
+              <span>{isRTL ? "سجل المصروفات التشغيلية المباشرة والفرعية" : "Operational Expenses Ledger"}</span>
+            </CardTitle>
+            <CardDescription className="text-xs text-gray-500 mt-0.5">
+              {isRTL
+                ? "سجل المصروفات الفعلية (إيجارات المستودعات، الوقود، التغليف، تراخيص نافذة، الصيانة)"
+                : "Real recorded expenses factored into net profit calculation"}
+            </CardDescription>
+          </div>
+          <Button
+            size="sm"
+            onClick={() => setIsAddExpenseOpen(true)}
+            className="h-8 px-3 bg-[#C45B2A] hover:bg-[#A34920] text-white text-xs font-bold gap-1 rounded-xl"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>{isRTL ? "إضافة مصروف" : "Add Expense"}</span>
+          </Button>
+        </CardHeader>
+
+        <div className="overflow-x-auto w-full">
+          <Table className="w-full min-w-[750px] border-collapse text-xs">
+            <TableHeader>
+              <TableRow className="bg-gray-50/95 text-gray-700 uppercase font-black border-b border-gray-200 select-none">
+                <TableHead className="font-black text-start py-3.5 px-4">{isRTL ? "بند المصروف" : "Title"}</TableHead>
+                <TableHead className="font-black text-start py-3.5 px-4">{isRTL ? "التصنيف" : "Category"}</TableHead>
+                <TableHead className="font-black text-center py-3.5 px-4">{isRTL ? "التاريخ" : "Date"}</TableHead>
+                <TableHead className="font-black text-center py-3.5 px-4">{isRTL ? "رقم الإيصال" : "Receipt No"}</TableHead>
+                <TableHead className="font-black text-end py-3.5 px-4">{`${isRTL ? "المبلغ" : "Amount"} (${currencySymbol})`}</TableHead>
+                <TableHead className="font-black text-center py-3.5 px-4">{isRTL ? "إجراء" : "Action"}</TableHead>
+              </TableRow>
+            </TableHeader>
+
+            <TableBody className="divide-y divide-gray-100">
+              {filteredExpenses.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={6} className="text-center py-10 text-gray-500">
+                    <p className="text-xs font-bold text-gray-600">
+                      {isRTL ? "لا توجد مصروفات مسجلة لهذه الفترة." : "No recorded expenses for this period."}
+                    </p>
+                  </TableCell>
+                </TableRow>
+              ) : (
+                filteredExpenses.map((exp) => {
+                  const amtInSelected =
+                    exp.currency === selectedCurrency
+                      ? exp.amount
+                      : selectedCurrency === "USD"
+                      ? exp.amount / usdExchangeRate
+                      : exp.amount * usdExchangeRate;
+
+                  return (
+                    <TableRow key={exp.id} className="hover:bg-gray-50/80 transition-colors">
+                      <TableCell className="font-bold text-gray-900 py-3 px-4 text-start">
+                        {exp.title}
+                        {exp.notes && <span className="block text-[10px] text-gray-400 font-normal">{exp.notes}</span>}
+                      </TableCell>
+                      <TableCell className="py-3 px-4 text-start">
+                        <span className="bg-gray-100 text-gray-800 text-[11px] font-bold px-2 py-0.5 rounded-md">
+                          {exp.category}
+                        </span>
+                      </TableCell>
+                      <TableCell className="font-mono text-center text-gray-600 py-3 px-4">
+                        {exp.date}
+                      </TableCell>
+                      <TableCell className="font-mono text-center text-gray-500 py-3 px-4">
+                        {exp.receiptNumber || "-"}
+                      </TableCell>
+                      <TableCell className="font-mono font-bold text-end text-rose-700 py-3 px-4" dir="ltr">
+                        -{amtInSelected.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      </TableCell>
+                      <TableCell className="text-center py-3 px-4">
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteExpense(exp.id)}
+                          className="p-1 text-gray-400 hover:text-red-600 rounded cursor-pointer transition-colors"
+                          title={isRTL ? "حذف المصروف" : "Delete Expense"}
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </Card>
+
+      {/* ── ADD EXPENSE MODAL ── */}
+      {isAddExpenseOpen && (
+        <Dialog open={isAddExpenseOpen} onOpenChange={setIsAddExpenseOpen}>
+          <DialogContent className="max-w-md w-full p-6 text-start">
+            <DialogTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
+              <Receipt className="w-5 h-5 text-[#C45B2A]" />
+              <span>{isRTL ? "تسجيل مصروف تشغيلي جديد" : "Record Business Expense"}</span>
+            </DialogTitle>
+            <DialogDescription className="text-xs text-gray-500">
+              {isRTL ? "أدخل تفاصيل المصروف لإدراجه فوراً في حسابات الأرباح والخسائر." : "Enter expense details to incorporate into real-time P&L."}
+            </DialogDescription>
+
+            <form onSubmit={handleAddExpense} className="space-y-4 pt-4">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  {isRTL ? "بند المصروف" : "Expense Title"} <span className="text-red-500">*</span>
+                </label>
+                <Input
+                  required
+                  value={expenseTitle}
+                  onChange={(e) => setExpenseTitle(e.target.value)}
+                  placeholder={isRTL ? "مثال: إيجار مستودع، وقود الشاحنات، بوالص شحن..." : "e.g. Warehouse lease, linehaul fuel, packing..."}
+                  className="text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    {isRTL ? "التصنيف" : "Category"}
+                  </label>
+                  <select
+                    value={expenseCategory}
+                    onChange={(e) => setExpenseCategory(e.target.value as any)}
+                    className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-lg px-2"
+                  >
+                    <option value="Rent & Facilities">{isRTL ? "إيجار ومرافق" : "Rent & Facilities"}</option>
+                    <option value="Salaries & Operations">{isRTL ? "رواتب وتشغيل" : "Salaries & Operations"}</option>
+                    <option value="Fuel & Linehaul">{isRTL ? "وقود ونقل" : "Fuel & Linehaul"}</option>
+                    <option value="Packaging & Supplies">{isRTL ? "تغليف ومطبوعات" : "Packaging & Supplies"}</option>
+                    <option value="Customs & Port Demurrage">{isRTL ? "رسوم جمارك وموانئ" : "Customs & Demurrage"}</option>
+                    <option value="Software & Marketing">{isRTL ? "برمجيات وتسويق" : "Software & Marketing"}</option>
+                    <option value="Other">{isRTL ? "أخرى" : "Other"}</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    {isRTL ? "المبلغ والعملة" : "Amount & Currency"} <span className="text-red-500">*</span>
+                  </label>
+                  <div className="flex gap-1">
+                    <Input
+                      required
+                      type="number"
+                      step="0.01"
+                      value={expenseAmount}
+                      onChange={(e) => setExpenseAmount(e.target.value)}
+                      placeholder="0.00"
+                      className="text-xs font-mono"
+                    />
+                    <select
+                      value={expenseCurrency}
+                      onChange={(e) => setExpenseCurrency(e.target.value as any)}
+                      className="h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-lg px-1.5"
+                    >
+                      <option value="EGP">EGP</option>
+                      <option value="USD">USD</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    {isRTL ? "تاريخ الصرف" : "Date"}
+                  </label>
+                  <Input
+                    type="date"
+                    value={expenseDate}
+                    onChange={(e) => setExpenseDate(e.target.value)}
+                    className="text-xs"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-700 mb-1">
+                    {isRTL ? "رقم الإيصال / الفاتورة" : "Receipt No"}
+                  </label>
+                  <Input
+                    value={expenseReceipt}
+                    onChange={(e) => setExpenseReceipt(e.target.value)}
+                    placeholder="REC-1002"
+                    className="text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  {isRTL ? "ملاحظات إضافية" : "Notes"}
+                </label>
+                <Input
+                  value={expenseNotes}
+                  onChange={(e) => setExpenseNotes(e.target.value)}
+                  placeholder={isRTL ? "تفاصيل إضافية عن المصروف..." : "Additional details..."}
+                  className="text-xs"
+                />
+              </div>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsAddExpenseOpen(false)}
+                >
+                  {isRTL ? "إلغاء" : "Cancel"}
+                </Button>
+                <Button type="submit" variant="brand" size="sm" className="font-bold">
+                  {isRTL ? "حفظ المصروف" : "Save Expense"}
+                </Button>
+              </div>
+            </form>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {/* ── DEDICATED FORMAL PDF DOCUMENT (Rendered offscreen) ── */}
       <div
         id="formal-pnl-pdf-report"
         style={{
@@ -666,139 +1214,53 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
           left: "0",
           top: "0",
           zIndex: -9999,
-          opacity: isDownloadingPdf ? 1 : 0,
+          opacity: 0,
           pointerEvents: "none",
-          width: "1120px",
+          width: "1260px",
           backgroundColor: "#FFFFFF",
-          color: "#111827",
-          padding: "36px 40px",
+          color: "#0F172A",
+          padding: "36px 44px 30px 44px",
           fontFamily: "'Segoe UI', Tahoma, Arial, sans-serif",
           boxSizing: "border-box",
           direction: isRTL ? "rtl" : "ltr",
         }}
       >
-        {/* Document Header */}
-        <div style={{ borderBottom: "3px solid #C45B2A", paddingBottom: "16px", marginBottom: "20px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
-              <img
-                src="/assets/xspeed_logo_earth_wide.jpg"
-                alt="XSPEED"
-                style={{ height: "46px", width: "auto", objectFit: "contain" }}
-              />
-              <div>
-                <h1 style={{ fontSize: "19px", fontWeight: "900", color: "#251516", margin: "0 0 3px 0", lineHeight: "1.2" }}>
-                  {isRTL ? "كشف حساب الأرباح والمصروفات الشهرية" : "Monthly Profit & Expenses Financial Statement"}
-                </h1>
-                <p style={{ fontSize: "11px", color: "#6B7280", margin: 0, fontWeight: "600" }}>
-                  XSPEED Express Logistics & Technology Solutions • Cairo Central Operations Hub
-                </p>
-              </div>
-            </div>
-
-            <div style={{ textAlign: isRTL ? "left" : "right", fontSize: "11px", color: "#374151", lineHeight: "1.6" }}>
-              <div><strong style={{ color: "#251516" }}>{isRTL ? "تاريخ الإصدار:" : "Issue Date:"}</strong> {new Date().toLocaleDateString(isRTL ? "ar-EG" : "en-US", { year: "numeric", month: "long", day: "numeric" })}</div>
-              <div><strong style={{ color: "#251516" }}>{isRTL ? "الفترة المالية:" : "Period:"}</strong> <span style={{ color: "#C45B2A", fontWeight: "bold" }}>{monthLabels[selectedMonth]} {selectedYear !== "all" ? selectedYear : ""}</span></div>
-              <div><strong style={{ color: "#251516" }}>{isRTL ? "الحساب المستهدف:" : "Target Account:"}</strong> {selectedClient === "all" ? (isRTL ? "كافة العملاء (All Clients)" : "All Client Accounts") : selectedClient}</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Executive Summary Financial Metrics */}
-        <div style={{ marginBottom: "22px" }}>
-          <div style={{ fontSize: "11px", fontWeight: "bold", color: "#4B5563", marginBottom: "6px", textTransform: "uppercase" }}>
-            {isRTL ? "ملخص المؤشرات المالية الإجمالية" : "Executive Financial Summary"}
-          </div>
-          <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "center", tableLayout: "fixed" }}>
-            <thead>
-              <tr style={{ backgroundColor: "#251516", color: "#FFFFFF", fontSize: "11px", fontWeight: "bold" }}>
-                <th style={{ padding: "8px 10px", border: "1px solid #382122" }}>{isRTL ? "إجمالي المبيعات المحصلة" : "Gross Billed Sales"}</th>
-                <th style={{ padding: "8px 10px", border: "1px solid #382122" }}>{isRTL ? "إجمالي التكلفة المباشرة" : "Direct Carrier Costs"}</th>
-                <th style={{ padding: "8px 10px", border: "1px solid #382122" }}>{isRTL ? "المصروفات العامة والتشغيل" : "General & Overhead"}</th>
-                <th style={{ padding: "8px 10px", border: "1px solid #382122", backgroundColor: "#C45B2A" }}>{isRTL ? "صافي الربح الإجمالي" : "Net Profit & Margin"}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr style={{ backgroundColor: "#F9FAFB", fontSize: "14px", fontWeight: "900", fontFamily: "monospace", color: "#111827" }}>
-                <td style={{ padding: "10px", border: "1px solid #E5E7EB" }}>{grandTotalSales.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span style={{ fontSize: "10px", fontWeight: "normal", color: "#6B7280" }}>EGP</span></td>
-                <td style={{ padding: "10px", border: "1px solid #E5E7EB" }}>{grandTotalDirectCosts.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span style={{ fontSize: "10px", fontWeight: "normal", color: "#6B7280" }}>EGP</span></td>
-                <td style={{ padding: "10px", border: "1px solid #E5E7EB" }}>{grandTotalGeneralExpenses.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span style={{ fontSize: "10px", fontWeight: "normal", color: "#6B7280" }}>EGP</span></td>
-                <td style={{ padding: "10px", border: "1px solid #E5E7EB", color: grandTotalNetProfit >= 0 ? "#047857" : "#DC2626", backgroundColor: "#ECFDF5" }}>
-                  {grandTotalNetProfit.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} <span style={{ fontSize: "10px", fontWeight: "bold" }}>({overallMarginPct}%)</span>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        {/* Itemized Client P&L Table */}
-        <div style={{ marginBottom: "18px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
-            <span style={{ fontSize: "11px", fontWeight: "bold", color: "#4B5563", textTransform: "uppercase" }}>
-              {isRTL ? "جدول كشف حسابات ومصروفات العملاء بالتفصيل" : "Itemized Client Profitability Ledger"}
-            </span>
-            <span style={{ fontSize: "11px", fontWeight: "bold", color: "#C45B2A" }}>
-              {isRTL ? `إجمالي الحسابات: ${clientPnlRows.length} عميل | إجمالي الشحنات: ${totalShipmentsCount}` : `Total Accounts: ${clientPnlRows.length} | Shipments: ${totalShipmentsCount}`}
-            </span>
-          </div>
-
-          <table style={{ width: "100%", borderCollapse: "collapse", tableLayout: "fixed", fontSize: "10.5px" }}>
-            <thead>
-              <tr style={{ backgroundColor: "#251516", color: "#FFFFFF", fontWeight: "bold" }}>
-                <th style={{ padding: "8px 10px", border: "1px solid #382122", width: "23%", textAlign: isRTL ? "right" : "left" }}>{isRTL ? "اسم العميل / الحساب" : "Client Account"}</th>
-                <th style={{ padding: "8px 10px", border: "1px solid #382122", width: "11%", textAlign: "center" }}>{isRTL ? "عدد الشحنات" : "Shipments"}</th>
-                <th style={{ padding: "8px 10px", border: "1px solid #382122", width: "13%", textAlign: "right" }}>{isRTL ? "إجمالي التكلفة" : "Total Cost"}</th>
-                <th style={{ padding: "8px 10px", border: "1px solid #382122", width: "14%", textAlign: "right" }}>{isRTL ? "إجمالي المبيعات" : "Total Sales"}</th>
-                <th style={{ padding: "8px 10px", border: "1px solid #382122", width: "13%", textAlign: "right" }}>{isRTL ? "مصاريف النقل" : "Transport Exp"}</th>
-                <th style={{ padding: "8px 10px", border: "1px solid #382122", width: "12%", textAlign: "right" }}>{isRTL ? "مصاريف إضافية" : "Extra Exp"}</th>
-                <th style={{ padding: "8px 10px", border: "1px solid #382122", width: "14%", textAlign: "right" }}>{isRTL ? "صافي الربح" : "Net Margin"}</th>
-              </tr>
-            </thead>
-            <tbody>
-              {clientPnlRows.map((r, idx) => {
-                const isProfit = r.netProfit >= 0;
-                return (
-                  <tr
-                    key={r.clientName}
-                    style={{
-                      backgroundColor: idx % 2 === 0 ? "#FFFFFF" : "#F9FAFB",
-                      color: "#1F2937",
-                    }}
-                  >
-                    <td style={{ padding: "6px 10px", border: "1px solid #E5E7EB", fontWeight: "bold", textAlign: isRTL ? "right" : "left" }}>{r.clientName}</td>
-                    <td style={{ padding: "6px 10px", border: "1px solid #E5E7EB", textAlign: "center", fontFamily: "monospace" }}>{r.shipmentCount}</td>
-                    <td style={{ padding: "6px 10px", border: "1px solid #E5E7EB", textAlign: "right", fontFamily: "monospace" }}>{r.totalCost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td style={{ padding: "6px 10px", border: "1px solid #E5E7EB", textAlign: "right", fontFamily: "monospace", fontWeight: "bold" }}>{r.totalSales.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td style={{ padding: "6px 10px", border: "1px solid #E5E7EB", textAlign: "right", fontFamily: "monospace", color: "#4B5563" }}>{r.transExpense.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td style={{ padding: "6px 10px", border: "1px solid #E5E7EB", textAlign: "right", fontFamily: "monospace", color: "#4B5563" }}>{r.extraExpense.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                    <td style={{ padding: "6px 10px", border: "1px solid #E5E7EB", textAlign: "right", fontFamily: "monospace", fontWeight: "bold", color: isProfit ? "#047857" : "#DC2626" }}>
-                      {r.netProfit.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-            <tfoot>
-              <tr style={{ backgroundColor: "#251516", color: "#FFFFFF", fontWeight: "bold", fontSize: "11px" }}>
-                <td style={{ padding: "8px 10px", border: "1px solid #382122", textAlign: isRTL ? "right" : "left" }}>{isRTL ? "المجموع الكلي" : "Grand Total"}</td>
-                <td style={{ padding: "8px 10px", border: "1px solid #382122", textAlign: "center", fontFamily: "monospace" }}>{totalShipmentsCount}</td>
-                <td style={{ padding: "8px 10px", border: "1px solid #382122", textAlign: "right", fontFamily: "monospace" }}>{sumTotalCost.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                <td style={{ padding: "8px 10px", border: "1px solid #382122", textAlign: "right", fontFamily: "monospace", color: "#F6AD55" }}>{grandTotalSales.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                <td style={{ padding: "8px 10px", border: "1px solid #382122", textAlign: "right", fontFamily: "monospace" }}>{sumTransExpense.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                <td style={{ padding: "8px 10px", border: "1px solid #382122", textAlign: "right", fontFamily: "monospace" }}>{grandTotalGeneralExpenses.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-                <td style={{ padding: "8px 10px", border: "1px solid #382122", textAlign: "right", fontFamily: "monospace", color: "#34D399" }}>{grandTotalNetProfit.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-
-        {/* Corporate Footer / Audit Stamp */}
-        <div style={{ marginTop: "20px", paddingTop: "12px", borderTop: "1px solid #E5E7EB", display: "flex", justifyContent: "space-between", alignItems: "center", fontSize: "10px", color: "#6B7280" }}>
+        <div style={{ height: "5px", background: "linear-gradient(90deg, #C45B2A 0%, #EA580C 50%, #251516 100%)", borderRadius: "4px", marginBottom: "20px" }} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", paddingBottom: "20px", marginBottom: "22px", borderBottom: "2px solid #E2E8F0" }}>
           <div>
-            {isRTL ? "مستند كشف حساب رسمي صادر إلكترونياً ومعتمد من إدارة العمليات لشركة XSPEED Express." : "Official automated financial statement issued by XSPEED Express Operations Management."}
+            <div style={{ fontSize: "20px", fontWeight: "900", color: "#1E293B", lineHeight: "1.2", marginBottom: "4px" }}>
+              {isRTL ? "شركة إكس سبيد لخدمات الشحن السريع واللوجستيات" : "XSPEED Express Freight & Logistics"}
+            </div>
+            <div style={{ fontSize: "11.5px", fontWeight: "700", color: "#C45B2A", marginBottom: "2px" }}>
+              {isRTL ? "الإدارة المالية المركزية • كشف حساب الأرباح والمصروفات" : "Central Finance Directorate • Profit & Loss Statement"}
+            </div>
           </div>
-          <div style={{ fontFamily: "monospace" }}>
-            Ref: XS-REP-{selectedYear}{selectedMonth} • {new Date().toISOString().split("T")[0]}
+          <div style={{ backgroundColor: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: "10px", padding: "10px 16px", minWidth: "280px", textAlign: isRTL ? "right" : "left", fontSize: "11px", lineHeight: "1.7" }}>
+            <div><strong>{isRTL ? "المرجع:" : "Ref:"}</strong> {docRefCode}</div>
+            <div><strong>{isRTL ? "التاريخ:" : "Date:"}</strong> {nowFormattedDate}</div>
+            <div><strong>{isRTL ? "العملة:" : "Currency:"}</strong> {selectedCurrency}</div>
+          </div>
+        </div>
+
+        {/* Top Metric Summary in PDF */}
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", marginBottom: "20px" }}>
+          <div style={{ padding: "12px", background: "#F1F5F9", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
+            <div style={{ fontSize: "10px", color: "#64748B", fontWeight: "bold" }}>{isRTL ? "إجمالي الإيرادات" : "Gross Revenue"}</div>
+            <div style={{ fontSize: "16px", fontWeight: "900", color: "#0F172A", marginTop: "4px" }}>{formatCurrency(grandTotalSales)} {currencySymbol}</div>
+          </div>
+          <div style={{ padding: "12px", background: "#F1F5F9", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
+            <div style={{ fontSize: "10px", color: "#64748B", fontWeight: "bold" }}>{isRTL ? "التكلفة المباشرة" : "Direct Costs"}</div>
+            <div style={{ fontSize: "16px", fontWeight: "900", color: "#0F172A", marginTop: "4px" }}>{formatCurrency(grandTotalDirectCosts)} {currencySymbol}</div>
+          </div>
+          <div style={{ padding: "12px", background: "#F1F5F9", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
+            <div style={{ fontSize: "10px", color: "#64748B", fontWeight: "bold" }}>{isRTL ? "المصروفات العامة" : "General Expenses"}</div>
+            <div style={{ fontSize: "16px", fontWeight: "900", color: "#0F172A", marginTop: "4px" }}>{formatCurrency(grandTotalGeneralExpenses)} {currencySymbol}</div>
+          </div>
+          <div style={{ padding: "12px", background: grandTotalNetProfit >= 0 ? "#ECFDF5" : "#FEF2F2", borderRadius: "8px", border: "1px solid #CBD5E1" }}>
+            <div style={{ fontSize: "10px", color: grandTotalNetProfit >= 0 ? "#065F46" : "#991B1B", fontWeight: "bold" }}>{isRTL ? "صافي الربح" : "Net Profit"}</div>
+            <div style={{ fontSize: "16px", fontWeight: "900", color: grandTotalNetProfit >= 0 ? "#047857" : "#B91C1C", marginTop: "4px" }}>
+              {grandTotalNetProfit >= 0 ? "+" : ""}{formatCurrency(grandTotalNetProfit)} {currencySymbol}
+            </div>
           </div>
         </div>
       </div>
