@@ -543,15 +543,12 @@ const getCandidateUrls = (): string[] => {
 
   const candidates: string[] = [];
 
-  // 1. Primary endpoint: Canonical WordPress subfolder on production
-  candidates.push("https://exspeeds.com/wordpress/wp-json");
-
-  // 2. Custom environment overrides if configured
+  // 1. Custom environment overrides if configured
   if (envInternal && envInternal.startsWith("http")) candidates.push(envInternal);
   if (envPublic && envPublic.startsWith("http")) candidates.push(envPublic);
 
-  // 3. Fallback standard endpoints
-  candidates.push("https://exspeeds.com/wp-json");
+  // 2. Primary canonical endpoint on production
+  candidates.push("https://exspeeds.com/wordpress/wp-json");
 
   return Array.from(new Set(candidates));
 };
@@ -564,7 +561,7 @@ export async function getPosts(limit = 20, locale: string = "ar"): Promise<WPPos
     const url = `${apiUrl}/wp/v2/posts?_embed=1&per_page=${limit}&lang=${normalizedLocale}`;
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const timeoutId = setTimeout(() => controller.abort(), 1200);
 
       const res = await fetch(url, {
         next: { revalidate: 60 },
@@ -582,22 +579,17 @@ export async function getPosts(limit = 20, locale: string = "ar"): Promise<WPPos
         if (contentType.includes("json")) {
           const posts: WPPost[] = await res.json();
           if (Array.isArray(posts) && posts.length > 0) {
-            console.log(`[WordPress API] Successfully fetched ${posts.length} posts for locale "${normalizedLocale}" from ${apiUrl}`);
             return posts.map((p) => transformWpPost(p, normalizedLocale));
           }
-        } else {
-          console.warn(`[WordPress API] Expected JSON but received ${contentType} from ${url}`);
         }
-      } else {
-        console.warn(`[WordPress API] HTTP ${res.status} (${res.statusText}) from ${url}`);
       }
-    } catch (err: any) {
-      console.warn(`[WordPress API] Failed to fetch posts from ${url}:`, err?.message || err);
+    } catch {
+      // Fast fallback on timeout/error without stalling SSR
     }
+    break; // Try only primary endpoint to prevent blocking cascade
   }
 
   const fallbackList = normalizedLocale === "en" ? FALLBACK_POSTS_EN : FALLBACK_POSTS_AR;
-  console.log(`[WordPress API] Serving ${fallbackList.length} localized fallback posts for "${normalizedLocale}".`);
   return fallbackList.slice(0, limit);
 }
 
@@ -608,12 +600,11 @@ export async function getPostBySlug(slug: string, locale: string = "ar"): Promis
   for (const apiUrl of candidateUrls) {
     const url = `${apiUrl}/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1&lang=${normalizedLocale}`;
     try {
-      console.log(`[WordPress API] Querying post slug "${slug}" (lang: ${normalizedLocale}) from ${apiUrl}...`);
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+      const timeoutId = setTimeout(() => controller.abort(), 1200);
 
       const res = await fetch(url, {
-        next: { revalidate: 10 },
+        next: { revalidate: 60 },
         signal: controller.signal,
         headers: {
           Accept: "application/json",
@@ -628,20 +619,14 @@ export async function getPostBySlug(slug: string, locale: string = "ar"): Promis
         if (contentType.includes("json")) {
           const posts: WPPost[] = await res.json();
           if (Array.isArray(posts) && posts.length > 0) {
-            console.log(`[WordPress API] Post "${slug}" found for locale "${normalizedLocale}" via ${apiUrl}`);
             return transformWpPost(posts[0], normalizedLocale);
-          } else {
-            console.warn(`[WordPress API] Endpoint ${apiUrl} returned empty array [] for slug "${slug}"`);
           }
-        } else {
-          console.warn(`[WordPress API] Expected JSON but received ${contentType} from ${url}`);
         }
-      } else {
-        console.warn(`[WordPress API] HTTP ${res.status} (${res.statusText}) for slug "${slug}" from ${url}`);
       }
-    } catch (err: any) {
-      console.warn(`[WordPress API] Request error for slug "${slug}" from ${url}:`, err?.message || err);
+    } catch {
+      // Fast fallback on timeout/error without stalling SSR
     }
+    break; // Try only primary endpoint to prevent blocking cascade
   }
 
   // Look up in preferred locale fallback dataset first
@@ -895,7 +880,7 @@ export async function getRankMathSchema(
     const endpoint = `${apiUrl}/rankmath/v1/getHead?url=${encodeURIComponent(targetUrl)}`;
     try {
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 6000);
+      const timeoutId = setTimeout(() => controller.abort(), 1000);
 
       const res = await fetch(endpoint, {
         next: { revalidate: 3600 }, // Cache for 1 hour (ISR)
@@ -929,23 +914,21 @@ export async function getRankMathSchema(
               try {
                 const parsed = JSON.parse(rawJson);
                 schemas.push(parsed);
-              } catch (parseErr) {
-                console.warn(`[Rank Math Schema] Error parsing JSON-LD script from ${endpoint}:`, parseErr);
+              } catch {
+                // Ignore parse errors
               }
             }
           }
 
           if (schemas.length > 0) {
-            console.log(`[Rank Math Schema] Successfully extracted ${schemas.length} schema block(s) from ${endpoint}`);
             return schemas;
           }
         }
-      } else {
-        console.warn(`[Rank Math Schema] HTTP ${res.status} (${res.statusText}) from ${endpoint}`);
       }
-    } catch (err: any) {
-      console.warn(`[Rank Math Schema] Request failed for ${endpoint}:`, err?.message || err);
+    } catch {
+      // Fast fallback without stalling
     }
+    break; // Only test primary endpoint
   }
 
   // Fallback to high-fidelity post data (zero generic filler)
