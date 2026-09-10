@@ -18,14 +18,6 @@ export default function BlogHeader({
 }: BlogHeaderProps) {
   const { t, isRTL } = useLanguage();
 
-  const categories = [
-    { id: "all", label: isRTL ? "جميع المقالات" : "All Articles" },
-    { id: "express", label: isRTL ? "الشحن السريع والطرود" : "Express & Courier" },
-    { id: "supply-chain", label: isRTL ? "سلاسل الإمداد" : "Supply Chain" },
-    { id: "customs", label: isRTL ? "التخليص الجمركي" : "Customs Clearance" },
-    { id: "tech", label: isRTL ? "التكنولوجيا واللوجستيات" : "Tech & Innovation" },
-  ];
-
   return (
     <section className="relative py-20 lg:py-28 px-4 sm:px-6 lg:px-8 border-b border-[#ECE2D5] overflow-hidden mb-12">
       {/* 3D Logistics Background Asset */}
@@ -66,24 +58,6 @@ export default function BlogHeader({
               ? "دليلك الشامل لمتابعة أحدث اتجاهات الشحن الدولي، قوانين الجمارك، وابتكارات سلاسل الإمداد."
               : "Your comprehensive guide to international freight trends, tariff updates, and supply chain technology.")}
         </p>
-
-        {/* Category Pills */}
-        <div className="pt-3 flex flex-wrap items-center justify-center gap-2">
-          {categories.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => onSelectCategory && onSelectCategory(cat.id)}
-              className={`px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer shadow-2xs ${
-                activeCategory === cat.id
-                  ? "bg-gradient-to-r from-[#C45B2A] to-[#E65100] text-white shadow-orange-500/20"
-                  : "bg-white/90 text-gray-700 hover:bg-white hover:text-[#C45B2A] border border-gray-200/80"
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
       </div>
     </section>
   );

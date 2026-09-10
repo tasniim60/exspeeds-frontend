@@ -45,7 +45,7 @@ function ForgotPasswordForm() {
   const redirectParam = searchParams.get("redirect") || "";
   const initialEmail = searchParams.get("email") || "";
 
-  const { t, isRTL } = useLanguage();
+  const { t, isRTL, getLocalizedPath } = useLanguage();
   const { forgotPassword, resetPassword } = useAuth();
 
   const [step, setStep] = useState<"request" | "reset" | "success">("request");
@@ -512,7 +512,7 @@ function ForgotPasswordForm() {
                     {isRTL ? "تغيير البريد الإلكتروني" : "Change Email"}
                   </button>
                   <Link
-                    href={redirectParam ? `/login?redirect=${encodeURIComponent(redirectParam)}` : "/login"}
+                    href={getLocalizedPath(redirectParam ? `/login?redirect=${encodeURIComponent(redirectParam)}` : "/login")}
                     className="text-[#C45B2A] font-bold hover:text-[#A8481B] hover:underline transition-colors"
                   >
                     {t("auth.backToLogin") || (isRTL ? "تسجيل الدخول" : "Sign In")}
@@ -538,7 +538,7 @@ function ForgotPasswordForm() {
                   </p>
                 </div>
                 <Link
-                  href={redirectParam ? `/login?redirect=${encodeURIComponent(redirectParam)}` : "/login"}
+                  href={getLocalizedPath(redirectParam ? `/login?redirect=${encodeURIComponent(redirectParam)}` : "/login")}
                   className="w-full h-12 rounded-xl bg-gradient-to-r from-[#C45B2A] via-[#D86227] to-[#E65100] hover:from-[#A8481B] hover:to-[#C45B2A] text-white font-bold text-sm shadow-[0_4px_16px_rgba(196,91,42,0.28)] hover:shadow-[0_6px_20px_rgba(196,91,42,0.38)] flex items-center justify-center gap-2 cursor-pointer transition-all duration-200"
                 >
                   <span>{isRTL ? "تسجيل الدخول الآن" : "Sign In Now"}</span>

@@ -29,26 +29,32 @@ export async function POST(request: Request) {
       provider: "google",
     };
 
-    // Forward to backend Laravel API if configured
+    // Forward to backend Laravel API if configured and external
     try {
       const backendUrl = process.env.BACKEND_API_URL || "http://localhost:8000/api";
-      const res = await fetch(`${backendUrl}/auth/google`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: userPayload.name,
-          email: userPayload.email,
-          google_id: googleId,
-          avatar,
-        }),
-      });
+      if (backendUrl && !backendUrl.includes("exspeeds.com/api")) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 1500);
+        const res = await fetch(`${backendUrl}/auth/google`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name: userPayload.name,
+            email: userPayload.email,
+            google_id: googleId,
+            avatar,
+          }),
+          signal: controller.signal,
+        });
+        clearTimeout(timeoutId);
 
-      if (res.ok) {
-        const json = await res.json();
-        if (json.data?.user) {
-          userPayload.name = json.data.user.name;
-          userPayload.email = json.data.user.email;
-          userPayload.role = json.data.user.role === "admin" ? "admin" : "user";
+        if (res.ok) {
+          const json = await res.json();
+          if (json.data?.user) {
+            userPayload.name = json.data.user.name;
+            userPayload.email = json.data.user.email;
+            userPayload.role = json.data.user.role === "admin" ? "admin" : "user";
+          }
         }
       }
     } catch {

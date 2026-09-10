@@ -55,4 +55,13 @@ if (fs.existsSync(dataSrc)) {
   console.log('  -> Copied .data/ to .next/standalone/.data/');
 }
 
+// 4. Copy .env.production to standalone
+const envProdSrc = path.join(rootDir, '.env.production');
+const envProdDest = path.join(standaloneDir, '.env.production');
+if (fs.existsSync(envProdSrc)) {
+  fs.copyFileSync(envProdSrc, envProdDest);
+  console.log('  -> Copied .env.production to .next/standalone/.env.production');
+}
+
+
 console.log('[standalone] Completed successfully! Standalone server is ready for Hostinger.');

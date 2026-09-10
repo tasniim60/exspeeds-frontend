@@ -30,6 +30,13 @@ export function middleware(request: NextRequest) {
     const cookieLocale = request.cookies.get(STORAGE_KEY)?.value;
 
     const response = NextResponse.next();
+    response.headers.set("Vary", "Accept, RSC, Next-Router-State-Tree, Next-Router-Prefetch");
+
+    if (/(login|register|forgot-password)/.test(pathname)) {
+      response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0");
+      response.headers.set("Pragma", "no-cache");
+    }
+
     if (cookieLocale !== currentLocale && LOCALES.includes(currentLocale)) {
       response.cookies.set(STORAGE_KEY, currentLocale, {
         path: "/",
@@ -58,6 +65,11 @@ export function middleware(request: NextRequest) {
   const redirectUrl = new URL(`/${detectedLocale}${targetPath}${request.nextUrl.search}`, request.url);
 
   const response = NextResponse.redirect(redirectUrl, 307);
+  response.headers.set("Vary", "Accept, RSC, Next-Router-State-Tree, Next-Router-Prefetch");
+  if (/(login|register|forgot-password)/.test(pathname)) {
+    response.headers.set("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0");
+    response.headers.set("Pragma", "no-cache");
+  }
   response.cookies.set(STORAGE_KEY, detectedLocale, {
     path: "/",
     maxAge: 31536000,

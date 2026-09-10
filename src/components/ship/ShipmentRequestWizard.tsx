@@ -37,6 +37,7 @@ import {
   Building2,
   Plane,
   ChevronDown,
+  ChevronUp,
   Warehouse,
   ExternalLink,
 } from "lucide-react";
@@ -56,6 +57,155 @@ const STORAGE_KEY_DRAFT = "xspeed_shipment_wizard_draft_v3";
 const STORAGE_KEY_STEP = "xspeed_shipment_wizard_step_v3";
 const STORAGE_KEY_SERVICE = "xspeed_shipment_wizard_service_v3";
 const STORAGE_KEY_SUBMITTED = "xspeed_shipment_wizard_submitted_v3";
+
+interface NumberStepperProps {
+  id?: string;
+  value: number | string;
+  onChange: (val: string) => void;
+  min?: number;
+  max?: number;
+  step?: number;
+  placeholder?: string;
+  required?: boolean;
+  hasError?: boolean;
+  inputMode?: "numeric" | "decimal";
+  size?: "default" | "compact";
+  isRTL?: boolean;
+  className?: string;
+  ariaLabel?: string;
+}
+
+function NumberStepper({
+  id,
+  value,
+  onChange,
+  min,
+  max,
+  step = 1,
+  placeholder,
+  required = false,
+  hasError = false,
+  inputMode = "numeric",
+  size = "default",
+  isRTL = false,
+  className = "",
+  ariaLabel,
+}: NumberStepperProps) {
+  // Determine decimal precision based on step
+  const getPrecision = (num: number) => {
+    const parts = num.toString().split(".");
+    return parts.length > 1 ? parts[1].length : 0;
+  };
+  const precision = getPrecision(step);
+
+  const handleIncrement = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (value === "" || value === null || value === undefined) {
+      const initial = min !== undefined ? min : step;
+      onChange(String(initial));
+      return;
+    }
+    const curr = parseFloat(String(value));
+    const safeCurr = isNaN(curr) ? (min !== undefined ? min : 0) : curr;
+    let next = safeCurr + step;
+    if (precision > 0) {
+      next = parseFloat(next.toFixed(precision));
+    }
+    if (max !== undefined && next > max) {
+      next = max;
+    }
+    onChange(String(next));
+  };
+
+  const handleDecrement = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (value === "" || value === null || value === undefined) {
+      const initial = min !== undefined ? min : 0;
+      onChange(String(initial));
+      return;
+    }
+    const curr = parseFloat(String(value));
+    const safeCurr = isNaN(curr) ? (min !== undefined ? min : 0) : curr;
+    let next = safeCurr - step;
+    if (precision > 0) {
+      next = parseFloat(next.toFixed(precision));
+    }
+    if (min !== undefined && next < min) {
+      next = min;
+    }
+    onChange(String(next));
+  };
+
+  const isDecrementDisabled =
+    min !== undefined && value !== "" && !isNaN(Number(value)) && Number(value) <= min;
+  const isIncrementDisabled =
+    max !== undefined && value !== "" && !isNaN(Number(value)) && Number(value) >= max;
+
+  const isCompact = size === "compact";
+
+  return (
+    <div className={`relative flex items-center w-full ${className}`}>
+      <input
+        id={id}
+        type="number"
+        min={min}
+        max={max}
+        step={step}
+        placeholder={placeholder}
+        required={required}
+        value={value}
+        inputMode={inputMode}
+        aria-label={ariaLabel}
+        onChange={(e) => onChange(e.target.value)}
+        className={`w-full ${
+          isCompact ? "h-10 text-xs pl-2.5 pr-7" : "h-10 sm:h-11 text-xs sm:text-sm pl-3.5 pr-9 sm:pr-10"
+        } bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] font-bold font-mono rounded-xl border outline-none transition-all [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none ${
+          hasError
+            ? "border-rose-400 ring-2 ring-rose-100"
+            : "border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20"
+        }`}
+      />
+
+      {/* Touch-friendly Stepper Buttons (Visible & Responsive on Mobile and Desktop) */}
+      <div
+        className={`absolute inset-y-1 right-1 ${
+          isCompact ? "w-6" : "w-7 sm:w-8"
+        } flex flex-col items-center justify-between rounded-r-lg border-l border-gray-200/80 bg-gray-100/80 select-none overflow-hidden`}
+      >
+        <button
+          type="button"
+          tabIndex={-1}
+          disabled={isIncrementDisabled}
+          onClick={handleIncrement}
+          aria-label={isRTL ? "زيادة القيمة" : "Increase value"}
+          className={`w-full flex-1 flex items-center justify-center border-b border-gray-200/70 transition-colors touch-manipulation ${
+            isIncrementDisabled
+              ? "opacity-25 cursor-not-allowed bg-transparent text-gray-400"
+              : "cursor-pointer text-gray-600 hover:text-[#C45B2A] hover:bg-white active:bg-[#C45B2A]/15 active:text-[#C45B2A]"
+          }`}
+        >
+          <ChevronUp className={`${isCompact ? "w-3 h-3 stroke-[2.5]" : "w-3.5 h-3.5 stroke-[2.5]"}`} />
+        </button>
+        <button
+          type="button"
+          tabIndex={-1}
+          disabled={isDecrementDisabled}
+          onClick={handleDecrement}
+          aria-label={isRTL ? "إنقاص القيمة" : "Decrease value"}
+          className={`w-full flex-1 flex items-center justify-center transition-colors touch-manipulation ${
+            isDecrementDisabled
+              ? "opacity-25 cursor-not-allowed bg-transparent text-gray-400"
+              : "cursor-pointer text-gray-600 hover:text-[#C45B2A] hover:bg-white active:bg-[#C45B2A]/15 active:text-[#C45B2A]"
+          }`}
+        >
+          <ChevronDown className={`${isCompact ? "w-3 h-3 stroke-[2.5]" : "w-3.5 h-3.5 stroke-[2.5]"}`} />
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export default function ShipmentRequestWizard() {
   const { user } = useAuth();
@@ -131,38 +281,6 @@ export default function ShipmentRequestWizard() {
           ? "مرحباً XSPEED، أود الاستفسار عن خدمات التخليص الجمركي للشحنات الدولية ونظام نافذة / ACI."
           : "Hello XSPEED, I would like to inquire about customs clearance services, Nafeza compliance, and ACI pre-clearance.",
       },
-      {
-        id: "warehousing",
-        title: isRTL ? "تخزين وإدارة مستودعات ذكية (3PL Hub)" : "Smart Warehousing & 3PL Hub",
-        shortTitle: isRTL ? "مستودعات وتخزين 3PL" : "Warehousing 3PL",
-        desc: isRTL
-          ? "مساحات تخزين آمنة، إدارة مخزون دقيقة بنظام WMS، وتجهيز وتغليف الطلبات لمتاجر التجارة الإلكترونية."
-          : "Secure pallet storage, WMS inventory tracking, and rapid pick & pack fulfillment for eCommerce.",
-        icon: Warehouse,
-        isForm: false,
-        tag: isRTL ? "واتساب فوري" : "Instant WhatsApp",
-        badgeBg: "bg-emerald-100 text-emerald-900 border-emerald-200",
-        actionText: isRTL ? "تنسيق عبر واتساب" : "WhatsApp Fast-Track",
-        whatsappMsg: isRTL
-          ? "مرحباً XSPEED، أود الاستفسار عن خدمات التخزين والمستودعات الذكية وحلول 3PL."
-          : "Hello XSPEED, I would like to inquire about smart warehousing and 3PL fulfillment solutions.",
-      },
-      {
-        id: "enterprise",
-        title: isRTL ? "عقود الشركات وحلول سلاسل الإمداد" : "Corporate Accounts & Enterprise SLA",
-        shortTitle: isRTL ? "حسابات شركات وعقود" : "Enterprise B2B",
-        desc: isRTL
-          ? "أسعار تفضيلية تعاقدية للشركات، فواتير دورية ائتمانية، ومدير حساب لوجستي مخصص لدعم عملياتك."
-          : "Contracted enterprise freight rates, monthly invoicing, and dedicated account manager.",
-        icon: Building2,
-        isForm: false,
-        tag: isRTL ? "واتساب فوري" : "Instant WhatsApp",
-        badgeBg: "bg-emerald-100 text-emerald-900 border-emerald-200",
-        actionText: isRTL ? "تنسيق عبر واتساب" : "WhatsApp Fast-Track",
-        whatsappMsg: isRTL
-          ? "مرحباً XSPEED، أود مناقشة فتح حساب شركات وعقد خدمات لوجستية دورية بأسعار مخصصة."
-          : "Hello XSPEED, I would like to discuss opening a corporate B2B logistics account with custom rates.",
-      },
     ],
     [isRTL]
   );
@@ -172,7 +290,24 @@ export default function ShipmentRequestWizard() {
     [servicesList, selectedService]
   );
 
-  // Handle service change: express parcel stays in form; others trigger WhatsApp directly
+  const updateStep = (newStep: number) => {
+    setStep(newStep);
+    setGeneralError(null);
+    try {
+      sessionStorage.setItem(STORAGE_KEY_STEP, String(newStep));
+      if (typeof window !== "undefined") {
+        const url = new URL(window.location.href);
+        url.searchParams.set("step", String(newStep));
+        window.history.replaceState(null, "", url.toString());
+        const wizardEl = document.getElementById("shipment-wizard-root");
+        if (wizardEl) {
+          wizardEl.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }
+    } catch {}
+  };
+
+  // Handle service change: express parcel navigates directly to Step 2 (form data); others trigger WhatsApp directly
   const handleServiceSelect = (serviceId: string, directOpen = true) => {
     setSelectedService(serviceId);
     try {
@@ -187,10 +322,15 @@ export default function ShipmentRequestWizard() {
     }
 
     const target = servicesList.find((s) => s.id === serviceId);
-    if (target && !target.isForm && directOpen) {
-      const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(target.whatsappMsg || "")}`;
-      if (typeof window !== "undefined") {
-        window.open(waUrl, "_blank");
+    if (target) {
+      if (target.isForm) {
+        // Direct transition to Step 2 (Pickup & Delivery Details)
+        updateStep(2);
+      } else if (directOpen) {
+        const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(target.whatsappMsg || "")}`;
+        if (typeof window !== "undefined") {
+          window.open(waUrl, "_blank");
+        }
       }
     }
   };
@@ -295,19 +435,6 @@ export default function ShipmentRequestWizard() {
       console.error("Failed to restore wizard state:", e);
     }
   }, [user]);
-
-  const updateStep = (newStep: number) => {
-    setStep(newStep);
-    setGeneralError(null);
-    try {
-      sessionStorage.setItem(STORAGE_KEY_STEP, String(newStep));
-      if (typeof window !== "undefined") {
-        const url = new URL(window.location.href);
-        url.searchParams.set("step", String(newStep));
-        window.history.replaceState(null, "", url.toString());
-      }
-    } catch {}
-  };
 
   const handleChange = (field: string, value: any) => {
     setFormData((prev) => {
@@ -817,7 +944,7 @@ export default function ShipmentRequestWizard() {
   }
 
   return (
-    <div className={`bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden w-full mx-auto ${isRTL ? "text-right" : "text-left"}`}>
+    <div id="shipment-wizard-root" className={`bg-white rounded-3xl border border-gray-200 shadow-xl overflow-hidden w-full mx-auto ${isRTL ? "text-right" : "text-left"}`}>
       {/* Stepper Header with 5-Step Progress */}
       <div className="bg-[#211112] text-white p-5 sm:p-6 border-b border-white/10 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -994,11 +1121,11 @@ export default function ShipmentRequestWizard() {
                 return (
                   <div
                     key={svc.id}
-                    onClick={() => handleServiceSelect(svc.id, !svc.isForm)}
+                    onClick={() => handleServiceSelect(svc.id, true)}
                     onKeyDown={(e) => {
                       if (e.key === "Enter" || e.key === " ") {
                         e.preventDefault();
-                        handleServiceSelect(svc.id, !svc.isForm);
+                        handleServiceSelect(svc.id, true);
                       }
                     }}
                     role="radio"
@@ -1090,44 +1217,7 @@ export default function ShipmentRequestWizard() {
                 );
               })}
             </div>
-
-            {/* Selected Service Summary Bar (Clean & Focused, Single Action at Footer) */}
-            <div
-              className={`p-4 sm:p-5 rounded-2xl border flex items-center justify-between gap-4 shadow-2xs transition-all ${
-                activeService.isForm
-                  ? "bg-gradient-to-r from-orange-50/90 via-white to-orange-50/50 border-orange-200"
-                  : "bg-gradient-to-r from-emerald-50/90 via-white to-emerald-50/50 border-emerald-200"
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <div
-                  className={`p-2.5 rounded-xl text-white shrink-0 shadow-2xs ${
-                    activeService.isForm ? "bg-[#C45B2A]" : "bg-emerald-600"
-                  }`}
-                >
-                  <activeService.icon className="w-5 h-5" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="text-[11px] font-bold uppercase tracking-wider text-gray-500">
-                      {isRTL ? "الخدمة المحددة حالياً:" : "Current Selection:"}
-                    </span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${activeService.badgeBg}`}>
-                      {activeService.tag}
-                    </span>
-                  </div>
-                  <h4 className="text-sm sm:text-base font-black text-gray-900 mt-0.5">
-                    {activeService.title}
-                  </h4>
-                  <p className="text-xs text-gray-600 mt-0.5">
-                    {activeService.isForm
-                      ? (isRTL ? "متابعة إدخال بيانات الاستلام والتسليم ومواصفات الشحنة." : "Proceed to fill cargo, pickup and delivery specifications.")
-                      : (isRTL ? "خدمة استشارية وتنسيق مباشر — اضغط على زر واتساب أدناه للتواصل الفوري مع مسؤولي العمليات." : "Direct consultation service — Click WhatsApp button below for instant support.")}
-                  </p>
-                </div>
-              </div>
             </div>
-          </div>
         )}
 
         {/* STEP 2: PICKUP DETAILS */}
@@ -1354,7 +1444,6 @@ export default function ShipmentRequestWizard() {
               <div className="sm:col-span-2">
                 <label className="block text-xs font-bold text-gray-700 mb-1 flex items-center justify-between">
                   <span>{isRTL ? "العنوان الوطني المختصر / الرمز البريدي" : "Short National Address / Postal Code"}</span>
-                  <span className="text-[11px] text-[#C45B2A] font-bold">{isRTL ? "هام للشحنات للخليج والسعودية" : "Recommended for GCC"}</span>
                 </label>
                 <div className="relative flex items-center">
                   <Hash className={`absolute ${isRTL ? "right-3" : "left-3"} h-4 w-4 text-gray-400 pointer-events-none`} />
@@ -1528,15 +1617,17 @@ export default function ShipmentRequestWizard() {
                 <label className="block text-xs font-bold text-gray-700 mb-1">
                   {isRTL ? "عدد الطرود" : "Number of Packages"} <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  type="number"
-                  min="1"
+                <NumberStepper
                   value={formData.packageCount}
-                  onChange={(e) => handleChange("packageCount", e.target.value)}
-                  className={`w-full h-10 px-3.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border outline-none transition-all ${
-                    fieldErrors.packageCount ? "border-rose-400 ring-2 ring-rose-100" : "border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20"
-                  }`}
+                  onChange={(val) => handleChange("packageCount", val)}
+                  min={1}
+                  step={1}
+                  inputMode="numeric"
+                  placeholder="1"
                   required
+                  hasError={!!fieldErrors.packageCount}
+                  isRTL={isRTL}
+                  ariaLabel={isRTL ? "عدد الطرود" : "Number of Packages"}
                 />
                 {fieldErrors.packageCount && <p className="text-[11px] font-bold text-rose-600 mt-1">{fieldErrors.packageCount}</p>}
               </div>
@@ -1545,16 +1636,17 @@ export default function ShipmentRequestWizard() {
                 <label className="block text-xs font-bold text-gray-700 mb-1">
                   {isRTL ? "الوزن الفعلي الإجمالي (كجم)" : "Actual Total Weight (KG)"} <span className="text-rose-500">*</span>
                 </label>
-                <input
-                  type="number"
-                  step="0.1"
-                  min="0.1"
+                <NumberStepper
                   value={formData.weight}
-                  onChange={(e) => handleChange("weight", e.target.value)}
-                  className={`w-full h-10 px-3.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border outline-none transition-all ${
-                    fieldErrors.weight ? "border-rose-400 ring-2 ring-rose-100" : "border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20"
-                  }`}
+                  onChange={(val) => handleChange("weight", val)}
+                  min={0.1}
+                  step={0.5}
+                  inputMode="decimal"
+                  placeholder="5.0"
                   required
+                  hasError={!!fieldErrors.weight}
+                  isRTL={isRTL}
+                  ariaLabel={isRTL ? "الوزن الفعلي الإجمالي (كجم)" : "Actual Total Weight (KG)"}
                 />
                 {fieldErrors.weight && <p className="text-[11px] font-bold text-rose-600 mt-1">{fieldErrors.weight}</p>}
               </div>
@@ -1563,12 +1655,15 @@ export default function ShipmentRequestWizard() {
                 <label className="block text-xs font-bold text-gray-700 mb-1">
                   {isRTL ? "القيمة المصرح بها ($ USD)" : "Declared Value ($ USD)"}
                 </label>
-                <input
-                  type="number"
-                  min="0"
+                <NumberStepper
                   value={formData.declaredValue}
-                  onChange={(e) => handleChange("declaredValue", e.target.value)}
-                  className="w-full h-10 px-3.5 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all"
+                  onChange={(val) => handleChange("declaredValue", val)}
+                  min={0}
+                  step={50}
+                  inputMode="numeric"
+                  placeholder="500"
+                  isRTL={isRTL}
+                  ariaLabel={isRTL ? "القيمة المصرح بها ($ USD)" : "Declared Value ($ USD)"}
                 />
               </div>
             </div>
@@ -1589,33 +1684,42 @@ export default function ShipmentRequestWizard() {
 
               <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <input
-                    type="number"
-                    min="1"
+                  <NumberStepper
+                    size="compact"
+                    min={1}
+                    step={1}
+                    inputMode="numeric"
                     placeholder={isRTL ? "الطول L" : "Length (L)"}
                     value={formData.length}
-                    onChange={(e) => handleChange("length", e.target.value)}
-                    className="w-full h-10 px-3 bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all"
+                    onChange={(val) => handleChange("length", val)}
+                    isRTL={isRTL}
+                    ariaLabel={isRTL ? "الطول بالسم" : "Length in cm"}
                   />
                 </div>
                 <div>
-                  <input
-                    type="number"
-                    min="1"
+                  <NumberStepper
+                    size="compact"
+                    min={1}
+                    step={1}
+                    inputMode="numeric"
                     placeholder={isRTL ? "العرض W" : "Width (W)"}
                     value={formData.width}
-                    onChange={(e) => handleChange("width", e.target.value)}
-                    className="w-full h-10 px-3 bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all"
+                    onChange={(val) => handleChange("width", val)}
+                    isRTL={isRTL}
+                    ariaLabel={isRTL ? "العرض بالسم" : "Width in cm"}
                   />
                 </div>
                 <div>
-                  <input
-                    type="number"
-                    min="1"
+                  <NumberStepper
+                    size="compact"
+                    min={1}
+                    step={1}
+                    inputMode="numeric"
                     placeholder={isRTL ? "الارتفاع H" : "Height (H)"}
                     value={formData.height}
-                    onChange={(e) => handleChange("height", e.target.value)}
-                    className="w-full h-10 px-3 bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all"
+                    onChange={(val) => handleChange("height", val)}
+                    isRTL={isRTL}
+                    ariaLabel={isRTL ? "الارتفاع بالسم" : "Height in cm"}
                   />
                 </div>
               </div>
@@ -2143,58 +2247,27 @@ export default function ShipmentRequestWizard() {
           </form>
         )}
 
-        {/* Stepper Navigation Footer Buttons (Steps 1 to 4) */}
-        {step < 5 && (
+        {/* Stepper Navigation Footer Buttons (Steps 2 to 4) */}
+        {step > 1 && step < 5 && (
           <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-            {step > 1 ? (
-              <button
-                type="button"
-                onClick={handleBack}
-                className="h-10 px-5 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
-              >
-                <ArrowLeft className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
-                <span>{isRTL ? "رجوع" : "Back"}</span>
-              </button>
-            ) : (
-              <div />
-            )}
+            <button
+              type="button"
+              onClick={handleBack}
+              className="h-10 px-5 rounded-xl border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition-colors"
+            >
+              <ArrowLeft className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
+              <span>{isRTL ? "رجوع" : "Back"}</span>
+            </button>
 
-            {step === 1 ? (
-              <div className="flex items-center justify-end w-full">
-                {activeService.isForm ? (
-                  <button
-                    id="wizard-next-btn"
-                    type="button"
-                    onClick={handleNext}
-                    className="h-11 px-7 rounded-xl bg-[#C45B2A] hover:bg-[#A8481B] text-white text-xs sm:text-sm font-extrabold flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-98"
-                  >
-                    <span>{isRTL ? "المتابعة إلى بيانات الاستلام والتسليم" : "Continue to Pickup"}</span>
-                    <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
-                  </button>
-                ) : (
-                  <a
-                    href={`https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(activeService.whatsappMsg || "")}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="h-11 px-7 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-extrabold flex items-center gap-2 shadow-md hover:shadow-lg transition-all cursor-pointer active:scale-98"
-                  >
-                    <MessageSquare className="w-4 h-4" />
-                    <span>{isRTL ? "تواصل فوري عبر واتساب" : "Chat on WhatsApp"}</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
-                )}
-              </div>
-            ) : (
-              <button
-                id="wizard-next-btn"
-                type="button"
-                onClick={handleNext}
-                className="h-10 px-6 rounded-xl bg-[#C45B2A] hover:bg-[#A8481B] text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
-              >
-                <span>{isRTL ? "التالي" : "Next"}</span>
-                <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
-              </button>
-            )}
+            <button
+              id="wizard-next-btn"
+              type="button"
+              onClick={handleNext}
+              className="h-10 px-6 rounded-xl bg-[#C45B2A] hover:bg-[#A8481B] text-white text-xs sm:text-sm font-bold flex items-center gap-1.5 shadow-sm transition-all cursor-pointer"
+            >
+              <span>{isRTL ? "التالي" : "Next"}</span>
+              <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
+            </button>
           </div>
         )}
       </div>

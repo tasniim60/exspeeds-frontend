@@ -23,15 +23,28 @@ export default function FloatingWidgets() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Hide floating widgets on admin, register, and authentication/dashboard management routes
-  if (
-    pathname?.startsWith("/admin") ||
-    pathname?.startsWith("/wp-admin") ||
-    pathname === "/register" ||
-    pathname === "/login" ||
-    pathname === "/forgot-password" ||
-    pathname === "/organic-login"
-  ) {
+  // Normalize pathname to strip language prefix (/ar, /en) and trailing slashes
+  const cleanPath = (pathname || "")
+    .split("?")[0]
+    .replace(/^\/(ar|en)(\/|$)/, "/")
+    .replace(/\/+$/, "") || "/";
+
+  // Hide floating widgets completely on login, register, auth, dashboard, and admin routes
+  const isHiddenRoute =
+    cleanPath === "/login" ||
+    cleanPath === "/register" ||
+    cleanPath === "/forgot-password" ||
+    cleanPath === "/organic-login" ||
+    cleanPath === "/dashboard" ||
+    cleanPath.startsWith("/dashboard/") ||
+    cleanPath === "/client" ||
+    cleanPath.startsWith("/client/") ||
+    cleanPath === "/admin" ||
+    cleanPath.startsWith("/admin/") ||
+    cleanPath === "/wp-admin" ||
+    cleanPath.startsWith("/wp-admin/");
+
+  if (isHiddenRoute) {
     return null;
   }
 

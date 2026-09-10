@@ -71,7 +71,7 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
             alt="XSPEED - Fast & Secure"
             width={200}
             height={58}
-            className="h-12 sm:h-[58px] w-auto object-contain shrink-0 mix-blend-multiply group-hover:scale-105 transition-transform"
+            className="h-10 xs:h-11 sm:h-[54px] md:h-[58px] w-auto object-contain shrink-0 mix-blend-multiply group-hover:scale-105 transition-transform"
           />
         </Link>
 
@@ -242,14 +242,14 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
           )}
         </div>
 
-        {/* Medium Screen Toolbar (768px - 1023px Tablets & iPad) */}
-        <div className="hidden md:flex lg:hidden items-center gap-2 sm:gap-3">
-          {/* Direct Language Switcher */}
+        {/* Mobile & Tablet Controls Group (< 1024px) */}
+        <div className="flex lg:hidden items-center gap-1.5 sm:gap-2.5">
+          {/* Direct Language Switcher - ALWAYS visible in navbar on mobile & tablet */}
           <LanguageSwitcher variant="nav-light" />
 
-          {/* Quick Request Shipment or User Profile */}
+          {/* Medium Screen Toolbar (768px - 1023px Tablets & iPad) */}
           {!isAuth && (
-            <>
+            <div className="hidden md:flex items-center gap-2">
               {mounted && user ? (
                 <Link
                   href={getLocalizedPath("/profile")}
@@ -277,37 +277,36 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
                   </Link>
                 </div>
               )}
-            </>
+            </div>
           )}
-        </div>
 
-        {/* Mobile & Tablet Menu Toggle Button */}
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="lg:hidden p-2 sm:px-3 sm:py-2 rounded-xl text-gray-700 hover:text-[#C45B2A] hover:bg-orange-50/70 border border-gray-200/80 transition-all flex items-center gap-2 cursor-pointer active:scale-95 shadow-2xs"
-          aria-label={mobileOpen ? "Close menu" : "Open menu"}
-        >
-          {mobileOpen ? (
-            <X className="w-5 h-5 text-[#C45B2A]" />
-          ) : (
-            <Menu className="w-5 h-5" />
-          )}
-          <span className="hidden sm:inline text-xs font-bold text-gray-800">
-            {mobileOpen ? (isRTL ? "إغلاق" : "Close") : (isRTL ? "القائمة" : "Menu")}
-          </span>
-        </button>
+          {/* Mobile & Tablet Menu Toggle Button */}
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="p-2 sm:px-3 sm:py-2 rounded-xl text-gray-700 hover:text-[#C45B2A] hover:bg-orange-50/70 border border-gray-200/80 transition-all flex items-center gap-2 cursor-pointer active:scale-95 shadow-2xs shrink-0"
+            aria-label={mobileOpen ? "Close menu" : "Open menu"}
+          >
+            {mobileOpen ? (
+              <X className="w-5 h-5 text-[#C45B2A]" />
+            ) : (
+              <Menu className="w-5 h-5" />
+            )}
+            <span className="hidden sm:inline text-xs font-bold text-gray-800">
+              {mobileOpen ? (isRTL ? "إغلاق" : "Close") : (isRTL ? "القائمة" : "Menu")}
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Mobile & Tablet Drawer Navigation */}
       {mobileOpen && (
         <div className="lg:hidden bg-white/98 backdrop-blur-md border-t border-gray-100 px-4 sm:px-6 md:px-8 py-6 animate-fade-up shadow-2xl">
           <div className="max-w-3xl mx-auto space-y-5">
-            {/* Phone-only Language Switcher Header (Tablet has it directly in the topbar) */}
-            <div className="flex md:hidden items-center justify-between pb-3 border-b border-gray-100">
+            {/* Drawer Header Title */}
+            <div className="flex items-center justify-between pb-3 border-b border-gray-100">
               <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
                 {isRTL ? "تصفح الموقع" : "Navigation"}
               </span>
-              <LanguageSwitcher variant="nav-light" />
             </div>
 
             {/* Navigation Links Grid: 1 col on phone, 2 cols on tablet */}
@@ -363,36 +362,41 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
                     </span>
                   </Link>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <Link
-                      href={getLocalizedPath("/ship")}
-                      onClick={() => setMobileOpen(false)}
-                      className="flex items-center justify-center gap-2 py-3 rounded-xl bg-[#C45B2A] text-white font-bold text-xs shadow-sm hover:bg-[#A34920] transition-colors"
-                    >
-                      <Plus className="w-4 h-4" />
-                      <span>{t("nav.requestShipment")}</span>
-                    </Link>
-
-                    {user.role === "admin" ? (
+                  <div className="space-y-2">
+                    <div className={`grid grid-cols-1 ${user.role === "admin" ? "sm:grid-cols-2" : ""} gap-2`}>
                       <Link
-                        href={getLocalizedPath("/admin")}
+                        href={getLocalizedPath("/ship")}
                         onClick={() => setMobileOpen(false)}
-                        className="flex items-center justify-center gap-2 py-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 font-bold text-xs hover:bg-amber-100 transition-colors"
+                        className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-[#C45B2A] text-white font-bold text-xs shadow-sm hover:bg-[#A34920] transition-colors cursor-pointer min-h-[44px]"
                       >
-                        <ShieldCheck className="w-4 h-4 text-amber-600" />
-                        <span>{t("nav.adminDashboard")}</span>
+                        <Plus className="w-4 h-4" />
+                        <span>{t("nav.requestShipment")}</span>
                       </Link>
-                    ) : (
-                      <button
-                        onClick={() => {
-                          handleLogout();
-                          setMobileOpen(false);
-                        }}
-                        className="py-3 rounded-xl bg-red-50 text-red-600 font-bold text-xs border border-red-200 hover:bg-red-100 transition-colors cursor-pointer"
-                      >
-                        {t("nav.signOut")}
-                      </button>
-                    )}
+
+                      {user.role === "admin" && (
+                        <Link
+                          href={getLocalizedPath("/admin")}
+                          onClick={() => setMobileOpen(false)}
+                          className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 font-bold text-xs hover:bg-amber-100 transition-colors cursor-pointer min-h-[44px]"
+                        >
+                          <ShieldCheck className="w-4 h-4 text-amber-600" />
+                          <span>{t("nav.adminDashboard")}</span>
+                        </Link>
+                      )}
+                    </div>
+
+                    {/* Sign Out Button - Always available for Admin & regular users */}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        handleLogout();
+                        setMobileOpen(false);
+                      }}
+                      className="w-full flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-rose-50 text-rose-700 font-bold text-xs border border-rose-200 hover:bg-rose-100 transition-colors cursor-pointer min-h-[44px] active:scale-98"
+                    >
+                      <LogOut className="w-4 h-4 text-rose-600" />
+                      <span>{t("nav.signOut")}</span>
+                    </button>
                   </div>
                 </div>
               ) : (

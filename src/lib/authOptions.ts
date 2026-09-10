@@ -120,7 +120,11 @@ export const authOptions: AuthOptions = {
       if (account?.provider === "google") {
         try {
           const backendUrl = process.env.BACKEND_API_URL || process.env.NEXT_PUBLIC_LARAVEL_API_URL;
-          if (backendUrl) {
+          // Only forward to external/separate backend; never recursively call self
+          if (backendUrl && !backendUrl.includes("exspeeds.com/api")) {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 1500);
+
             await fetch(`${backendUrl}/auth/google`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -130,7 +134,9 @@ export const authOptions: AuthOptions = {
                 google_id: user.id,
                 avatar: user.image,
               }),
+              signal: controller.signal,
             });
+            clearTimeout(timeoutId);
           }
         } catch {
           // Allow fallback sign in even if offline
