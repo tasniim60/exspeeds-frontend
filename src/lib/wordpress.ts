@@ -537,56 +537,48 @@ export const FALLBACK_POSTS_AR: WPPost[] = [
 
 export const FALLBACK_POSTS = FALLBACK_POSTS_EN;
 
-const getCandidateUrls = (): string[] => {
+const getPrimaryApiUrl = (): string => {
   const envInternal = process.env.WP_INTERNAL_URL;
   const envPublic = process.env.NEXT_PUBLIC_WP_URL;
 
-  const candidates: string[] = [];
+  if (envInternal && envInternal.startsWith("http")) return envInternal;
+  if (envPublic && envPublic.startsWith("http")) return envPublic;
 
-  // 1. Custom environment overrides if configured
-  if (envInternal && envInternal.startsWith("http")) candidates.push(envInternal);
-  if (envPublic && envPublic.startsWith("http")) candidates.push(envPublic);
-
-  // 2. Primary canonical endpoint on production
-  candidates.push("https://exspeeds.com/wordpress/wp-json");
-
-  return Array.from(new Set(candidates));
+  return "https://exspeeds.com/wordpress/wp-json";
 };
 
 export async function getPosts(limit = 20, locale: string = "ar"): Promise<WPPost[]> {
   const normalizedLocale = locale === "en" ? "en" : "ar";
-  const candidateUrls = getCandidateUrls();
+  const apiUrl = getPrimaryApiUrl();
+  const url = `${apiUrl}/wp/v2/posts?_embed=1&per_page=${limit}&lang=${normalizedLocale}`;
 
-  for (const apiUrl of candidateUrls) {
-    const url = `${apiUrl}/wp/v2/posts?_embed=1&per_page=${limit}&lang=${normalizedLocale}`;
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1200);
+  try {
+    const controller = new AbortController();
+    // Aggressive 1.2s timeout prevents SSR blocking - fallback posts serve instantly if WordPress is slow
+    const timeoutId = setTimeout(() => controller.abort(), 1200);
 
-      const res = await fetch(url, {
-        next: { revalidate: 60 },
-        signal: controller.signal,
-        headers: {
-          Accept: "application/json",
-          "User-Agent": "XSPEED-NextJS-SSR/1.0",
-          "Accept-Language": normalizedLocale,
-        },
-      });
-      clearTimeout(timeoutId);
+    const res = await fetch(url, {
+      next: { revalidate: 60 },
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "XSPEED-NextJS-SSR/1.0",
+        "Accept-Language": normalizedLocale,
+      },
+    });
+    clearTimeout(timeoutId);
 
-      if (res.ok) {
-        const contentType = res.headers.get("content-type") || "";
-        if (contentType.includes("json")) {
-          const posts: WPPost[] = await res.json();
-          if (Array.isArray(posts) && posts.length > 0) {
-            return posts.map((p) => transformWpPost(p, normalizedLocale));
-          }
+    if (res.ok) {
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("json")) {
+        const posts: WPPost[] = await res.json();
+        if (Array.isArray(posts) && posts.length > 0) {
+          return posts.map((p) => transformWpPost(p, normalizedLocale));
         }
       }
-    } catch {
-      // Fast fallback on timeout/error without stalling SSR
     }
-    break; // Try only primary endpoint to prevent blocking cascade
+  } catch {
+    // Silent fallback preserves SSR performance - WordPress CMS is non-critical for page render
   }
 
   const fallbackList = normalizedLocale === "en" ? FALLBACK_POSTS_EN : FALLBACK_POSTS_AR;
@@ -595,57 +587,48 @@ export async function getPosts(limit = 20, locale: string = "ar"): Promise<WPPos
 
 export async function getPostBySlug(slug: string, locale: string = "ar"): Promise<WPPost | null> {
   const normalizedLocale = locale === "en" ? "en" : "ar";
-  const candidateUrls = getCandidateUrls();
+  const apiUrl = getPrimaryApiUrl();
+  const url = `${apiUrl}/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1&lang=${normalizedLocale}`;
 
-  for (const apiUrl of candidateUrls) {
-    const url = `${apiUrl}/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1&lang=${normalizedLocale}`;
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1200);
+  try {
+    const controller = new AbortController();
+    // Aggressive 1.2s timeout prevents SSR blocking
+    const timeoutId = setTimeout(() => controller.abort(), 1200);
 
-      const res = await fetch(url, {
-        next: { revalidate: 60 },
-        signal: controller.signal,
-        headers: {
-          Accept: "application/json",
-          "User-Agent": "XSPEED-NextJS-SSR/1.0",
-          "Accept-Language": normalizedLocale,
-        },
-      });
-      clearTimeout(timeoutId);
+    const res = await fetch(url, {
+      next: { revalidate: 60 },
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "XSPEED-NextJS-SSR/1.0",
+        "Accept-Language": normalizedLocale,
+      },
+    });
+    clearTimeout(timeoutId);
 
-      if (res.ok) {
-        const contentType = res.headers.get("content-type") || "";
-        if (contentType.includes("json")) {
-          const posts: WPPost[] = await res.json();
-          if (Array.isArray(posts) && posts.length > 0) {
-            return transformWpPost(posts[0], normalizedLocale);
-          }
+    if (res.ok) {
+      const contentType = res.headers.get("content-type") || "";
+      if (contentType.includes("json")) {
+        const posts: WPPost[] = await res.json();
+        if (Array.isArray(posts) && posts.length > 0) {
+          return transformWpPost(posts[0], normalizedLocale);
         }
       }
-    } catch {
-      // Fast fallback on timeout/error without stalling SSR
     }
-    break; // Try only primary endpoint to prevent blocking cascade
+  } catch {
+    // Silent fallback preserves SSR performance
   }
 
   // Look up in preferred locale fallback dataset first
   const primaryFallback = normalizedLocale === "en" ? FALLBACK_POSTS_EN : FALLBACK_POSTS_AR;
   const match = primaryFallback.find((p) => p.slug === slug);
-  if (match) {
-    console.log(`[WordPress API] Slug "${slug}" matched in "${normalizedLocale}" fallback dataset.`);
-    return match;
-  }
+  if (match) return match;
 
   // Cross-locale lookup if slug exists in alternate language
   const secondaryFallback = normalizedLocale === "en" ? FALLBACK_POSTS_AR : FALLBACK_POSTS_EN;
   const crossMatch = secondaryFallback.find((p) => p.slug === slug);
-  if (crossMatch) {
-    console.log(`[WordPress API] Slug "${slug}" matched across alternate locale dataset.`);
-    return crossMatch;
-  }
+  if (crossMatch) return crossMatch;
 
-  console.error(`[WordPress API] Slug "${slug}" was not found on WordPress REST API or fallback datasets.`);
   return null;
 }
 
@@ -759,8 +742,8 @@ export async function createWordPressPost(data: {
   imageUrl?: string;
   locale?: string;
 }): Promise<{ success: boolean; wpId?: number; post?: WPPost; message?: string }> {
-  const candidateUrls = getCandidateUrls();
   const locale = data.locale === "en" ? "en" : "ar";
+  const apiUrl = getPrimaryApiUrl();
   const defaultImage = data.imageUrl || "/assets/xspeed_about_showcase.jpg";
 
   const wpPayload = {
@@ -778,38 +761,33 @@ export async function createWordPressPost(data: {
   };
 
   // Attempt to persist into WordPress REST API
-  for (const apiUrl of candidateUrls) {
-    try {
-      const url = `${apiUrl}/wp/v2/posts?lang=${locale}`;
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 8000);
+  try {
+    const url = `${apiUrl}/wp/v2/posts?lang=${locale}`;
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-      const res = await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "User-Agent": "XSPEED-NextJS-SSR/1.0",
-        },
-        body: JSON.stringify(wpPayload),
-        signal: controller.signal,
-      });
-      clearTimeout(timeoutId);
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "User-Agent": "XSPEED-NextJS-SSR/1.0",
+      },
+      body: JSON.stringify(wpPayload),
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
 
-      if (res.ok) {
-        const createdPost: WPPost = await res.json();
-        console.log(`[WordPress API] Created post ID ${createdPost.id} via ${apiUrl}`);
-        return {
-          success: true,
-          wpId: createdPost.id,
-          post: transformWpPost(createdPost, locale),
-          message: "Saved to WordPress database successfully.",
-        };
-      } else {
-        console.warn(`[WordPress API] Create post failed at ${apiUrl} with status ${res.status}`);
-      }
-    } catch (err: any) {
-      console.warn(`[WordPress API] Create post error at ${apiUrl}:`, err?.message || err);
+    if (res.ok) {
+      const createdPost: WPPost = await res.json();
+      return {
+        success: true,
+        wpId: createdPost.id,
+        post: transformWpPost(createdPost, locale),
+        message: "Saved to WordPress database successfully.",
+      };
     }
+  } catch {
+    // WordPress API unavailable - will register locally with fallback sync
   }
 
   // If WordPress engine is currently sleeping/local, return structured success payload
@@ -874,61 +852,59 @@ export async function getRankMathSchema(
   targetUrl: string,
   fallbackPost?: WPPost | null
 ): Promise<any[]> {
-  const candidateUrls = getCandidateUrls();
+  const apiUrl = getPrimaryApiUrl();
+  const endpoint = `${apiUrl}/rankmath/v1/getHead?url=${encodeURIComponent(targetUrl)}`;
 
-  for (const apiUrl of candidateUrls) {
-    const endpoint = `${apiUrl}/rankmath/v1/getHead?url=${encodeURIComponent(targetUrl)}`;
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 1000);
+  try {
+    const controller = new AbortController();
+    // 1s timeout - RankMath schema is non-critical, fallback generates high-fidelity schema
+    const timeoutId = setTimeout(() => controller.abort(), 1000);
 
-      const res = await fetch(endpoint, {
-        next: { revalidate: 3600 }, // Cache for 1 hour (ISR)
-        signal: controller.signal,
-        headers: {
-          Accept: "application/json",
-          "User-Agent": "XSPEED-NextJS-SSR/1.0",
-        },
-      });
-      clearTimeout(timeoutId);
+    const res = await fetch(endpoint, {
+      next: { revalidate: 3600 },
+      signal: controller.signal,
+      headers: {
+        Accept: "application/json",
+        "User-Agent": "XSPEED-NextJS-SSR/1.0",
+      },
+    });
+    clearTimeout(timeoutId);
 
-      if (res.ok) {
-        const contentType = res.headers.get("content-type") || "";
-        let headHtml = "";
+    if (res.ok) {
+      const contentType = res.headers.get("content-type") || "";
+      let headHtml = "";
 
-        if (contentType.includes("json")) {
-          const json = await res.json();
-          headHtml = json?.head || (typeof json === "string" ? json : "");
-        } else {
-          headHtml = await res.text();
-        }
+      if (contentType.includes("json")) {
+        const json = await res.json();
+        headHtml = json?.head || (typeof json === "string" ? json : "");
+      } else {
+        headHtml = await res.text();
+      }
 
-        if (headHtml) {
-          const scriptRegex = /<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
-          const schemas: any[] = [];
-          let match;
+      if (headHtml) {
+        const scriptRegex = /<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+        const schemas: any[] = [];
+        let match;
 
-          while ((match = scriptRegex.exec(headHtml)) !== null) {
-            const rawJson = match[1].trim();
-            if (rawJson) {
-              try {
-                const parsed = JSON.parse(rawJson);
-                schemas.push(parsed);
-              } catch {
-                // Ignore parse errors
-              }
+        while ((match = scriptRegex.exec(headHtml)) !== null) {
+          const rawJson = match[1].trim();
+          if (rawJson) {
+            try {
+              const parsed = JSON.parse(rawJson);
+              schemas.push(parsed);
+            } catch {
+              // Ignore parse errors
             }
           }
+        }
 
-          if (schemas.length > 0) {
-            return schemas;
-          }
+        if (schemas.length > 0) {
+          return schemas;
         }
       }
-    } catch {
-      // Fast fallback without stalling
     }
-    break; // Only test primary endpoint
+  } catch {
+    // Silent fallback preserves SSR performance
   }
 
   // Fallback to high-fidelity post data (zero generic filler)

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useLanguage } from "@/context/LanguageContext";
-import { ShieldCheck, Scale, Headphones, ArrowRight, ArrowLeft } from "lucide-react";
+import { ShieldCheck, Scale, Headphones, Home } from "lucide-react";
 
 export default function AuthFooter() {
   const { isRTL, getLocalizedPath } = useLanguage();
@@ -22,8 +22,9 @@ export default function AuthFooter() {
         <nav aria-label="Legal & Support links" className="flex flex-wrap items-center justify-center gap-4 sm:gap-6 text-gray-300 font-semibold">
           <Link
             href={getLocalizedPath("/")}
-            className="hover:text-[#C45B2A] transition-colors duration-200 inline-flex items-center gap-1.5 cursor-pointer py-1"
+            className="hover:text-[#C45B2A] transition-colors duration-200 inline-flex items-center gap-1.5 py-1"
           >
+            <Home className="w-3.5 h-3.5 text-[#C45B2A]" />
             <span>{isRTL ? "الرئيسية" : "Home"}</span>
           </Link>
 
@@ -31,7 +32,7 @@ export default function AuthFooter() {
 
           <Link
             href={getLocalizedPath("/privacy")}
-            className="hover:text-[#C45B2A] transition-colors duration-200 inline-flex items-center gap-1.5 cursor-pointer py-1"
+            className="hover:text-[#C45B2A] transition-colors duration-200 inline-flex items-center gap-1.5 py-1"
           >
             <ShieldCheck className="w-3.5 h-3.5 text-[#C45B2A]" />
             <span>{isRTL ? "سياسة الخصوصية" : "Privacy Policy"}</span>
@@ -41,7 +42,7 @@ export default function AuthFooter() {
 
           <Link
             href={getLocalizedPath("/terms")}
-            className="hover:text-[#C45B2A] transition-colors duration-200 inline-flex items-center gap-1.5 cursor-pointer py-1"
+            className="hover:text-[#C45B2A] transition-colors duration-200 inline-flex items-center gap-1.5 py-1"
           >
             <Scale className="w-3.5 h-3.5 text-[#C45B2A]" />
             <span>{isRTL ? "الشروط والأحكام" : "Terms & Conditions"}</span>
@@ -51,7 +52,7 @@ export default function AuthFooter() {
 
           <Link
             href={getLocalizedPath("/contact")}
-            className="hover:text-[#C45B2A] transition-colors duration-200 inline-flex items-center gap-1.5 cursor-pointer py-1"
+            className="hover:text-[#C45B2A] transition-colors duration-200 inline-flex items-center gap-1.5 py-1"
           >
             <Headphones className="w-3.5 h-3.5 text-[#C45B2A]" />
             <span>{isRTL ? "الدعم الفني 24/7" : "24/7 Support"}</span>
