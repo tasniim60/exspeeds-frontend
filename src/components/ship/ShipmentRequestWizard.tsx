@@ -3,6 +3,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
+import { useShipmentWizardStore } from "@/stores/useShipmentWizardStore";
+import { shipmentRequestService } from "@/services";
 import {
   User,
   MapPin,
@@ -211,8 +213,11 @@ export default function ShipmentRequestWizard() {
   const { user } = useAuth();
   const { locale, isRTL } = useLanguage();
 
-  // Selected Service Type from grid or initial step
-  const [selectedService, setSelectedService] = useState<string>("express-parcel");
+  // Selected Service Type and Navigation from Zustand Store
+  const selectedService = useShipmentWizardStore((s) => s.selectedService);
+  const setSelectedService = useShipmentWizardStore((s) => s.setSelectedService);
+  const setStep = useShipmentWizardStore((s) => s.setStep);
+  const setGeneralError = useShipmentWizardStore((s) => s.setGeneralError);
 
   // Services definitions with high-craft badges, icons, and descriptions
   const servicesList = useMemo(
@@ -293,18 +298,6 @@ export default function ShipmentRequestWizard() {
   const updateStep = (newStep: number) => {
     setStep(newStep);
     setGeneralError(null);
-    try {
-      sessionStorage.setItem(STORAGE_KEY_STEP, String(newStep));
-      if (typeof window !== "undefined") {
-        const url = new URL(window.location.href);
-        url.searchParams.set("step", String(newStep));
-        window.history.replaceState(null, "", url.toString());
-        const wizardEl = document.getElementById("shipment-wizard-root");
-        if (wizardEl) {
-          wizardEl.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }
-    } catch {}
   };
 
   // Handle service change: express parcel navigates directly to Step 2 (form data); others trigger WhatsApp directly
@@ -376,82 +369,31 @@ export default function ShipmentRequestWizard() {
     [user]
   );
 
-  const [step, setStep] = useState(1);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submittedData, setSubmittedData] = useState<any>(null);
-  const [generalError, setGeneralError] = useState<string | null>(null);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [confirmedCorrect, setConfirmedCorrect] = useState(false);
-  const [copiedReqNumber, setCopiedReqNumber] = useState(false);
-  const [formData, setFormData] = useState(defaultFormData);
+  const step = useShipmentWizardStore((s) => s.step);
+  const isSubmitting = useShipmentWizardStore((s) => s.isSubmitting);
+  const submittedData = useShipmentWizardStore((s) => s.submittedData);
+  const generalError = useShipmentWizardStore((s) => s.generalError);
+  const fieldErrors = useShipmentWizardStore((s) => s.fieldErrors);
+  const confirmedCorrect = useShipmentWizardStore((s) => s.confirmedCorrect);
+  const copiedReqNumber = useShipmentWizardStore((s) => s.copiedReqNumber);
+  const formData = useShipmentWizardStore((s) => s.formData);
 
-  // Restore draft state on mount
+  const updateFormData = useShipmentWizardStore((s) => s.updateFormData);
+  const setFieldErrors = useShipmentWizardStore((s) => s.setFieldErrors);
+  const setConfirmedCorrect = useShipmentWizardStore((s) => s.setConfirmedCorrect);
+  const setCopiedReqNumber = useShipmentWizardStore((s) => s.setCopiedReqNumber);
+  const setSubmittedData = useShipmentWizardStore((s) => s.setSubmittedData);
+  const setIsSubmitting = useShipmentWizardStore((s) => s.setIsSubmitting);
+  const initFromStorageAndUser = useShipmentWizardStore((s) => s.initFromStorageAndUser);
+  const resetDraft = useShipmentWizardStore((s) => s.resetDraft);
+
+  // Restore draft state on mount via Zustand store
   useEffect(() => {
-    try {
-      const savedService = sessionStorage.getItem(STORAGE_KEY_SERVICE);
-      if (savedService) {
-        setSelectedService(savedService);
-      }
-
-      const savedSubmitted = sessionStorage.getItem(STORAGE_KEY_SUBMITTED);
-      if (savedSubmitted) {
-        setSubmittedData(JSON.parse(savedSubmitted));
-      }
-
-      const savedDraft = sessionStorage.getItem(STORAGE_KEY_DRAFT);
-      if (savedDraft) {
-        const parsed = JSON.parse(savedDraft);
-        setFormData((prev) => ({
-          ...prev,
-          ...parsed,
-          customerName: parsed.customerName || user?.name || prev.customerName,
-          email: parsed.email || user?.email || prev.email,
-          companyName: parsed.companyName || user?.company || prev.companyName,
-          phone: parsed.phone || user?.phone || prev.phone,
-          whatsapp: parsed.whatsapp || user?.phone || prev.whatsapp,
-          pickupContactName: parsed.pickupContactName || user?.name || prev.pickupContactName,
-          pickupContactPhone: parsed.pickupContactPhone || user?.phone || prev.pickupContactPhone,
-        }));
-      } else if (user) {
-        setFormData((prev) => ({
-          ...prev,
-          customerName: prev.customerName || user.name || "",
-          email: prev.email || user.email || "",
-          companyName: prev.companyName || user.company || "",
-          phone: prev.phone || user.phone || "",
-          whatsapp: prev.whatsapp || user.phone || "",
-          pickupContactName: prev.pickupContactName || user.name || "",
-          pickupContactPhone: prev.pickupContactPhone || user.phone || "",
-        }));
-      }
-
-      const urlStep = new URLSearchParams(window.location.search).get("step");
-      const savedStep = sessionStorage.getItem(STORAGE_KEY_STEP);
-      const targetStep = urlStep ? parseInt(urlStep, 10) : savedStep ? parseInt(savedStep, 10) : 1;
-      if (targetStep >= 1 && targetStep <= 5) {
-        setStep(targetStep);
-      }
-    } catch (e) {
-      console.error("Failed to restore wizard state:", e);
-    }
-  }, [user]);
+    initFromStorageAndUser(user);
+  }, [user, initFromStorageAndUser]);
 
   const handleChange = (field: string, value: any) => {
-    setFormData((prev) => {
-      const updated = { ...prev, [field]: value };
-      try {
-        sessionStorage.setItem(STORAGE_KEY_DRAFT, JSON.stringify(updated));
-      } catch {}
-      return updated;
-    });
-
-    if (fieldErrors[field]) {
-      setFieldErrors((prev) => {
-        const updated = { ...prev };
-        delete updated[field];
-        return updated;
-      });
-    }
+    updateFormData(field as any, value);
     if (generalError) {
       setGeneralError(null);
     }
@@ -571,24 +513,12 @@ export default function ShipmentRequestWizard() {
   };
 
   const handleStartNewRequest = () => {
-    try {
-      sessionStorage.removeItem(STORAGE_KEY_DRAFT);
-      sessionStorage.removeItem(STORAGE_KEY_STEP);
-      sessionStorage.removeItem(STORAGE_KEY_SERVICE);
-      sessionStorage.removeItem(STORAGE_KEY_SUBMITTED);
-      if (typeof window !== "undefined") {
-        const url = new URL(window.location.href);
-        url.searchParams.delete("step");
-        window.history.replaceState(null, "", url.pathname);
-      }
-    } catch {}
-    setSubmittedData(null);
-    setSelectedService("express-parcel");
-    setFormData(defaultFormData);
-    setConfirmedCorrect(false);
-    setFieldErrors({});
-    setGeneralError(null);
-    updateStep(1);
+    resetDraft();
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("step");
+      window.history.replaceState(null, "", url.pathname);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -664,38 +594,10 @@ export default function ShipmentRequestWizard() {
     };
 
     try {
-      const res = await fetch("/api/shipment-requests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && json.data) {
-          setSubmittedData(json.data);
-          try {
-            sessionStorage.setItem(STORAGE_KEY_SUBMITTED, JSON.stringify(json.data));
-            sessionStorage.removeItem(STORAGE_KEY_DRAFT);
-            sessionStorage.removeItem(STORAGE_KEY_STEP);
-          } catch {}
-          setIsSubmitting(false);
-          return;
-        }
-      }
-
-      const reqNumber = `REQ-${Math.floor(10000 + Math.random() * 90000)}`;
-      const fallbackRequest = {
-        ...payload,
-        id: `req-${Date.now()}`,
-        requestNumber: reqNumber,
-        status: "New",
-        createdAt: new Date().toISOString().replace("T", " ").substring(0, 16),
-      };
-
-      setSubmittedData(fallbackRequest);
+      const saved = await shipmentRequestService.createRequest(payload as any);
+      setSubmittedData(saved);
       try {
-        sessionStorage.setItem(STORAGE_KEY_SUBMITTED, JSON.stringify(fallbackRequest));
+        sessionStorage.setItem(STORAGE_KEY_SUBMITTED, JSON.stringify(saved));
         sessionStorage.removeItem(STORAGE_KEY_DRAFT);
         sessionStorage.removeItem(STORAGE_KEY_STEP);
       } catch {}
