@@ -159,9 +159,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       />
 
       {/* Command Box */}
-      <div className="relative z-50 w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden animate-fade-up">
+      <div className="relative z-50 w-full max-w-2xl rounded-2xl bg-[#FAF8F5] shadow-2xl border border-[#E2DDD1] overflow-hidden animate-fade-up">
         {/* Search Input Bar */}
-        <div className="flex items-center px-4 border-b border-gray-200 bg-gray-50/70">
+        <div className="flex items-center px-4 border-b border-[#E2DDD1] bg-[#EFEBE2]/70">
           <Search className="h-5 w-5 text-gray-400 shrink-0" />
           <input
             type="text"
@@ -244,7 +244,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     onSelectTab("requests");
                     onOpenChange(false);
                   }}
-                  className="flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-bold text-gray-700 bg-gray-50 hover:bg-amber-50 hover:text-amber-800 border border-gray-200/80 hover:border-amber-300 transition-all cursor-pointer text-start"
+                  className="flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-bold text-[#1E293B] bg-[#EFEBE2] hover:bg-amber-100 hover:text-amber-900 border border-[#E2DDD1] hover:border-amber-300 transition-all cursor-pointer text-start"
                 >
                   <Package className="h-4 w-4 text-amber-600 shrink-0" />
                   <span>{isRTL ? "مراجعة طلبات الشحن والتسعير" : "Review Shipment Requests"}</span>
@@ -254,7 +254,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     onSelectTab("reports");
                     onOpenChange(false);
                   }}
-                  className="flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-bold text-gray-700 bg-gray-50 hover:bg-emerald-50 hover:text-emerald-800 border border-gray-200/80 hover:border-emerald-300 transition-all cursor-pointer text-start"
+                  className="flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-bold text-[#1E293B] bg-[#EFEBE2] hover:bg-emerald-100 hover:text-emerald-900 border border-[#E2DDD1] hover:border-emerald-300 transition-all cursor-pointer text-start"
                 >
                   <FileSpreadsheet className="h-4 w-4 text-emerald-600 shrink-0" />
                   <span>{isRTL ? "التقارير المالية والفواتير" : "Financial Reports & Invoices"}</span>
@@ -264,7 +264,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     onSelectTab("posts");
                     onOpenChange(false);
                   }}
-                  className="flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-bold text-gray-700 bg-gray-50 hover:bg-blue-50 hover:text-blue-800 border border-gray-200/80 hover:border-blue-300 transition-all cursor-pointer text-start"
+                  className="flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-bold text-[#1E293B] bg-[#EFEBE2] hover:bg-blue-100 hover:text-blue-900 border border-[#E2DDD1] hover:border-blue-300 transition-all cursor-pointer text-start"
                 >
                   <FileCode className="h-4 w-4 text-blue-600 shrink-0" />
                   <span>{isRTL ? "إدارة مقالات المدونة والـ SEO" : "Manage Blog & SEO"}</span>

@@ -37,7 +37,7 @@ export default function TermsPage({
   const isAr = params?.locale !== "en";
 
   return (
-    <div className="bg-[#FAF8F5] min-h-screen py-16 px-4 sm:px-6 lg:px-8 font-sans">
+    <div className="bg-[#FAFBFC] min-h-screen py-16 px-4 sm:px-6 lg:px-8 font-sans">
       <div className="max-w-4xl mx-auto space-y-8 text-start" dir={isAr ? "rtl" : "ltr"}>
         {/* Header Breadcrumb & Tag */}
         <div className="space-y-3">

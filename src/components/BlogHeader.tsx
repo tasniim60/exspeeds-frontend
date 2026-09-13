@@ -2,6 +2,7 @@
 
 import { useLanguage } from "@/context/LanguageContext";
 import { BookOpen, Sparkles } from "lucide-react";
+import { SectionEyebrow } from "@/components/ui/SectionEyebrow";
 
 interface BlogHeaderProps {
   activeCategory?: string;
@@ -19,24 +20,21 @@ export default function BlogHeader({
   const { t, isRTL } = useLanguage();
 
   return (
-    <section className="relative py-20 lg:py-28 px-4 sm:px-6 lg:px-8 border-b border-[#ECE2D5] overflow-hidden mb-12">
+    <section className="relative py-20 lg:py-28 px-4 sm:px-6 lg:px-8 border-b border-[#E2E8F0] overflow-hidden mb-12">
       {/* 3D Logistics Background Asset */}
       <div
         className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none"
         style={{ backgroundImage: "url('/assets/xspeed_blog_header.jpg')" }}
       />
       {/* Luminous Warm Light Overlay */}
-      <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#FAF8F5]/85 via-[#FAF8F5]/75 to-[#FAF8F5]/95 backdrop-blur-[1px] pointer-events-none" />
+      <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#FAFBFC]/90 via-[#FAFBFC]/80 to-[#FAFBFC]/95 backdrop-blur-[1px] pointer-events-none" />
 
       {/* Content Container */}
       <div className="max-w-5xl mx-auto text-center space-y-6 relative z-10">
-        {/* Pill Badge */}
-        <div className="inline-flex items-center gap-2 bg-white/90 border border-orange-200/80 px-4 py-1.5 rounded-full shadow-2xs">
-          <BookOpen className="w-3.5 h-3.5 text-[#C45B2A]" />
-          <span className="text-[#C45B2A] text-xs font-black uppercase tracking-wider">
-            {t("blogPage.badge") || (isRTL ? "أحدث المقالات والأخبار" : "Insights & Global Logistics Intelligence")}
-          </span>
-        </div>
+        {/* Natural Editorial Eyebrow */}
+        <SectionEyebrow centered>
+          {t("blogPage.badge") || (isRTL ? "أحدث المقالات والأخبار" : "Insights & Global Logistics Intelligence")}
+        </SectionEyebrow>
 
         {/* Title */}
         <h1 className="text-3xl sm:text-4xl lg:text-5xl font-display font-black text-gray-950 tracking-[-0.03em] leading-[1.15]">

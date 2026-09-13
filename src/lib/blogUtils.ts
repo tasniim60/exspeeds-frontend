@@ -37,7 +37,7 @@ export function convertAdminPostToWP(post: BlogPost, index: number): WPPost {
     : new Date().toISOString();
 
   return {
-    id: parseInt(post.id.replace(/\D/g, "")) || 500 + index,
+    id: (parseInt(post.id.replace(/\D/g, "")) || 0) + 90000 + index,
     date: postDate,
     modified: postDate,
     slug: post.slug,

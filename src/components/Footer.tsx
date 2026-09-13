@@ -7,11 +7,11 @@ export default function Footer() {
   const { t, getLocalizedPath } = useLanguage();
 
   return (
-    <footer className="bg-[#251516] text-white border-t border-gray-800">
+    <footer className="bg-[#0F172A] text-white border-t border-slate-800">
       <div className="max-w-[1400px] mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
         {/* Brand */}
         <div className="space-y-5">
-          <div className="flex items-center gap-4">
+          <div className="flex flex-col items-center gap-1.5">
             <Link href={getLocalizedPath("/")} className="inline-block py-1 shrink-0">
               <img
                 src="/assets/xspeed_logo_earth_dark.jpg"

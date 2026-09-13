@@ -1,6 +1,8 @@
 # XSPEED Express Logistics & Technology Platform (exspeeds.com)
+# XSPEED Logistics
 
 > XSPEED (accessible at https://exspeeds.com) is a regional and international express logistics, freight forwarding, customs clearance, and supply chain technology platform headquartered at Cairo International Airport Cargo Village, Egypt, operating across Egypt, GCC (Saudi Arabia, United Arab Emirates, Kuwait, Qatar), and 220+ international destinations.
+> Fast, secure, and technologically advanced logistics and express cargo delivery platform operating across Egypt, the Middle East, and globally.
 
 ## Core Identity & Operations
 - **Brand & Domain:** XSPEED Express Logistics (Official Web Platform: https://exspeeds.com)
@@ -8,6 +10,14 @@
 - **24/7 Operations Desk:** Phone & WhatsApp (+20 120 802 7171), Email: sales@exspeeds.com
 - **Operating Hours:** 24 hours / 7 days a week
 - **Coverage:** Nationwide linehaul across Egypt, specialized express corridors across the GCC (KSA, UAE, Kuwait, Qatar), and global multi-carrier networks across 220+ countries.
+## Core Logistics Services
+- [Air Freight](https://exspeeds.com/services/air-freight): Priority expedited international and domestic air cargo.
+- [Sea Freight](https://exspeeds.com/services/sea-freight): Full Container Load (FCL) and Less than Container Load (LCL) ocean freight.
+- [Land Freight](https://exspeeds.com/services/land-freight): Cross-border regional trucking and nationwide distribution fleet.
+- [Customs Clearance](https://exspeeds.com/services/customs-clearance): Licensed ACI-compliant customs brokerage in Egyptian and GCC sea/airports.
+- [Warehousing & Fulfillment](https://exspeeds.com/services/warehousing): Temperature-controlled storage, 3PL inventory management, and B2B/B2C fulfillment.
+- [Real-Time Shipment Tracking](https://exspeeds.com/track): Millisecond live GPS telemetry and milestone status updates.
+- [Shipping Rate Calculator](https://exspeeds.com/ship): Instant freight cost estimator and automated booking.
 
 ## Key Logistics Services
 
@@ -51,3 +61,9 @@
 - Multi-lingual architecture supporting full Arabic (`/ar/`) and English (`/en/`) routes.
 - Schema.org compliant structured data (`Organization`, `LocalBusiness`, `Service`, `BlogPosting`, `FAQPage`).
 - Verified WCAG AA contrast and mobile-optimized interfaces.
+## Operations & Contact Details
+- Headquarters: 7 Rokn El Safa, Off Khaled Amin, El Arish, Al Haram, Giza, Egypt
+- Hotline / WhatsApp: +201208027171
+- Enterprise Sales: sales@exspeeds.com
+- Supported Languages: Arabic (ar), English (en)
+- Coverage: Egypt (EG), Saudi Arabia (SA), United Arab Emirates (AE), Kuwait (KW), Qatar (QA), and Worldwide.

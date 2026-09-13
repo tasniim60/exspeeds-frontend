@@ -5,9 +5,9 @@ export function Table({
   ...props
 }: React.HTMLAttributes<HTMLTableElement>) {
   return (
-    <div className="relative w-full overflow-x-auto rounded-xl border border-gray-200/90 bg-white shadow-2xs">
+    <div className="relative w-full overflow-x-auto rounded-2xl border border-[#E2DDD1] bg-[#FAF8F5] shadow-xs">
       <table
-        className={`w-full min-w-[1800px] border-collapse text-xs text-start text-gray-700 ${className}`}
+        className={`w-full min-w-[1800px] border-collapse text-xs text-start text-[#334155] ${className}`}
         style={{ tableLayout: "auto" }}
         {...props}
       />
@@ -21,7 +21,7 @@ export function TableHeader({
 }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
     <thead
-      className={`border-b border-gray-200 bg-gray-50/90 text-xs font-bold text-gray-700 ${className}`}
+      className={`border-b border-[#E2DDD1] bg-[#EFEBE2] text-xs font-semibold text-[#475569] ${className}`}
       {...props}
     />
   );
@@ -33,7 +33,7 @@ export function TableBody({
 }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
     <tbody
-      className={`divide-y divide-gray-100 [&_tr:last-child]:border-0 ${className}`}
+      className={`divide-y divide-[#EAE5DA] [&_tr:last-child]:border-0 ${className}`}
       {...props}
     />
   );
@@ -45,7 +45,7 @@ export function TableFooter({
 }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
     <tfoot
-      className={`border-t border-gray-200 bg-gray-50 font-medium text-gray-900 ${className}`}
+      className={`border-t border-[#E2DDD1] bg-[#EFEBE2] font-medium text-[#0F172A] ${className}`}
       {...props}
     />
   );
@@ -57,7 +57,7 @@ export function TableRow({
 }: React.HTMLAttributes<HTMLTableRowElement>) {
   return (
     <tr
-      className={`transition-colors hover:bg-gray-50/80 data-[state=selected]:bg-gray-100 ${className}`}
+      className={`transition-colors hover:bg-[#F2EEE5] data-[state=selected]:bg-[#EAE5DA] ${className}`}
       {...props}
     />
   );
@@ -69,7 +69,7 @@ export function TableHead({
 }: React.ThHTMLAttributes<HTMLTableCellElement>) {
   return (
     <th
-      className={`h-11 px-4 py-3 text-start align-middle font-bold text-gray-700 whitespace-nowrap shrink-0 [&:has([role=checkbox])]:pr-0 ${className}`}
+      className={`h-10 px-4 py-2.5 text-start align-middle font-semibold text-[#475569] whitespace-nowrap shrink-0 [&:has([role=checkbox])]:pr-0 ${className}`}
       style={{ display: "table-cell", whiteSpace: "nowrap" }}
       {...props}
     />
@@ -95,8 +95,9 @@ export function TableCaption({
 }: React.HTMLAttributes<HTMLTableCaptionElement>) {
   return (
     <caption
-      className={`mt-4 text-xs text-gray-500 ${className}`}
+      className={`mt-4 text-xs text-[#64748B] ${className}`}
       {...props}
     />
   );
 }
+

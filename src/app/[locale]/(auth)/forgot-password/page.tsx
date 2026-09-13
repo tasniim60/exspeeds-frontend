@@ -157,7 +157,7 @@ function ForgotPasswordForm() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-68px)] flex flex-col justify-between relative overflow-hidden font-sans bg-[#FAF8F5]">
+    <div className="min-h-[calc(100vh-68px)] flex flex-col justify-between relative overflow-hidden font-sans bg-[#FAFBFC]">
       {/* Background Image - Mirrors horizontally in Arabic (RTL) for perfect visual harmony */}
       <div
         className={`absolute inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-transform duration-700 ease-in-out ${
@@ -166,7 +166,7 @@ function ForgotPasswordForm() {
         style={{ backgroundImage: "url('/assets/xspeed_login_bg.jpg')" }}
       />
       {/* Subtle warm overlay for optimal readability and depth */}
-      <div className="absolute inset-0 z-0 bg-[#FAF8F5]/45 backdrop-blur-[0.5px] pointer-events-none" />
+      <div className="absolute inset-0 z-0 bg-[#FAFBFC]/45 backdrop-blur-[0.5px] pointer-events-none" />
 
       {/* Main Content Grid */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 flex-grow grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-10 lg:gap-12 items-center relative z-10 w-full">

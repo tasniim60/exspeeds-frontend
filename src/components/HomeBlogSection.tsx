@@ -37,8 +37,8 @@ export default function HomeBlogSection({ initialPosts }: HomeBlogSectionProps) 
   return (
     <>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-        {posts.slice(0, 6).map((post) => (
-          <PostCard key={post.id} post={post} />
+        {posts.slice(0, 6).map((post, idx) => (
+          <PostCard key={`home-post-${post.id}-${post.slug || idx}`} post={post} />
         ))}
       </div>
       <div className="text-center pt-4">

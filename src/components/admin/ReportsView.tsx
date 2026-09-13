@@ -919,7 +919,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                         {formatCurrency(r.totalCost)}
                       </TableCell>
 
-                      <TableCell className="font-mono font-black text-gray-900 whitespace-nowrap py-3.5 px-4" dir="ltr">
+                      <TableCell className="font-mono text-end font-black text-gray-900 whitespace-nowrap py-3.5 px-4" dir="ltr">
                         {formatCurrency(r.totalSales)}
                       </TableCell>
 
@@ -948,33 +948,33 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
 
             {clientPnlRows.length > 0 && (
               <TableFooter className="bg-[#251516] text-white font-bold border-t-2 border-[#C45B2A]">
-                <TableRow className="bg-[#251516] hover:bg-[#251516] text-white font-bold">
-                  <TableCell className="font-black text-white text-start whitespace-nowrap py-4 px-4 text-xs">
+                <TableRow className="group bg-[#251516] hover:bg-[#251516] hover:text-[#251516] text-white font-bold">
+                  <TableCell className="font-black text-white group-hover:text-[#251516] text-start whitespace-nowrap py-4 px-4 text-xs">
                     {isRTL ? "المجموع الكلي الإجمالي" : "Consolidated Grand Total"}
                   </TableCell>
 
-                  <TableCell className="font-mono font-black text-white text-center whitespace-nowrap py-4 px-4 text-xs">
+                  <TableCell className="font-mono font-black group-hover:text-[#251516] text-white text-center whitespace-nowrap py-4 px-6 text-xs">
                     {totalShipmentsCount}
                   </TableCell>
 
-                  <TableCell className="font-mono font-bold text-gray-200 text-end whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
+                  <TableCell className="font-mono font-bold text-gray-200 group-hover:text-[#251516] text-end whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
                     {formatCurrency(sumTotalCost)}
                   </TableCell>
 
-                  <TableCell className="font-mono font-black text-[#F6AD55] text-end whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
+                  <TableCell className="font-mono font-black text-gray-200 group-hover:text-[#251516] text-end whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
                     {formatCurrency(grandTotalSales)}
                   </TableCell>
 
-                  <TableCell className="font-mono font-bold text-gray-200 text-end whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
+                  <TableCell className="font-mono font-bold text-gray-200 group-hover:text-[#251516] text-end whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
                     {formatCurrency(sumTransExpense)}
                   </TableCell>
 
-                  <TableCell className={`font-mono font-black text-end whitespace-nowrap py-4 px-4 text-xs ${grandTotalNetProfit >= 0 ? "text-emerald-400" : "text-rose-400"}`} dir="ltr">
+                  <TableCell className={`font-mono font-black text-end whitespace-nowrap py-4 px-4 text-xs group-hover:text-[#251516] ${grandTotalNetProfit >= 0 ? "text-emerald-400" : "text-rose-400"}`} dir="ltr">
                     {grandTotalNetProfit >= 0 ? "+" : ""}{formatCurrency(grandTotalNetProfit)}
                   </TableCell>
 
-                  <TableCell className="font-mono font-black text-center whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
-                    <span className="bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-md">
+                  <TableCell className="font-mono font-black text-center whitespace-nowrap py-4 px-4 text-xs group-hover:text-[#251516]" dir="ltr">
+                    <span className="bg-emerald-500/20 text-emerald-300 group-hover:text-[#251516] border border-emerald-500/40 px-2 py-0.5 rounded-md">
                       {overallMarginPct}%
                     </span>
                   </TableCell>

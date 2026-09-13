@@ -161,7 +161,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
         const count = map[name];
         const share = totalVolume > 0 ? Math.round((count / totalVolume) * 100) : 0;
         const upper = name.toUpperCase();
-        let color = "bg-[#251516]";
+        let color = "bg-[#0F172A]";
         for (const [key, clr] of Object.entries(colors)) {
           if (upper.includes(key)) color = clr;
         }
@@ -225,7 +225,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
             <BarChart2 className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-[#251516]">
+            <h1 className="text-xl font-bold text-[#0F172A]">
               {isRTL ? "لوحة الإحصائيات والمؤشرات التشغيلية" : "Operational Analytics & KPIs"}
             </h1>
             <p className="text-xs text-gray-500 mt-0.5">
