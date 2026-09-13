@@ -1,26 +1,47 @@
-# robots.txt for XSPEED
+# robots.txt for XSPEED Logistics
 User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /admin/*
+Disallow: /*/admin
+Disallow: /*/admin/*
 Disallow: /dashboard
 Disallow: /dashboard/*
+Disallow: /*/dashboard
+Disallow: /*/dashboard/*
 Disallow: /client
 Disallow: /client/*
+Disallow: /*/client
+Disallow: /*/client/*
+Disallow: /profile
+Disallow: /profile/*
+Disallow: /*/profile
+Disallow: /*/profile/*
 Disallow: /api/auth
 Disallow: /api/auth/*
+Disallow: /*/api/auth/*
 
 User-agent: Googlebot
 Allow: /
 Disallow: /admin
 Disallow: /admin/*
+Disallow: /*/admin
+Disallow: /*/admin/*
 Disallow: /dashboard
 Disallow: /dashboard/*
+Disallow: /*/dashboard
+Disallow: /*/dashboard/*
 Disallow: /client
 Disallow: /client/*
+Disallow: /*/client
+Disallow: /*/client/*
+Disallow: /profile
+Disallow: /profile/*
+Disallow: /*/profile
+Disallow: /*/profile/*
 Disallow: /api/auth
 Disallow: /api/auth/*
+Disallow: /*/api/auth/*
 
 Host: https://exspeeds.com
 Sitemap: https://exspeeds.com/sitemap.xml
-

@@ -417,7 +417,7 @@ export default function SingleServicePage({
   };
 
   return (
-    <div className="bg-[#FAF8F5] min-h-screen font-sans" dir={isAr ? "rtl" : "ltr"}>
+    <div className="bg-[#FAFBFC] min-h-screen font-sans" dir={isAr ? "rtl" : "ltr"}>
       {/* Inject JSON-LD Schema */}
       <script
         type="application/ld+json"
@@ -425,13 +425,13 @@ export default function SingleServicePage({
       />
 
       {/* 1. Hero Banner */}
-      <section className="relative py-16 lg:py-24 px-4 sm:px-6 lg:px-8 border-b border-[#ECE2D5] overflow-hidden">
+      <section className="relative py-16 lg:py-24 px-4 sm:px-6 lg:px-8 border-b border-[#E2E8F0] overflow-hidden">
         {/* Background Image with Warm Overlay */}
         <div
           className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none"
           style={{ backgroundImage: `url('${service.image}')` }}
         />
-        <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#FAF8F5]/90 via-[#FAF8F5]/85 to-[#FAF8F5]/95 backdrop-blur-[2px] pointer-events-none" />
+        <div className="absolute inset-0 z-0 bg-gradient-to-b from-[#FAFBFC]/90 via-[#FAFBFC]/80 to-[#FAFBFC]/95 backdrop-blur-[2px] pointer-events-none" />
 
         <div className="max-w-5xl mx-auto space-y-6 relative z-10 text-start">
           {/* Breadcrumb Navigation */}
@@ -454,7 +454,7 @@ export default function SingleServicePage({
           </div>
 
           {/* Service Tag & Icon */}
-          <div className="inline-flex items-center gap-2.5 bg-white/90 border border-orange-200/80 px-4 py-1.5 rounded-full shadow-2xs">
+          <div className="inline-flex items-center gap-2.5 bg-white/90 border border-[#E2E8F0] px-4 py-1.5 rounded-full shadow-2xs">
             <div className="w-6 h-6 rounded-full bg-orange-100 flex items-center justify-center">
               {renderIcon(service.icon)}
             </div>
@@ -493,7 +493,7 @@ export default function SingleServicePage({
 
             <a
               href="tel:+201208027171"
-              className="inline-flex items-center gap-2 bg-[#FAF8F5] hover:bg-white text-gray-800 border border-gray-200 font-bold text-xs sm:text-sm px-5 py-3.5 rounded-full transition-all min-h-[44px]"
+              className="inline-flex items-center gap-2 bg-[#F8FAFC] hover:bg-white text-gray-800 border border-slate-200 font-bold text-xs sm:text-sm px-5 py-3.5 rounded-full transition-all min-h-[44px]"
               dir="ltr"
             >
               <Phone className="w-4 h-4 text-[#C45B2A]" />
@@ -541,7 +541,7 @@ export default function SingleServicePage({
                 {features.map((f, fIdx) => (
                   <div
                     key={fIdx}
-                    className="flex items-start gap-3 bg-[#FAF8F5] p-4 rounded-2xl border border-gray-100/90"
+                    className="flex items-start gap-3 bg-[#F8FAFC] p-4 rounded-2xl border border-slate-200"
                   >
                     <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                     <span className="text-sm font-bold text-gray-800 leading-relaxed">{f}</span>
@@ -559,7 +559,7 @@ export default function SingleServicePage({
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {specs.map((sp, sIdx) => (
-                  <div key={sIdx} className="bg-[#FAF8F5] p-4 rounded-2xl border border-orange-100/80">
+                  <div key={sIdx} className="bg-[#F8FAFC] p-4 rounded-2xl border border-slate-200">
                     <span className="text-xs text-gray-500 font-bold block">{sp.label}</span>
                     <span className="text-sm font-bold text-gray-950 mt-1 block">{sp.value}</span>
                   </div>
@@ -571,7 +571,7 @@ export default function SingleServicePage({
           {/* Right Sidebar (4 Cols) */}
           <div className="lg:col-span-4 space-y-6">
             {/* Quick Action Widget */}
-            <div className="bg-gradient-to-b from-[#1C1415] to-[#2A1D1E] rounded-3xl p-7 text-white space-y-6 shadow-2xl border border-orange-500/20 text-start">
+            <div className="bg-gradient-to-b from-slate-950 to-[#0F172A] rounded-3xl p-7 text-white space-y-6 shadow-2xl border border-slate-800 text-start">
               <div className="space-y-2">
                 <span className="text-[11px] font-bold text-orange-400 uppercase tracking-wider block">
                   {isAr ? "تواصل مع مدير العمليات" : "Connect with Operations Desk"}
@@ -629,7 +629,7 @@ export default function SingleServicePage({
                     <Link
                       key={oIdx}
                       href={isAr ? `/ar/services/${otherS.slug}` : `/en/services/${otherS.slug}`}
-                      className="flex items-center justify-between p-3 rounded-xl bg-[#FAF8F5] hover:bg-orange-50/70 border border-gray-100/90 hover:border-orange-200 transition-all text-xs font-bold text-gray-800 group"
+                      className="flex items-center justify-between p-3 rounded-xl bg-[#F8FAFC] hover:bg-slate-50 border border-slate-200 hover:border-slate-300 transition-all text-xs font-bold text-gray-800 group"
                     >
                       <div className="flex items-center gap-2.5">
                         {renderIcon(otherS.icon)}

@@ -18,7 +18,7 @@ export default function HomeCtaSection() {
 
   if (!mounted || isLoading) {
     return (
-      <section className="bg-gradient-to-r from-gray-950 via-[#251516] to-gray-950 text-white py-16 sm:py-20 relative overflow-hidden border-t border-gray-800">
+      <section className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white py-16 sm:py-20 relative overflow-hidden border-t border-slate-800">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
             <div className="space-y-2">
@@ -43,11 +43,11 @@ export default function HomeCtaSection() {
   // 1. Logged in as Admin
   if (user && user.role === "admin") {
     return (
-      <section className="bg-gradient-to-r from-gray-950 via-[#251516] to-gray-950 text-white py-16 sm:py-20 border-t border-orange-900/30 relative overflow-hidden">
+      <section className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white py-16 sm:py-20 border-t border-orange-900/30 relative overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8 text-start">
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 bg-orange-500/20 text-orange-300 border border-orange-500/30 px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider">
+              <div className="inline-flex items-center gap-2 bg-white/10 text-orange-300 border border-white/15 px-3.5 py-1 rounded-md text-xs font-semibold">
                 <ShieldCheck className="h-3.5 w-3.5 text-[#C45B2A]" />
                 <span>{isRTL ? "مسؤول النظام المسجل" : "Logged in as System Administrator"}</span>
               </div>
@@ -83,12 +83,12 @@ export default function HomeCtaSection() {
   // 2. Logged in as Customer / Shipper
   if (user) {
     return (
-      <section className="bg-gradient-to-r from-gray-950 via-[#251516] to-gray-950 text-white py-16 sm:py-20 border-t border-gray-800 relative overflow-hidden">
+      <section className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white py-16 sm:py-20 border-t border-slate-800 relative overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8 text-start">
             <div className="space-y-3">
-              <div className="inline-flex items-center gap-2 bg-orange-500/20 text-orange-300 border border-orange-500/30 px-4 py-1.5 rounded-full text-xs font-extrabold uppercase tracking-wider">
-                <User className="h-3.5 w-3.5 text-orange-400" />
+              <div className="inline-flex items-center gap-2 bg-white/10 text-orange-300 border border-white/15 px-3.5 py-1 rounded-md text-xs font-semibold">
+                <User className="h-3.5 w-3.5 text-[#C45B2A]" />
                 <span>{t("client.dashboard.welcomeBack")}, {user.name}</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-display font-black tracking-[-0.03em]">
@@ -121,7 +121,7 @@ export default function HomeCtaSection() {
 
   // 3. Guest User CTA
   return (
-    <section className="bg-gradient-to-r from-gray-950 via-[#251516] to-gray-950 text-white py-16 sm:py-20 relative overflow-hidden border-t border-gray-800">
+    <section className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white py-16 sm:py-20 relative overflow-hidden border-t border-slate-800">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 relative z-10">
         <div className="flex flex-col md:flex-row items-center justify-between gap-8 text-start">
           <div className="space-y-3">

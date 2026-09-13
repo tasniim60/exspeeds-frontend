@@ -239,7 +239,7 @@ export default function RootLocaleLayout({
         />
       </head>
       <body
-        className={`bg-white text-xspeed-dark font-body flex flex-col min-h-screen antialiased ${inter.variable} ${jetbrainsMono.variable} ${cairo.variable} font-sans`}
+        className={`bg-[#FAFBFC] text-[#0F172A] font-body flex flex-col min-h-screen antialiased ${inter.variable} ${jetbrainsMono.variable} ${cairo.variable} font-sans`}
       >
         <NextAuthProvider>
           <LanguageProvider initialLocale={locale}>

@@ -85,7 +85,7 @@ export function SheetTitle({
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h2
-      className={`text-lg font-bold tracking-tight text-[#251516] flex items-center gap-2 ${className}`}
+      className={`text-lg font-bold tracking-tight text-[#0F172A] flex items-center gap-2 ${className}`}
       {...props}
     />
   );

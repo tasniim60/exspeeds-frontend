@@ -101,6 +101,15 @@ export const en = {
         onTimeDelivery: "On-Time Delivery",
         onTimeDeliveryRate: "99.4%",
       },
+      statsSection: {
+        tag: "Proven Operational Scale",
+        title: "Numbers That Reflect Our Logistics Leadership",
+        subtitle: "Connecting your enterprise to regional and global trade lanes with precision, high velocity, and uncompromising security.",
+        shipmentsDesc: "International and domestic consignments successfully delivered",
+        customersDesc: "Commercial enterprises and merchants trusting our network daily",
+        countriesDesc: "Global destinations connected through scheduled freight corridors",
+        onTimeDesc: "Strict SLA precision ensuring cargo arrives as promised",
+      },
     },
     trackWidget: {
       title: "Welcome to XSpeed",

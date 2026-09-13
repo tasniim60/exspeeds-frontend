@@ -128,7 +128,7 @@ export default async function BlogPage({
   const activeSchemas = schemas.length > 0 ? schemas : [fallbackBlogSchema, breadcrumbSchema];
 
   return (
-    <div className="min-h-screen bg-[#FAF8F5]">
+    <div className="min-h-screen bg-[#FAFBFC]">
       {/* Structured Data JSON-LD for SEO & Rich Results */}
       {activeSchemas.map((schema, index) => (
         <script

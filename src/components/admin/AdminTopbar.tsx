@@ -46,13 +46,13 @@ export const AdminTopbar: React.FC<AdminTopbarProps> = ({
   const currentSubtitle = t(`admin.topbar.tabTitles.${activeTab}.subtitle`) || "XSPEED Operations";
 
   return (
-    <header className="sticky top-0 z-30 h-16 bg-white border-b border-gray-200/90 px-4 sm:px-6 flex items-center justify-between shadow-2xs">
+    <header className="sticky top-0 z-30 h-16 bg-[#FAF8F5]/95 border-b border-[#E2DDD1] px-4 sm:px-6 flex items-center justify-between backdrop-blur-md shadow-xs">
       {/* Mobile Toggle & Page Title */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         <button
           type="button"
           onClick={onOpenMobileMenu}
-          className="lg:hidden p-1.5 sm:p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 cursor-pointer shrink-0"
+          className="lg:hidden p-1.5 sm:p-2 rounded-lg text-[#64748B] hover:bg-[#EFEBE2] hover:text-[#0F172A] cursor-pointer shrink-0"
           aria-label="Open navigation menu"
         >
           <Menu className="h-5 w-5" />
@@ -60,15 +60,12 @@ export const AdminTopbar: React.FC<AdminTopbarProps> = ({
 
         <div className={`flex flex-col min-w-0 ${isRTL ? "text-right" : "text-left"}`}>
           <div className="flex items-center gap-2 min-w-0">
-            <h1 className="text-xs sm:text-base md:text-lg font-bold text-[#251516] tracking-tight leading-tight truncate max-w-[120px] xs:max-w-[170px] sm:max-w-xs md:max-w-md">
+            <h1 className="text-xs sm:text-base md:text-lg font-bold text-[#0F172A] tracking-tight leading-tight truncate max-w-[120px] xs:max-w-[170px] sm:max-w-xs md:max-w-md">
               {currentTitle}
             </h1>
-            <span className="hidden md:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              {t("admin.topbar.liveOperations")}
-            </span>
+            
           </div>
-          <p className="hidden sm:block text-xs text-gray-500 truncate max-w-md">
+          <p className="hidden sm:block text-xs text-[#64748B] truncate max-w-md">
             {currentSubtitle}
           </p>
         </div>
@@ -83,12 +80,12 @@ export const AdminTopbar: React.FC<AdminTopbarProps> = ({
         <button
           type="button"
           onClick={onOpenCommand}
-          className="flex items-center justify-center sm:justify-start gap-2 h-9 px-2.5 sm:px-3 rounded-lg bg-gray-100/90 hover:bg-gray-200/80 border border-gray-200 text-gray-500 text-xs font-medium transition-colors shadow-2xs group cursor-pointer shrink-0"
+          className="flex items-center justify-center sm:justify-start gap-2 h-9 px-2.5 sm:px-3.5 rounded-xl bg-[#EFEBE2] hover:bg-[#E7E2D7] border border-[#E2DDD1] text-[#475569] text-xs font-semibold transition-colors shadow-2xs group cursor-pointer shrink-0"
           aria-label={t("admin.topbar.searchPlaceholder")}
         >
-          <Search className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-gray-400 group-hover:text-[#C45B2A]" />
+          <Search className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-[#8C8275] group-hover:text-[#C45B2A]" />
           <span className="hidden sm:inline-block">{t("admin.topbar.searchPlaceholder")}</span>
-          <kbd className="hidden md:inline-block font-mono text-[10px] bg-white text-gray-600 px-1.5 py-0.5 rounded border border-gray-300 shadow-2xs">
+          <kbd className="hidden md:inline-block font-mono text-[10px] bg-[#E2DDD1] text-[#5C5549] px-1.5 py-0.5 rounded border border-[#D5CFBF]">
             ⌘K
           </kbd>
         </button>
@@ -99,7 +96,7 @@ export const AdminTopbar: React.FC<AdminTopbarProps> = ({
             id="admin-notif-bell-btn"
             type="button"
             onClick={() => setNotifDropdownOpen(!notifDropdownOpen)}
-            className="relative p-2 rounded-lg text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors cursor-pointer"
+            className="relative p-2 rounded-lg text-gray-600 hover:bg-[#EFEBE2] hover:text-gray-900 transition-colors cursor-pointer"
             aria-label={t("admin.topbar.notifications")}
           >
             <Bell className="h-4 w-4" />
@@ -117,8 +114,8 @@ export const AdminTopbar: React.FC<AdminTopbarProps> = ({
                 className="fixed inset-0 z-40"
                 onClick={() => setNotifDropdownOpen(false)}
               />
-              <div className={`absolute ${isRTL ? "left-0 text-right" : "right-0 text-left"} mt-2 w-80 sm:w-96 rounded-2xl bg-white shadow-2xl border border-gray-200 z-50 overflow-hidden animate-fade-up`}>
-                <div className="p-3.5 border-b border-gray-100 flex items-center justify-between bg-gray-50/70">
+              <div className={`absolute ${isRTL ? "left-0 text-right" : "right-0 text-left"} mt-2 w-80 sm:w-96 rounded-2xl bg-[#FAF8F5] shadow-2xl border border-[#E2DDD1] z-50 overflow-hidden animate-fade-up`}>
+                <div className="p-3.5 border-b border-[#EAE5DA] flex items-center justify-between bg-[#EFEBE2]/70">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-gray-900">{t("admin.topbar.notifications")}</span>
                     {unreadNotifs.length > 0 && (

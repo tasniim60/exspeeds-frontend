@@ -28,13 +28,13 @@ const ShipmentRequestsView = dynamic(() => import("@/components/admin/ShipmentRe
 function ViewSkeleton() {
   return (
     <div className="space-y-4 animate-pulse">
-      <div className="h-8 bg-gray-200 rounded-lg w-48" />
+      <div className="h-8 bg-slate-200 rounded-full w-48" />
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="h-28 bg-gray-100 rounded-xl border border-gray-200" />
+          <div key={i} className="h-28 bg-white rounded-2xl border border-slate-200" />
         ))}
       </div>
-      <div className="h-64 bg-gray-100 rounded-xl border border-gray-200" />
+      <div className="h-64 bg-white rounded-2xl border border-slate-200" />
     </div>
   );
 }
@@ -106,7 +106,7 @@ function AdminPageContent() {
   );
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] flex">
+    <div className="min-h-screen bg-[#F4F1EA] flex">
       {/* Desktop Sidebar */}
       <div className="hidden lg:block">
         <AdminSidebar

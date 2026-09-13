@@ -91,7 +91,7 @@ export function DialogHeader({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`flex flex-col space-y-1.5 text-left border-b border-gray-100 pb-3 sm:pb-4 mb-4 sm:mb-5 ${className}`}
+      className={`flex flex-col space-y-1.5 text-left border-b border-[#F1F5F9] pb-3 sm:pb-4 mb-4 sm:mb-5 ${className}`}
       {...props}
     />
   );
@@ -103,7 +103,7 @@ export function DialogTitle({
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h2
-      className={`text-base sm:text-xl font-bold tracking-tight text-[#251516] flex items-center gap-2 ${className}`}
+      className={`text-base sm:text-xl font-bold tracking-tight text-[#0F172A] flex items-center gap-2 ${className}`}
       {...props}
     />
   );
@@ -115,7 +115,7 @@ export function DialogDescription({
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
     <p
-      className={`text-xs text-gray-500 font-normal leading-relaxed ${className}`}
+      className={`text-xs text-[#64748B] font-normal leading-relaxed ${className}`}
       {...props}
     />
   );
@@ -127,8 +127,9 @@ export function DialogFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-end sm:items-center sm:gap-2.5 pt-4 border-t border-gray-100 mt-5 sm:mt-6 [&>*]:w-full sm:[&>*]:w-auto [&>*:only-child]:col-span-2 ${className}`}
+      className={`grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-end sm:items-center sm:gap-2.5 pt-4 border-t border-[#F1F5F9] mt-5 sm:mt-6 [&>*]:w-full sm:[&>*]:w-auto [&>*:only-child]:col-span-2 ${className}`}
       {...props}
     />
   );
 }
+

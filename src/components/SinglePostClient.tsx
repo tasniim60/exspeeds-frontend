@@ -311,8 +311,8 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#FAF8F5] py-20 px-4 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white p-8 rounded-[28px] border border-orange-100 shadow-xl text-center space-y-4">
+      <div className="min-h-screen bg-[#FAFBFC] py-20 px-4 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white p-8 rounded-[28px] border border-slate-200 shadow-xl text-center space-y-4">
           <div className="w-12 h-12 rounded-full bg-orange-50 text-[#C45B2A] flex items-center justify-center mx-auto animate-pulse">
             <Loader2 className="w-6 h-6 animate-spin text-[#C45B2A]" />
           </div>
@@ -331,8 +331,8 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
 
   if (!post) {
     return (
-      <div className="min-h-screen bg-[#FAF8F5] py-20 px-4 flex items-center justify-center">
-        <div className="max-w-md w-full bg-white p-8 rounded-[28px] border border-orange-100 shadow-xl text-center space-y-4">
+      <div className="min-h-screen bg-[#FAFBFC] py-20 px-4 flex items-center justify-center">
+        <div className="max-w-md w-full bg-white p-8 rounded-[28px] border border-slate-200 shadow-xl text-center space-y-4">
           <div className="w-12 h-12 rounded-full bg-orange-50 text-[#C45B2A] flex items-center justify-center mx-auto">
             <BookOpen className="w-6 h-6" />
           </div>
@@ -427,7 +427,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
   const shareUrls = getShareUrls();
 
   return (
-    <div className={`min-h-screen bg-[#FAF8F5] py-10 lg:py-16 px-3 sm:px-6 lg:px-8 ${isRTL ? "text-right" : "text-left"}`}>
+    <div className={`min-h-screen bg-[#FAFBFC] py-10 lg:py-16 px-3 sm:px-6 lg:px-8 ${isRTL ? "text-right" : "text-left"}`}>
       {/* Sticky Reading Progress Bar */}
       <div
         className="fixed top-0 left-0 right-0 z-50 h-1 bg-gray-100 pointer-events-none"
@@ -465,8 +465,8 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
               <span>{t("blogPage.backToArticles") || (isRTL ? "العودة إلى جميع المقالات" : "Back to All Articles")}</span>
             </Link>
 
-            {/* Category Pill */}
-            <span className="bg-orange-50 text-[#C45B2A] border border-orange-200/80 text-[11px] font-black uppercase tracking-wider px-3.5 py-1.5 rounded-full shadow-2xs">
+            {/* Category Tag */}
+            <span className="bg-orange-50 text-[#C45B2A] border border-orange-200/80 text-xs font-bold px-3 py-1 rounded-lg shadow-2xs">
               {getLocalizedCategory(post.category_name)}
             </span>
           </div>
@@ -590,7 +590,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
 
             {/* Table of Contents (TOC) - If article has 2+ headings */}
             {headings.length >= 2 && (
-              <div className="bg-[#FAF8F5] rounded-2xl p-5 sm:p-6 border border-orange-100/90 space-y-3">
+              <div className="bg-[#F8FAFC] rounded-2xl p-5 sm:p-6 border border-slate-200 space-y-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2 text-xs font-black text-gray-900 uppercase tracking-wider">
                     <ListOrdered className="w-4 h-4 text-[#C45B2A] shrink-0" />
@@ -605,7 +605,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
                 </div>
 
                 {showToc && (
-                  <ul className="space-y-1.5 pt-2 border-t border-orange-100/60 text-xs sm:text-sm">
+                  <ul className="space-y-1.5 pt-2 border-t border-slate-200 text-xs sm:text-sm">
                     {headings.map((heading) => (
                       <li key={heading.id} className={heading.level === 3 ? (isArabicPost ? "me-4" : "ms-4") : ""}>
                         <button
@@ -645,7 +645,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
                 {postFaqs.map((faq, idx) => (
                   <div
                     key={idx}
-                    className="border border-orange-100 rounded-2xl overflow-hidden bg-[#FAF8F5] transition-all"
+                    className="border border-slate-200 rounded-2xl overflow-hidden bg-[#F8FAFC] transition-all"
                   >
                     <button
                       type="button"
@@ -660,7 +660,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
                       />
                     </button>
                     {openFaq === idx && (
-                      <div className={`px-4 pb-4 text-xs sm:text-sm text-gray-600 leading-relaxed font-medium border-t border-orange-100/60 pt-2 ${postAlign}`}>
+                      <div className={`px-4 pb-4 text-xs sm:text-sm text-gray-600 leading-relaxed font-medium border-t border-slate-200 pt-2 ${postAlign}`}>
                         {faq.a}
                       </div>
                     )}
@@ -670,7 +670,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
             </div>
 
             {/* Social Sharing Bar with Proper SVG Icons and AA Contrast */}
-            <div className="flex flex-wrap items-center justify-between gap-4 bg-[#FAF8F5] p-5 rounded-2xl border border-orange-100/80">
+            <div className="flex flex-wrap items-center justify-between gap-4 bg-[#F8FAFC] p-5 rounded-2xl border border-slate-200">
               <span className="text-xs font-bold text-gray-800 flex items-center gap-2">
                 <Share2 className="w-4 h-4 text-[#C45B2A]" />
                 <span>{isArabicPost ? "مشاركة المقال:" : "Share this article:"}</span>
@@ -713,7 +713,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
         </article>
 
         {/* Commercial Conversion Callout Card */}
-        <section className="bg-gradient-to-r from-gray-950 via-[#1C1415] to-gray-900 text-white rounded-[32px] p-8 sm:p-10 lg:p-12 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 border border-white/10 text-start">
+        <section className="bg-gradient-to-r from-slate-950 via-[#0F172A] to-slate-950 text-white rounded-[32px] p-8 sm:p-10 lg:p-12 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 border border-slate-800 text-start">
           <div className="space-y-2 max-w-2xl">
             <span className="bg-[#C45B2A]/30 text-orange-300 text-[10px] font-extrabold uppercase px-3 py-1 rounded-full border border-[#C45B2A]/40 inline-block">
               {t("blogPage.cargoBadge") || (isRTL ? "شحن دولي سريع وسلس" : "Express Cargo & Global Logistics")}
@@ -802,7 +802,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
                         alt={related.title.rendered.replace(/<[^>]*>?/gm, "")}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <span className="absolute top-3 end-3 bg-white/95 backdrop-blur-md text-[#C45B2A] text-[10px] font-black uppercase px-2.5 py-1 rounded-full border border-orange-100 shadow-2xs">
+                      <span className="absolute top-3 end-3 bg-white/95 backdrop-blur-md text-[#C45B2A] text-xs font-bold px-2.5 py-1 rounded-lg border border-slate-200/80 shadow-2xs">
                         {getLocalizedCategory(related.category_name)}
                       </span>
                     </div>

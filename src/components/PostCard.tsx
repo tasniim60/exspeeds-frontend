@@ -75,8 +75,7 @@ export default function PostCard({ post }: { post: WPPost }) {
       onClick={handleCardClick}
       onKeyDown={handleKeyDown}
       tabIndex={0}
-      role="link"
-      aria-label={typeof post.title.rendered === "string" ? post.title.rendered.replace(/<[^>]*>/g, "") : "Open blog post"}
+      aria-label={typeof post.title.rendered === "string" ? post.title.rendered.replace(/<[^>]*>/g, "") : "Blog post"}
     >
       {/* Featured Image */}
       <div className="relative h-56 w-full bg-gray-100 overflow-hidden">
@@ -92,7 +91,7 @@ export default function PostCard({ post }: { post: WPPost }) {
         <span
           className={`absolute top-4 ${
             isRTL ? "right-4" : "left-4"
-          } bg-white/90 backdrop-blur-md text-[#C45B2A] border border-orange-200/80 text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider shadow-2xs`}
+          } bg-white/95 backdrop-blur-md text-[#C45B2A] border border-slate-200/80 text-xs font-bold px-2.5 py-1 rounded-lg shadow-sm`}
         >
           {getLocalizedCategory(post.category_name)}
         </span>
@@ -157,7 +156,8 @@ export default function PostCard({ post }: { post: WPPost }) {
           <Link
             href={getLocalizedPath(`/blog/${post.slug}`)}
             onClick={(e) => e.stopPropagation()}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#C45B2A] hover:text-[#A34920] transition-colors group-hover:translate-x-1"
+            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#C45B2A] hover:text-[#A34920] transition-colors py-2 px-3 -my-2 -mx-3 min-h-[44px] rounded-lg group-hover:translate-x-1"
+            aria-label={`${t("blogPage.readArticle") || (isRTL ? "اقرأ المقال" : "Read Article")}: ${typeof post.title.rendered === "string" ? post.title.rendered.replace(/<[^>]*>/g, "") : ""}`}
           >
             <span>{t("blogPage.readArticle") || (isRTL ? "اقرأ المقال" : "Read Article")}</span>
             <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />

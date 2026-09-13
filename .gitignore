@@ -1,45 +1,86 @@
 # ==============================================================================
-# XSPEED Next.js - .gitignore Configuration
+# XSPEED Logistics - Production GitIgnore for Next.js & GitHub
 # ==============================================================================
 
-# Dependencies
-/node_modules
-/.pnp
-.pnp.js
-.yarn/install-state.gz
-
-# Next.js Build Output & Standalone Cache
-/.next/
-/out/
-/build
-dist/
-
-# TypeScript Cache
-*.tsbuildinfo
-next-env.d.ts
-
-# Environment & Sensitive Credentials
-.env
-.env*.local
-.env.production
-
-# Local Data / JSON Database (Preserve server runtime state)
-/.data/*
-!/.data/.gitkeep
-
-# Temporary Test Files & Screenshots
-test_*.js
-arabic_*.png
-/coverage
-
-# Logs & Debugging
-*.log
+# --- Node & Package Dependencies ---
+node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
+.pnp
+.pnp.js
+.yarn/install-state.gz
+.yarn/cache/
+.yarn/unplugged/
+.yarn/build-state.yml
 
-# Operating System Files
+# --- Next.js Build & Outputs ---
+.next/
+out/
+build/
+dist/
+.next-traces/
+
+# --- TypeScript Cache & Definitions ---
+*.tsbuildinfo
+next-env.d.ts
+
+# --- Environment Secrets & Credentials (NEVER commit real env files) ---
+.env
+.env*.local
+.env.development.local
+.env.test.local
+.env.production
+.env.production.local
+*.env
+*.env.*
+# Allow example environment configuration
+!.env.example
+
+# --- Local Data & Runtime State (Preserve schema structure, ignore live data) ---
+.data/*
+!.data/.gitkeep
+
+# --- IDEs & Code Editors ---
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.idea/
+.kilo/
+.fleet/
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+
+# --- Testing, Coverage & Playwright ---
+coverage/
+*.lcov
+.nyc_output/
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+test_*.js
+test_*.ts
+arabic_*.png
+lighthouse-report*
+*.report.json
+*.report.html
+
+# --- Logs & Monitoring ---
+*.log
+logs/
+*.pid
+*.seed
+*.pid.lock
+
+# --- Operating System Specific Files ---
 .DS_Store
 .DS_Store?
 ._*
@@ -47,3 +88,13 @@ pnpm-debug.log*
 .Trashes
 ehthumbs.db
 Thumbs.db
+desktop.ini
+[Dd]esktop.ini
+$RECYCLE.BIN/
+
+# --- Temporary & Backup Files ---
+tmp/
+temp/
+*.tmp
+*.bak
+*.old

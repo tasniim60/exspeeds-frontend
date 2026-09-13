@@ -135,7 +135,7 @@ export default function BlogList({ initialPosts }: BlogListProps) {
                   className={`px-4 py-2 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer shadow-2xs flex items-center gap-1.5 ${
                     isSelected
                       ? "bg-gradient-to-r from-[#C45B2A] to-[#E65100] text-white shadow-orange-500/20 scale-[1.02]"
-                      : "bg-[#FAF8F5] text-gray-700 hover:bg-white hover:text-[#C45B2A] border border-gray-200/80"
+                      : "bg-[#F8FAFC] text-gray-700 hover:bg-white hover:text-[#C45B2A] border border-slate-200"
                   }`}
                 >
                   <span>{isRTL ? cat.labelAr : cat.labelEn}</span>
@@ -152,7 +152,7 @@ export default function BlogList({ initialPosts }: BlogListProps) {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={isRTL ? "ابحث في المقالات والمواضيع..." : "Search articles & topics..."}
-              className={`w-full bg-[#FAF8F5] border border-gray-200/90 rounded-full py-2 text-xs sm:text-sm font-medium focus:outline-none focus:border-[#C45B2A] focus:bg-white transition-all ${
+              className={`w-full bg-[#F8FAFC] border border-slate-200 rounded-full py-2 text-xs sm:text-sm font-medium focus:outline-none focus:border-[#C45B2A] focus:bg-white transition-all ${
                 isRTL ? "pr-10 pl-8" : "pl-10 pr-8"
               }`}
             />
@@ -211,8 +211,8 @@ export default function BlogList({ initialPosts }: BlogListProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredPosts.map((post) => (
-            <PostCard key={post.id} post={post} />
+          {filteredPosts.map((post, idx) => (
+            <PostCard key={`blog-post-${post.id}-${post.slug || idx}`} post={post} />
           ))}
         </div>
       )}

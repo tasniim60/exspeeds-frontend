@@ -51,7 +51,7 @@ export function TabsList({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`inline-flex items-center justify-center rounded-xl bg-gray-100/90 p-1 text-gray-500 border border-gray-200/60 ${className}`}
+      className={`inline-flex items-center justify-center rounded-xl bg-[#F1F5F9] p-1 text-[#64748B] border border-[#E2E8F0] ${className}`}
       {...props}
     >
       {children}
@@ -75,10 +75,10 @@ export function TabsTrigger({
     <button
       type="button"
       onClick={() => context.onValueChange(value)}
-      className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3 py-1.5 text-xs md:text-sm font-semibold transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer ${
+      className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs md:text-sm font-semibold transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer ${
         isActive
-          ? "bg-white text-gray-900 shadow-xs border border-gray-200/60"
-          : "text-gray-600 hover:text-gray-900 hover:bg-white/50"
+          ? "bg-white text-[#0F172A] shadow-xs font-bold"
+          : "text-[#64748B] hover:text-[#0F172A] hover:bg-white/50"
       } ${className}`}
       {...props}
     >
@@ -108,3 +108,4 @@ export function TabsContent({
     </div>
   );
 }
+
