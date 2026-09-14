@@ -250,12 +250,432 @@ export interface NotificationItem {
 export interface BusinessExpense {
   id: string;
   title: string;
-  category: "Rent & Facilities" | "Salaries & Operations" | "Fuel & Linehaul" | "Packaging & Supplies" | "Customs & Port Demurrage" | "Software & Marketing" | "Other";
+  category: "Rent & Facilities" | "Salaries & Operations" | "Fuel & Linehaul" | "Packaging & Supplies" | "Customs & Port Demurrage" | "Software & Marketing" | "Other" | string;
   amount: number;
   currency: "EGP" | "USD";
   date: string; // ISO date string e.g. "2026-08-15"
   notes?: string;
   receiptNumber?: string;
+  payingAccount?: string; // e.g. "CIB account", "speedex wallet", "el rawy", "hussein", "dabash"
+  recorder?: string; // e.g. "مصطفى", "بسمة", "ضبش", "الراوي", "حسين"
+  paymentMethod?: string; // e.g. "نقدي", "تحويل بنكي", "محفظة إلكترونية", "بطاقة"
+  allocatedClient?: string; // e.g. Client name for client split
+  linkedAwb?: string; // e.g. Linked AWB for extra shipment surcharge
+  expenseNature?: "general" | "shipment_extra"; // General operational expense vs Extra shipment fee
+}
+
+/**
+ * Customer Collection Record (سند تحصيل عميل)
+ * Records cash/wire/wallet collections received from a client, credited to a specific treasury account.
+ * Crucial for calculating real-time customer balance and treasury inflows.
+ */
+export interface CustomerCollection {
+  id: string;
+  customerId?: string;
+  clientName: string; // matches customer account / company / name
+  amount: number;
+  currency: "EGP" | "USD";
+  date: string; // ISO date string e.g. "2026-08-20"
+  receivingAccount: string; // One of MASTER_FINANCIAL_ACCOUNTS: CIB account, speedex wallet, el rawy, hussein, dabash
+  paymentMethod: string; // Cash, Bank Wire, Wallet, Card
+  receiptNumber?: string;
+  recordedBy: string; // One of MASTER_AGENTS: مصطفي, بسمة, ضبش, الراوي, حسين
+  notes?: string;
+}
+
+export interface CustomerBalanceDetails {
+  totalSales: number;
+  extraExpenses: number;
+  rtoSales: number;
+  totalCollected: number;
+  netBalance: number;
+  shipmentCount: number;
+  rtoCount: number;
+}
+
+/**
+ * Calculates Customer Balance according to legacy Google Apps Script sheet (00_مراقبة_العملاء_والشركات):
+ * Balance (Charge) = (Total Sales of all shipments + Extra expenses linked to client)
+ *                  - (Total Sales of RTO shipments only)
+ *                  - (Total Collections actually received from client)
+ */
+export function calculateCustomerBalance(
+  customerIdentifier: { id?: string; name?: string; company?: string; code?: string } | string,
+  shipments: Shipment[] = [],
+  expenses: BusinessExpense[] = [],
+  collections: CustomerCollection[] = []
+): CustomerBalanceDetails {
+  const candidateNames = new Set<string>();
+
+  if (typeof customerIdentifier === "string") {
+    const trimmed = customerIdentifier.trim().toLowerCase();
+    if (trimmed) candidateNames.add(trimmed);
+  } else if (customerIdentifier) {
+    if (customerIdentifier.id) candidateNames.add(customerIdentifier.id.trim().toLowerCase());
+    if (customerIdentifier.name) candidateNames.add(customerIdentifier.name.trim().toLowerCase());
+    if (customerIdentifier.company) candidateNames.add(customerIdentifier.company.trim().toLowerCase());
+    if (customerIdentifier.code) candidateNames.add(customerIdentifier.code.trim().toLowerCase());
+  }
+
+  const isMatching = (val?: string) => {
+    if (!val) return false;
+    const v = val.trim().toLowerCase();
+    return candidateNames.has(v);
+  };
+
+  // 1. Shipments belonging to this customer
+  const matchedShipments = shipments.filter((s) => {
+    return isMatching(s.account) || isMatching(s.company) || isMatching(s.senderName);
+  });
+
+  const matchedAwbs = new Set(matchedShipments.map((s) => s.awb.trim()));
+
+  let totalSales = 0;
+  let rtoSales = 0;
+  let rtoCount = 0;
+
+  for (const s of matchedShipments) {
+    const salePrice = Number(s.sellingPrice !== undefined ? s.sellingPrice : (s.priceEgp || 0));
+    totalSales += salePrice;
+
+    const statusNorm = (s.status || "").trim().toUpperCase();
+    if (
+      statusNorm === "RTO" ||
+      statusNorm === "RETURN TO ORIGIN" ||
+      statusNorm === "RETURNED" ||
+      statusNorm === "REFUSED TO RECIVE" ||
+      statusNorm === "REFUSED TO RECEIVE" ||
+      statusNorm === "RE EXPORT"
+    ) {
+      rtoSales += salePrice;
+      rtoCount++;
+    }
+  }
+
+  // 2. Extra expenses linked to customer directly or via matched AWB
+  let extraExpenses = 0;
+  for (const exp of expenses) {
+    const matchesClient = isMatching(exp.allocatedClient);
+    const matchesAwb = exp.linkedAwb && matchedAwbs.has(exp.linkedAwb.trim());
+    if (matchesClient || matchesAwb) {
+      extraExpenses += Number(exp.amount || 0);
+    }
+  }
+
+  // 3. Collections recorded for this customer
+  let totalCollected = 0;
+  for (const col of collections) {
+    const matchesClient = isMatching(col.clientName) || (col.customerId && isMatching(col.customerId));
+    if (matchesClient) {
+      totalCollected += Number(col.amount || 0);
+    }
+  }
+
+  const netBalance = Math.round(((totalSales + extraExpenses) - rtoSales - totalCollected) * 100) / 100;
+
+  return {
+    totalSales: Math.round(totalSales * 100) / 100,
+    extraExpenses: Math.round(extraExpenses * 100) / 100,
+    rtoSales: Math.round(rtoSales * 100) / 100,
+    totalCollected: Math.round(totalCollected * 100) / 100,
+    netBalance,
+    shipmentCount: matchedShipments.length,
+    rtoCount,
+  };
+}
+
+/**
+ * ── Carrier & Broker Transfer (سند سداد لشركة شحن أو وسيط) ──
+ * Records payments made to linehaul carriers (FEDEX, Aramex, Express, SMSA, sonbola, Azab, NOK)
+ * from company vaults/accounts. Crucial for Carrier Balance Ledger (Columns H:O in legacy sheets).
+ */
+export interface CarrierTransfer {
+  id: string;
+  carrier: string; // e.g. "Express", "FEDEX", "Aramex", "SMSA Express", "sonbola", "Azab", "NOK"
+  amount: number;
+  currency: "EGP" | "USD";
+  date: string; // ISO date string e.g. "2026-08-18"
+  payingAccount: string; // One of MASTER_FINANCIAL_ACCOUNTS: CIB account, speedex wallet, el rawy, hussein, dabash
+  paymentMethod: string; // Bank Wire, Cash, Wallet, Check
+  referenceNumber?: string;
+  recordedBy: string; // One of MASTER_AGENTS
+  notes?: string;
+}
+
+export interface CarrierBalanceDetails {
+  carrier: string;
+  isBroker: boolean;
+  shipmentCount: number;
+  rtoCount: number;
+  totalCost: number;
+  rtoCost: number;
+  netCost: number; // totalCost - rtoCost
+  totalPaid: number;
+  dueBalance: number; // netCost - totalPaid
+}
+
+/**
+ * Calculates Carrier & Broker Balances according to legacy Excel sheet columns H:O:
+ * Net Cost = Total Cost - RTO Cost
+ * Due Balance = Net Cost - Total Paid (Carrier Transfers)
+ */
+export function calculateCarrierBalances(
+  shipments: Shipment[] = [],
+  transfers: CarrierTransfer[] = []
+): CarrierBalanceDetails[] {
+  // Aggregate all distinct carriers & brokers from MASTER lists and shipments
+  const carrierNames = new Set<string>();
+  MASTER_CARRIERS.forEach((c) => carrierNames.add(c));
+  MASTER_BROKERS.forEach((b) => carrierNames.add(b));
+
+  for (const s of shipments) {
+    if (s.carrier && s.carrier.trim()) carrierNames.add(s.carrier.trim());
+    if (s.broker && s.broker.trim()) carrierNames.add(s.broker.trim());
+  }
+
+  const brokerSet = new Set(MASTER_BROKERS.map((b) => b.toLowerCase().trim()));
+
+  const results: CarrierBalanceDetails[] = [];
+
+  for (const name of Array.from(carrierNames)) {
+    const nameNorm = name.toLowerCase().trim();
+    if (!nameNorm || nameNorm === "other" || nameNorm === "null" || nameNorm === "undefined") continue;
+
+    // Shipments where carrier or broker matches
+    const matchedShipments = shipments.filter((s) => {
+      const c = (s.carrier || "").toLowerCase().trim();
+      const b = (s.broker || "").toLowerCase().trim();
+      return c === nameNorm || b === nameNorm;
+    });
+
+    let totalCost = 0;
+    let rtoCost = 0;
+    let rtoCount = 0;
+
+    for (const s of matchedShipments) {
+      const cost = Number(s.costPrice || 0);
+      totalCost += cost;
+
+      const st = (s.status || "").toUpperCase().trim();
+      if (
+        st === "RTO" ||
+        st === "RETURN TO ORIGIN" ||
+        st === "RETURNED" ||
+        st === "REFUSED TO RECIVE" ||
+        st === "REFUSED TO RECEIVE" ||
+        st === "RE EXPORT"
+      ) {
+        rtoCost += cost;
+        rtoCount++;
+      }
+    }
+
+    // Transfers paid to this carrier
+    let totalPaid = 0;
+    for (const tr of transfers) {
+      if ((tr.carrier || "").toLowerCase().trim() === nameNorm) {
+        totalPaid += Number(tr.amount || 0);
+      }
+    }
+
+    const netCost = Math.round((totalCost - rtoCost) * 100) / 100;
+    const dueBalance = Math.round((netCost - totalPaid) * 100) / 100;
+
+    results.push({
+      carrier: name,
+      isBroker: brokerSet.has(nameNorm),
+      shipmentCount: matchedShipments.length,
+      rtoCount,
+      totalCost: Math.round(totalCost * 100) / 100,
+      rtoCost: Math.round(rtoCost * 100) / 100,
+      netCost,
+      totalPaid: Math.round(totalPaid * 100) / 100,
+      dueBalance,
+    });
+  }
+
+  // Sort by highest due balance descending
+  return results.sort((a, b) => b.dueBalance - a.dueBalance);
+}
+
+/**
+ * ── Internal Vault Transfer (مناقلة داخلية بين الخزائن والعهد) ──
+ * Moves liquid money from one company account/custody to another (e.g. CIB -> el rawy custody).
+ */
+export interface InternalTransfer {
+  id: string;
+  fromAccount: string; // Source account from MASTER_FINANCIAL_ACCOUNTS
+  toAccount: string; // Destination account from MASTER_FINANCIAL_ACCOUNTS
+  amount: number;
+  currency: "EGP" | "USD";
+  date: string;
+  fee?: number; // Wire / processing fee deducted from source
+  referenceNumber?: string;
+  recordedBy: string;
+  notes?: string;
+}
+
+/**
+ * ── Salary & Staff Advance (سند صرف مرتبات وسلف العاملين) ──
+ */
+export interface SalaryPayment {
+  id: string;
+  employeeName: string; // e.g. "مصطفي", "بسمة", "ضبش", "الراوي", "حسين"
+  type: "salary" | "advance" | "bonus" | "deduction";
+  amount: number;
+  currency: "EGP" | "USD";
+  date: string;
+  payingAccount: string; // Account paid from
+  period?: string; // e.g. "2026-08"
+  recordedBy: string;
+  notes?: string;
+}
+
+/**
+ * ── Invoice Loss / Claim (خسارة فاتورة / مطالبة شحنة) ──
+ * Attributed directly to the month/date of the original AWB shipment to ensure accurate P&L.
+ */
+export interface InvoiceLoss {
+  id: string;
+  awb: string;
+  clientName: string;
+  lossAmount: number;
+  currency: "EGP" | "USD";
+  lossDate: string; // Date loss was recorded
+  shipmentDate: string; // Date of the original AWB shipment (critical for Monthly P&L)
+  reason: "damage" | "loss" | "customs_confiscation" | "penalty" | "pricing_error" | string;
+  status: "deducted" | "pending_review" | "recovered";
+  recordedBy?: string;
+  notes?: string;
+}
+
+/**
+ * Treasury & Multi-Vault State Summary (0_الخزينة_والميزانية)
+ */
+export interface TreasuryVaultSummary {
+  accountName: string;
+  accountType: "bank" | "wallet" | "custody";
+  initialFloat: number;
+  collectionsIn: number;
+  transfersIn: number;
+  expensesOut: number;
+  carrierPaymentsOut: number;
+  salariesOut: number;
+  transfersOut: number;
+  totalInflows: number;
+  totalOutflows: number;
+  currentBalance: number;
+}
+
+export interface CompanyTreasuryState {
+  vaults: TreasuryVaultSummary[];
+  totalCompanyCash: number;
+  totalInflows: number;
+  totalOutflows: number;
+}
+
+export const INITIAL_VAULT_FLOATS: Record<string, { type: "bank" | "wallet" | "custody"; float: number }> = {
+  "CIB account": { type: "bank", float: 50000 },
+  "speedex wallet": { type: "wallet", float: 15000 },
+  "el rawy": { type: "custody", float: 10000 },
+  "hussein": { type: "custody", float: 10000 },
+  "dabash": { type: "custody", float: 10000 },
+};
+
+export function calculateTreasuryState(
+  collections: CustomerCollection[] = [],
+  carrierTransfers: CarrierTransfer[] = [],
+  expenses: BusinessExpense[] = [],
+  internalTransfers: InternalTransfer[] = [],
+  salaries: SalaryPayment[] = []
+): CompanyTreasuryState {
+  const vaults: TreasuryVaultSummary[] = [];
+  let totalCompanyCash = 0;
+  let totalInflowsCombined = 0;
+  let totalOutflowsCombined = 0;
+
+  for (const acc of MASTER_FINANCIAL_ACCOUNTS) {
+    const accNorm = acc.toLowerCase().trim();
+    const config = INITIAL_VAULT_FLOATS[acc] || { type: "custody", float: 0 };
+
+    // Inflow: Collections received into this vault
+    let colIn = 0;
+    for (const c of collections) {
+      if ((c.receivingAccount || "").toLowerCase().trim() === accNorm) {
+        colIn += Number(c.amount || 0);
+      }
+    }
+
+    // Inflow: Internal transfers received into this vault
+    let trIn = 0;
+    for (const tr of internalTransfers) {
+      if ((tr.toAccount || "").toLowerCase().trim() === accNorm) {
+        trIn += Number(tr.amount || 0);
+      }
+    }
+
+    // Outflow: Expenses paid from this vault
+    let expOut = 0;
+    for (const e of expenses) {
+      if ((e.payingAccount || "").toLowerCase().trim() === accNorm) {
+        expOut += Number(e.amount || 0);
+      }
+    }
+
+    // Outflow: Carrier payments paid from this vault
+    let carOut = 0;
+    for (const ct of carrierTransfers) {
+      if ((ct.payingAccount || "").toLowerCase().trim() === accNorm) {
+        carOut += Number(ct.amount || 0);
+      }
+    }
+
+    // Outflow: Salaries & advances paid from this vault
+    let salOut = 0;
+    for (const sal of salaries) {
+      if ((sal.payingAccount || "").toLowerCase().trim() === accNorm) {
+        salOut += Number(sal.amount || 0);
+      }
+    }
+
+    // Outflow: Internal transfers sent out of this vault (+ transfer fees)
+    let trOut = 0;
+    for (const tr of internalTransfers) {
+      if ((tr.fromAccount || "").toLowerCase().trim() === accNorm) {
+        trOut += Number(tr.amount || 0) + Number(tr.fee || 0);
+      }
+    }
+
+    const totalInflows = Math.round((colIn + trIn) * 100) / 100;
+    const totalOutflows = Math.round((expOut + carOut + salOut + trOut) * 100) / 100;
+    const currentBalance = Math.round((config.float + totalInflows - totalOutflows) * 100) / 100;
+
+    totalCompanyCash += currentBalance;
+    totalInflowsCombined += totalInflows;
+    totalOutflowsCombined += totalOutflows;
+
+    vaults.push({
+      accountName: acc,
+      accountType: config.type,
+      initialFloat: config.float,
+      collectionsIn: colIn,
+      transfersIn: trIn,
+      expensesOut: expOut,
+      carrierPaymentsOut: carOut,
+      salariesOut: salOut,
+      transfersOut: trOut,
+      totalInflows,
+      totalOutflows,
+      currentBalance,
+    });
+  }
+
+  return {
+    vaults,
+    totalCompanyCash: Math.round(totalCompanyCash * 100) / 100,
+    totalInflows: Math.round(totalInflowsCombined * 100) / 100,
+    totalOutflows: Math.round(totalOutflowsCombined * 100) / 100,
+  };
 }
 
 export interface BlogPost {
@@ -265,7 +685,7 @@ export interface BlogPost {
   author: string;
   category: string;
   date: string;
-  status: "published" | "draft" | "scheduled";
+  status: "published" | "draft" | "scheduled" | "pending_translation";
   views: number;
   seoScore: number; // Rank Math SEO Score (0-100)
   focusKeyword: string;
@@ -274,6 +694,11 @@ export interface BlogPost {
   content?: string;
   excerpt?: string;
   imageUrl?: string;
+  lang?: "ar" | "en";
+  translationOf?: string;
+  translations?: Record<string, string | number>;
+  deeplStatus?: "translated" | "pending_translation" | "failed" | "none";
+  deeplError?: string;
 }
 
 // Real Initial Datasets (Empty by default for true operational data)
@@ -2919,12 +3344,282 @@ export const initialShipments: Shipment[] = [
     ]
   }
 ];
+export const initialCustomers: Customer[] = [
+  {
+    id: "CUST-401",
+    code: "ACC-8801",
+    name: "nour saied",
+    company: "nour saied",
+    email: "nour.saied@exspeeds-client.com",
+    phone: "+20 100 234 5678",
+    country: "Egypt",
+    city: "Cairo",
+    tier: "Enterprise VIP",
+    creditLimit: 50000,
+    currentBalance: 0,
+    totalShipments: 0,
+    lifetimeSpend: 0,
+    taxRegistrationNumber: "EG-801-100-200",
+    assignedManager: "بسمة",
+    activeContracts: 1,
+    joinedDate: "2026-01-15",
+    status: "Active",
+  },
+  {
+    id: "CUST-402",
+    code: "ACC-8802",
+    name: "sohib",
+    company: "sohib",
+    email: "sohib@exspeeds-client.com",
+    phone: "+20 101 345 6789",
+    country: "Egypt",
+    city: "Alexandria",
+    tier: "Enterprise VIP",
+    creditLimit: 75000,
+    currentBalance: 0,
+    totalShipments: 0,
+    lifetimeSpend: 0,
+    taxRegistrationNumber: "EG-802-100-200",
+    assignedManager: "مصطفي",
+    activeContracts: 1,
+    joinedDate: "2026-02-01",
+    status: "Active",
+  },
+  {
+    id: "CUST-403",
+    code: "ACC-8803",
+    name: "Tasniim",
+    company: "Tasniim",
+    email: "tasniim@exspeeds-client.com",
+    phone: "+20 102 456 7890",
+    country: "Egypt",
+    city: "Giza",
+    tier: "Corporate Partner",
+    creditLimit: 30000,
+    currentBalance: 0,
+    totalShipments: 0,
+    lifetimeSpend: 0,
+    taxRegistrationNumber: "EG-803-100-200",
+    assignedManager: "ضبش",
+    activeContracts: 1,
+    joinedDate: "2026-02-10",
+    status: "Active",
+  },
+  {
+    id: "CUST-404",
+    code: "ACC-8804",
+    name: "Sabaan",
+    company: "Sabaan",
+    email: "sabaan@exspeeds-client.com",
+    phone: "+20 103 567 8901",
+    country: "Egypt",
+    city: "Cairo",
+    tier: "Corporate Partner",
+    creditLimit: 40000,
+    currentBalance: 0,
+    totalShipments: 0,
+    lifetimeSpend: 0,
+    taxRegistrationNumber: "EG-804-100-200",
+    assignedManager: "حسين",
+    activeContracts: 1,
+    joinedDate: "2026-02-15",
+    status: "Active",
+  },
+  {
+    id: "CUST-405",
+    code: "ACC-8805",
+    name: "Simon Botrous",
+    company: "Simon Botrous",
+    email: "simon.botrous@exspeeds-client.com",
+    phone: "+20 104 678 9012",
+    country: "Egypt",
+    city: "Alexandria",
+    tier: "Standard Shipper",
+    creditLimit: 25000,
+    currentBalance: 0,
+    totalShipments: 0,
+    lifetimeSpend: 0,
+    taxRegistrationNumber: "EG-805-100-200",
+    assignedManager: "الراوي",
+    activeContracts: 1,
+    joinedDate: "2026-03-01",
+    status: "Active",
+  },
+  {
+    id: "CUST-406",
+    code: "ACC-8806",
+    name: "Ahmed alfar",
+    company: "Ahmed alfar",
+    email: "ahmed.alfar@exspeeds-client.com",
+    phone: "+20 105 789 0123",
+    country: "Egypt",
+    city: "Cairo",
+    tier: "Standard Shipper",
+    creditLimit: 25000,
+    currentBalance: 0,
+    totalShipments: 0,
+    lifetimeSpend: 0,
+    taxRegistrationNumber: "EG-806-100-200",
+    assignedManager: "مصطفي",
+    activeContracts: 1,
+    joinedDate: "2026-03-10",
+    status: "Active",
+  },
+  {
+    id: "CUST-407",
+    code: "ACC-8807",
+    name: "Soliman store",
+    company: "Soliman store",
+    email: "soliman.store@exspeeds-client.com",
+    phone: "+20 106 890 1234",
+    country: "Egypt",
+    city: "Giza",
+    tier: "Corporate Partner",
+    creditLimit: 35000,
+    currentBalance: 0,
+    totalShipments: 0,
+    lifetimeSpend: 0,
+    taxRegistrationNumber: "EG-807-100-200",
+    assignedManager: "بسمة",
+    activeContracts: 1,
+    joinedDate: "2026-03-15",
+    status: "Active",
+  },
+  {
+    id: "CUST-408",
+    code: "ACC-8808",
+    name: "Cash",
+    company: "Cash Client",
+    email: "cash@exspeeds.com",
+    phone: "+20 100 000 0000",
+    country: "Egypt",
+    city: "Cairo",
+    tier: "Standard Shipper",
+    creditLimit: 0,
+    currentBalance: 0,
+    totalShipments: 0,
+    lifetimeSpend: 0,
+    taxRegistrationNumber: "EG-000-000-000",
+    assignedManager: "Operations",
+    activeContracts: 0,
+    joinedDate: "2026-01-01",
+    status: "Active",
+  }
+];
 export const initialOrders: Order[] = [];
-export const initialCustomers: Customer[] = [];
 export const initialInvoices: Invoice[] = [];
 export const initialWarehouseItems: WarehouseItem[] = [];
 export const initialNotifications: NotificationItem[] = [];
 export const initialShipmentRequests: ShipmentRequest[] = [];
+
+export const initialCarrierTransfers: CarrierTransfer[] = [
+  {
+    id: "ct-1",
+    carrier: "Express",
+    amount: 15000,
+    currency: "EGP",
+    date: "2026-08-10",
+    payingAccount: "CIB account",
+    paymentMethod: "تحويل بنكي CIB",
+    referenceNumber: "TR-EXP-801",
+    recordedBy: "ضبش",
+    notes: "سداد دفعة حساب بوالص خط إكسبريس لشهر أغسطس",
+  },
+  {
+    id: "ct-2",
+    carrier: "FEDEX",
+    amount: 8000,
+    currency: "EGP",
+    date: "2026-08-15",
+    payingAccount: "CIB account",
+    paymentMethod: "تحويل بنكي CIB",
+    referenceNumber: "TR-FDX-802",
+    recordedBy: "ضبش",
+    notes: "دفعة تحت الحساب لشحنات فيديكس الدولية",
+  },
+  {
+    id: "ct-3",
+    carrier: "sonbola",
+    amount: 6500,
+    currency: "EGP",
+    date: "2026-08-20",
+    payingAccount: "speedex wallet",
+    paymentMethod: "محفظة إلكترونية",
+    referenceNumber: "TR-SNB-803",
+    recordedBy: "مصطفي",
+    notes: "سداد مستحقات وسيط سنبلة",
+  },
+];
+
+export const initialInternalTransfers: InternalTransfer[] = [
+  {
+    id: "it-1",
+    fromAccount: "CIB account",
+    toAccount: "el rawy",
+    amount: 12000,
+    currency: "EGP",
+    date: "2026-08-05",
+    fee: 35,
+    referenceNumber: "WIT-CIB-01",
+    recordedBy: "ضبش",
+    notes: "تغذية عهدة كاش الراوي لمصاريف التشغيل والاستلام",
+  },
+  {
+    id: "it-2",
+    fromAccount: "CIB account",
+    toAccount: "speedex wallet",
+    amount: 10000,
+    currency: "EGP",
+    date: "2026-08-12",
+    fee: 0,
+    referenceNumber: "WIT-CIB-02",
+    recordedBy: "بسمة",
+    notes: "شحن محفظة سبيدكس لسداد فواتير الوسطاء السريعة",
+  },
+];
+
+export const initialSalaries: SalaryPayment[] = [
+  {
+    id: "sal-1",
+    employeeName: "مصطفي",
+    type: "salary",
+    amount: 12000,
+    currency: "EGP",
+    date: "2026-08-01",
+    payingAccount: "CIB account",
+    period: "2026-08",
+    recordedBy: "ضبش",
+    notes: "راتب شهر أغسطس",
+  },
+  {
+    id: "sal-2",
+    employeeName: "الراوي",
+    type: "advance",
+    amount: 2500,
+    currency: "EGP",
+    date: "2026-08-15",
+    payingAccount: "el rawy",
+    period: "2026-08",
+    recordedBy: "الراوي",
+    notes: "سلفة نقدية على راتب أغسطس",
+  },
+];
+
+export const initialInvoiceLosses: InvoiceLoss[] = [
+  {
+    id: "loss-1",
+    awb: "875202433089",
+    clientName: "nour saied",
+    lossAmount: 850,
+    currency: "EGP",
+    lossDate: "2026-08-28",
+    shipmentDate: "2026-08-01",
+    reason: "customs_confiscation",
+    status: "deducted",
+    recordedBy: "مصطفي",
+    notes: "غرامة جمركية تم تحميلها على تكلفة شهر الشحنة الأصلي",
+  },
+];
 
 export const initialWarehouses: WarehouseFacility[] = [
   {
@@ -3105,6 +3800,65 @@ export const initialBlogPosts: BlogPost[] = [
   },
 ];
 
+export const initialExpenses: BusinessExpense[] = [
+  {
+    id: "exp-1",
+    title: "إيجار مستودع قرية البضائع - مطار القاهرة",
+    category: "Rent & Facilities",
+    amount: 4500,
+    currency: "EGP",
+    date: "2026-08-01",
+    payingAccount: "CIB account",
+    recorder: "ضبش",
+    paymentMethod: "تحويل بنكي CIB",
+    notes: "الإيجار الشهري لمساحة المناولة الجمركية",
+    receiptNumber: "REC-2026-0801",
+    expenseNature: "general",
+  },
+  {
+    id: "exp-2",
+    title: "وقود وصيانة شاحنات النقل البري",
+    category: "Fuel & Linehaul",
+    amount: 2800,
+    currency: "EGP",
+    date: "2026-08-10",
+    payingAccount: "el rawy",
+    recorder: "الراوي",
+    paymentMethod: "عهدة نقدية كاش",
+    notes: "كروت وقود أسطول السويس والإسكندرية",
+    receiptNumber: "REC-2026-0810",
+    expenseNature: "general",
+  },
+  {
+    id: "exp-3",
+    title: "مستلزمات تغليف وبوالص AWB وبطاقات تتبع",
+    category: "Packaging & Supplies",
+    amount: 1250,
+    currency: "EGP",
+    date: "2026-08-18",
+    payingAccount: "speedex wallet",
+    recorder: "مصطفي",
+    paymentMethod: "محفظة إلكترونية",
+    notes: "كراتين مضلعة وبلاستيك هوائي وملصقات حرارية",
+    receiptNumber: "REC-2026-0818",
+    expenseNature: "general",
+  },
+  {
+    id: "exp-4",
+    title: "اشتراك سحابي لنظام نافذة وتتبع الشحنات",
+    category: "Software & Marketing",
+    amount: 1080,
+    currency: "EGP",
+    date: "2026-08-25",
+    payingAccount: "CIB account",
+    recorder: "بسمة",
+    paymentMethod: "بطاقة ائتمان بنكية",
+    notes: "تراخيص منصة التتبع الرقمية وتشفير البيانات",
+    receiptNumber: "REC-2026-0825",
+    expenseNature: "general",
+  },
+];
+
 // Local Storage Helper & Store API
 export class AdminStorage {
   private static isBrowser(): boolean {
@@ -3203,10 +3957,58 @@ export class AdminStorage {
   }
 
   static getCustomers(): Customer[] {
-    return this.get("xspeed_admin_customers", initialCustomers);
+    const list = this.get<Customer[]>("xspeed_admin_customers", initialCustomers);
+    if (!list || list.length === 0 || !list.some((c) => c.code === "ACC-8801")) {
+      this.saveCustomers(initialCustomers);
+      return initialCustomers;
+    }
+    return list;
   }
   static saveCustomers(data: Customer[]) {
     this.save("xspeed_admin_customers", data);
+  }
+
+  static getCollections(): CustomerCollection[] {
+    return this.get<CustomerCollection[]>("xspeed_admin_collections", [
+      {
+        id: "col-1",
+        clientName: "nour saied",
+        amount: 2500,
+        currency: "EGP",
+        date: "2026-08-15",
+        receivingAccount: "CIB account",
+        paymentMethod: "تحويل بنكي CIB",
+        receiptNumber: "COL-801",
+        recordedBy: "بسمة",
+        notes: "دفعة نقدية تحت حساب شحنات شهر أغسطس",
+      },
+      {
+        id: "col-2",
+        clientName: "sohib",
+        amount: 5000,
+        currency: "EGP",
+        date: "2026-08-22",
+        receivingAccount: "speedex wallet",
+        paymentMethod: "محفظة إلكترونية",
+        receiptNumber: "COL-802",
+        recordedBy: "مصطفي",
+        notes: "سداد جزئي بوليصة 875202548831",
+      },
+    ]);
+  }
+  static saveCollections(data: CustomerCollection[]) {
+    this.save("xspeed_admin_collections", data);
+  }
+  static addCollection(collection: CustomerCollection) {
+    const current = this.getCollections();
+    const updated = [collection, ...current];
+    this.saveCollections(updated);
+    return collection;
+  }
+  static deleteCollection(id: string) {
+    const current = this.getCollections();
+    const updated = current.filter((c) => c.id !== id);
+    this.saveCollections(updated);
   }
 
   static getInvoices(): Invoice[] {
@@ -3238,48 +4040,7 @@ export class AdminStorage {
   }
 
   static getExpenses(): BusinessExpense[] {
-    return this.get("xspeed_admin_expenses", [
-      {
-        id: "exp-1",
-        title: "إيجار مستودع قرية البضائع - مطار القاهرة",
-        category: "Rent & Facilities",
-        amount: 4500,
-        currency: "EGP",
-        date: "2026-08-01",
-        notes: "الإيجار الشهري لمساحة المناولة الجمركية",
-        receiptNumber: "REC-2026-0801",
-      },
-      {
-        id: "exp-2",
-        title: "وقود وصيانة شاحنات النقل البري",
-        category: "Fuel & Linehaul",
-        amount: 2800,
-        currency: "EGP",
-        date: "2026-08-10",
-        notes: "كروت وقود أسطول السويس والإسكندرية",
-        receiptNumber: "REC-2026-0810",
-      },
-      {
-        id: "exp-3",
-        title: "مستلزمات تغليف وبوالص AWB وبطاقات تتبع",
-        category: "Packaging & Supplies",
-        amount: 1250,
-        currency: "EGP",
-        date: "2026-08-18",
-        notes: "كراتين مضلعة وبلاستيك هوائي وملصقات حرارية",
-        receiptNumber: "REC-2026-0818",
-      },
-      {
-        id: "exp-4",
-        title: "اشتراك سحابي لنظام نافذة وتتبع الشحنات",
-        category: "Software & Marketing",
-        amount: 1080,
-        currency: "EGP",
-        date: "2026-08-25",
-        notes: "تراخيص منصة التتبع الرقمية وتشفير البيانات",
-        receiptNumber: "REC-2026-0825",
-      },
-    ]);
+    return this.get("xspeed_admin_expenses", initialExpenses);
   }
   static saveExpenses(data: BusinessExpense[]) {
     this.save("xspeed_admin_expenses", data);
@@ -3294,6 +4055,82 @@ export class AdminStorage {
     const current = this.getExpenses();
     const updated = current.filter((e) => e.id !== id);
     this.saveExpenses(updated);
+  }
+
+  // Carrier Transfers (سندات سداد شركات الشحن والوسطاء)
+  static getCarrierTransfers(): CarrierTransfer[] {
+    return this.get("xspeed_admin_carrier_transfers", initialCarrierTransfers);
+  }
+  static saveCarrierTransfers(data: CarrierTransfer[]) {
+    this.save("xspeed_admin_carrier_transfers", data);
+  }
+  static addCarrierTransfer(transfer: CarrierTransfer) {
+    const current = this.getCarrierTransfers();
+    const updated = [transfer, ...current];
+    this.saveCarrierTransfers(updated);
+    return transfer;
+  }
+  static deleteCarrierTransfer(id: string) {
+    const current = this.getCarrierTransfers();
+    const updated = current.filter((t) => t.id !== id);
+    this.saveCarrierTransfers(updated);
+  }
+
+  // Internal Vault Transfers (مناقلات بين الخزائن والعهد)
+  static getInternalTransfers(): InternalTransfer[] {
+    return this.get("xspeed_admin_internal_transfers", initialInternalTransfers);
+  }
+  static saveInternalTransfers(data: InternalTransfer[]) {
+    this.save("xspeed_admin_internal_transfers", data);
+  }
+  static addInternalTransfer(transfer: InternalTransfer) {
+    const current = this.getInternalTransfers();
+    const updated = [transfer, ...current];
+    this.saveInternalTransfers(updated);
+    return transfer;
+  }
+  static deleteInternalTransfer(id: string) {
+    const current = this.getInternalTransfers();
+    const updated = current.filter((t) => t.id !== id);
+    this.saveInternalTransfers(updated);
+  }
+
+  // Salary Payments (سندات صرف المرتبات والسلف)
+  static getSalaries(): SalaryPayment[] {
+    return this.get("xspeed_admin_salaries", initialSalaries);
+  }
+  static saveSalaries(data: SalaryPayment[]) {
+    this.save("xspeed_admin_salaries", data);
+  }
+  static addSalary(salary: SalaryPayment) {
+    const current = this.getSalaries();
+    const updated = [salary, ...current];
+    this.saveSalaries(updated);
+    return salary;
+  }
+  static deleteSalary(id: string) {
+    const current = this.getSalaries();
+    const updated = current.filter((s) => s.id !== id);
+    this.saveSalaries(updated);
+  }
+
+  // Invoice Losses (خسائر الفواتير المنسوبة لتاريخ البوليصة)
+  static getInvoiceLosses(): InvoiceLoss[] {
+    return this.get("xspeed_admin_invoice_losses", initialInvoiceLosses);
+  }
+  static saveInvoiceLosses(data: InvoiceLoss[]) {
+    this.save("xspeed_admin_invoice_losses", data);
+  }
+  static addInvoiceLoss(loss: InvoiceLoss) {
+    const current = this.getInvoiceLosses();
+    const updated = [loss, ...current];
+    this.saveInvoiceLosses(updated);
+    return loss;
+  }
+  static deleteInvoiceLoss(id: string) {
+    const current = this.getInvoiceLosses();
+    const updated = current.filter((l) => l.id !== id);
+    this.saveInvoiceLosses(updated);
   }
 }
 

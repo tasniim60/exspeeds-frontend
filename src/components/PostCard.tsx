@@ -6,11 +6,11 @@ import { useRouter } from "next/navigation";
 import { WPPost } from "@/lib/wordpress";
 import { useLanguage } from "@/context/LanguageContext";
 import { sanitizeHtml } from "@/lib/sanitize";
-import { Calendar, Clock, ArrowRight, User } from "lucide-react";
+import { Calendar, Clock, ArrowRight, User, Globe, Languages } from "lucide-react";
 
 export default function PostCard({ post }: { post: WPPost }) {
   const router = useRouter();
-  const { t, isRTL, getLocalizedPath } = useLanguage();
+  const { t, isRTL, getLocalizedPath, setLocale } = useLanguage();
   const [imgSrc, setImgSrc] = useState(
     post.featured_image_url || "/assets/xspeed_about_showcase.jpg"
   );
@@ -95,6 +95,23 @@ export default function PostCard({ post }: { post: WPPost }) {
         >
           {getLocalizedCategory(post.category_name)}
         </span>
+
+        {post.translatedSlug && (
+          <Link
+            href={isRTL ? `/en/blog/${post.translatedSlug}` : `/ar/blog/${post.translatedSlug}`}
+            onClick={(e) => {
+              e.stopPropagation();
+              setLocale(isRTL ? "en" : "ar");
+            }}
+            className={`absolute top-4 ${
+              isRTL ? "left-4" : "right-4"
+            } bg-gray-950/80 hover:bg-gray-900 backdrop-blur-md text-white border border-white/20 text-[11px] font-bold px-2.5 py-1 rounded-lg shadow-sm flex items-center gap-1.5 transition-all hover:scale-105 z-10 cursor-pointer`}
+            title={isRTL ? "قراءة النسخة الإنجليزية من هذا المقال" : "Read Arabic version of this article"}
+          >
+            <Globe className="w-3.5 h-3.5 text-orange-400 shrink-0" />
+            <span>{isRTL ? "English" : "العربية"}</span>
+          </Link>
+        )}
       </div>
 
       {/* Main Body */}
@@ -123,6 +140,16 @@ export default function PostCard({ post }: { post: WPPost }) {
             <span className="flex items-center gap-1 text-gray-400">
               <span>3 {isRTL ? "دقائق" : "min read"}</span>
             </span>
+
+            {post.translatedSlug && (
+              <>
+                <span className="text-gray-300">•</span>
+                <span className="flex items-center gap-1 font-bold text-[10px] text-indigo-700 bg-indigo-50/90 px-2 py-0.5 rounded-full border border-indigo-200/80 shadow-2xs">
+                  <Languages className="w-3 h-3 text-indigo-600 shrink-0" />
+                  <span>{isRTL ? "مقال ثنائي اللغة (AR/EN)" : "Bilingual Article (EN/AR)"}</span>
+                </span>
+              </>
+            )}
           </div>
 
           {/* Title */}

@@ -18,13 +18,14 @@ export default function HomeBlogSection({ initialPosts }: HomeBlogSectionProps) 
   const { t, isRTL, getLocalizedPath } = useLanguage();
 
   useEffect(() => {
+    const currentLocale = isRTL ? "ar" : "en";
     const adminPosts = AdminStorage.getBlogPosts();
     if (adminPosts && adminPosts.length > 0) {
-      setPosts(mergeAdminPosts(initialPosts, adminPosts));
+      setPosts(mergeAdminPosts(initialPosts, adminPosts, currentLocale));
     } else {
-      setPosts(initialPosts);
+      setPosts(initialPosts.filter((p) => (p.lang || p.locale || (isRTL ? "ar" : "en")) === currentLocale));
     }
-  }, [initialPosts]);
+  }, [initialPosts, isRTL]);
 
   if (!posts || posts.length === 0) {
     return (

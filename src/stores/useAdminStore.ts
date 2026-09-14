@@ -8,6 +8,12 @@ import {
   NotificationItem,
   BlogPost,
   AdminStorage,
+  CustomerCollection,
+  BusinessExpense,
+  CarrierTransfer,
+  InternalTransfer,
+  SalaryPayment,
+  InvoiceLoss,
 } from "@/lib/adminData";
 import {
   shipmentService,
@@ -17,22 +23,44 @@ import {
   warehouseService,
   notificationService,
   postService,
+  collectionService,
+  expenseService,
+  carrierTransferService,
+  treasuryService,
+  invoiceLossService,
 } from "@/services";
 
-export type AdminTab = "statistics" | "requests" | "shipments" | "reports" | "posts";
+export type AdminTab =
+  | "statistics"
+  | "requests"
+  | "shipments"
+  | "invoices"
+  | "customers"
+  | "carriers"
+  | "treasury"
+  | "expenses"
+  | "reports"
+  | "posts";
 
 export type QuickActionType =
   | "new-shipment"
   | "new-order"
   | "new-customer"
   | "new-invoice"
-  | "new-post";
+  | "new-post"
+  | "new-collection"
+  | "new-carrier-transfer"
+  | "new-expense"
+  | "new-vault-transfer"
+  | "new-salary"
+  | "new-loss";
 
 export interface BadgeCounts {
   shipments: number;
   orders: number;
   notifications: number;
   requests?: number;
+  invoices?: number;
 }
 
 interface AdminState {
@@ -52,6 +80,12 @@ interface AdminState {
   warehouseItems: WarehouseItem[];
   notifications: NotificationItem[];
   posts: BlogPost[];
+  collections: CustomerCollection[];
+  expenses: BusinessExpense[];
+  carrierTransfers: CarrierTransfer[];
+  internalTransfers: InternalTransfer[];
+  salaries: SalaryPayment[];
+  invoiceLosses: InvoiceLoss[];
 
   // Operational Flags
   isLoadingData: boolean;
@@ -89,6 +123,24 @@ interface AdminState {
   addCustomer: (newCustomer: Customer) => Promise<void>;
   updateCustomer: (updatedCustomer: Customer) => Promise<void>;
 
+  addCollection: (newCollection: CustomerCollection) => Promise<void>;
+  deleteCollection: (id: string) => Promise<void>;
+
+  addExpense: (newExpense: BusinessExpense) => Promise<void>;
+  deleteExpense: (id: string) => Promise<void>;
+
+  addCarrierTransfer: (newTransfer: CarrierTransfer) => Promise<void>;
+  deleteCarrierTransfer: (id: string) => Promise<void>;
+
+  addInternalTransfer: (newTransfer: InternalTransfer) => Promise<void>;
+  deleteInternalTransfer: (id: string) => Promise<void>;
+
+  addSalary: (newSalary: SalaryPayment) => Promise<void>;
+  deleteSalary: (id: string) => Promise<void>;
+
+  addInvoiceLoss: (newLoss: InvoiceLoss) => Promise<void>;
+  deleteInvoiceLoss: (id: string) => Promise<void>;
+
   addInvoice: (newInvoice: Invoice) => Promise<void>;
   updateInvoice: (updatedInvoice: Invoice) => Promise<void>;
 
@@ -119,6 +171,12 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   orders: [],
   customers: [],
   invoices: [],
+  collections: [],
+  expenses: [],
+  carrierTransfers: [],
+  internalTransfers: [],
+  salaries: [],
+  invoiceLosses: [],
   warehouseItems: [],
   notifications: [],
   posts: [],
@@ -157,6 +215,11 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     const validTabs: Record<string, AdminTab> = {
       shipments: "shipments",
       requests: "requests",
+      invoices: "invoices",
+      customers: "customers",
+      carriers: "carriers",
+      treasury: "treasury",
+      expenses: "expenses",
       reports: "reports",
       statistics: "statistics",
       posts: "posts",
@@ -177,10 +240,26 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         get().setActiveTab("requests");
         break;
       case "new-customer":
-        get().setActiveTab("shipments");
+        get().setActiveTab("customers");
+        break;
+      case "new-collection":
+        get().setActiveTab("customers");
+        break;
+      case "new-carrier-transfer":
+        get().setActiveTab("carriers");
+        break;
+      case "new-expense":
+        get().setActiveTab("expenses");
+        break;
+      case "new-vault-transfer":
+      case "new-salary":
+        get().setActiveTab("treasury");
+        break;
+      case "new-loss":
+        get().setActiveTab("reports");
         break;
       case "new-invoice":
-        get().setActiveTab("reports");
+        get().setActiveTab("invoices");
         break;
       case "new-post":
         get().setActiveTab("posts");
@@ -192,13 +271,32 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   loadRealData: async () => {
     set({ isLoadingData: true });
     try {
-      const [shpList, ordList, custList, invList, whList, notifList] = await Promise.all([
+      const [
+        shpList,
+        ordList,
+        custList,
+        invList,
+        whList,
+        notifList,
+        colList,
+        expList,
+        ctList,
+        itList,
+        salList,
+        lossList,
+      ] = await Promise.all([
         shipmentService.getShipments(),
         orderService.getOrders(),
         customerService.getCustomers(),
         invoiceService.getInvoices(),
         warehouseService.getItems(),
         notificationService.getNotifications(),
+        collectionService.getCollections(),
+        expenseService.getExpenses(),
+        carrierTransferService.getTransfers(),
+        treasuryService.getInternalTransfers(),
+        treasuryService.getSalaries(),
+        invoiceLossService.getLosses(),
       ]);
 
       set({
@@ -206,6 +304,12 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         orders: ordList || [],
         customers: custList || [],
         invoices: invList || [],
+        collections: colList || [],
+        expenses: expList || [],
+        carrierTransfers: ctList || [],
+        internalTransfers: itList || [],
+        salaries: salList || [],
+        invoiceLosses: lossList || [],
         warehouseItems: whList || [],
         notifications: notifList || [],
         posts: AdminStorage.getBlogPosts(),
@@ -399,6 +503,120 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     await customerService.updateCustomer(updatedCustomer);
   },
 
+  addCollection: async (newCollection: CustomerCollection) => {
+    set((state) => ({ collections: [newCollection, ...state.collections] }));
+    await collectionService.createCollection(newCollection);
+
+    get().triggerNotification(
+      "Customer Payment Collected",
+      `Received ${newCollection.amount.toLocaleString()} ${newCollection.currency} from ${newCollection.clientName} into vault '${newCollection.receivingAccount}'.`,
+      "success",
+      "invoice",
+      "customers",
+      newCollection.id
+    );
+  },
+
+  deleteCollection: async (id: string) => {
+    set((state) => ({ collections: state.collections.filter((c) => c.id !== id) }));
+    await collectionService.deleteCollection(id);
+  },
+
+  addExpense: async (newExpense: BusinessExpense) => {
+    set((state) => ({ expenses: [newExpense, ...state.expenses] }));
+    await expenseService.createExpense(newExpense);
+
+    get().triggerNotification(
+      "Expense Recorded",
+      `Paid ${newExpense.amount.toLocaleString()} ${newExpense.currency} for '${newExpense.title}' from '${newExpense.payingAccount}'.`,
+      "info",
+      "system",
+      "reports",
+      newExpense.id
+    );
+  },
+
+  deleteExpense: async (id: string) => {
+    set((state) => ({ expenses: state.expenses.filter((e) => e.id !== id) }));
+    await expenseService.deleteExpense(id);
+  },
+
+  addCarrierTransfer: async (newTransfer: CarrierTransfer) => {
+    set((state) => ({ carrierTransfers: [newTransfer, ...state.carrierTransfers] }));
+    await carrierTransferService.createTransfer(newTransfer);
+
+    get().triggerNotification(
+      "Carrier Payment Recorded",
+      `Paid ${newTransfer.amount.toLocaleString()} ${newTransfer.currency} to ${newTransfer.carrier} from '${newTransfer.payingAccount}'.`,
+      "info",
+      "system",
+      "carriers",
+      newTransfer.id
+    );
+  },
+
+  deleteCarrierTransfer: async (id: string) => {
+    set((state) => ({ carrierTransfers: state.carrierTransfers.filter((t) => t.id !== id) }));
+    await carrierTransferService.deleteTransfer(id);
+  },
+
+  addInternalTransfer: async (newTransfer: InternalTransfer) => {
+    set((state) => ({ internalTransfers: [newTransfer, ...state.internalTransfers] }));
+    await treasuryService.createInternalTransfer(newTransfer);
+
+    get().triggerNotification(
+      "Vault Transfer Completed",
+      `Transferred ${newTransfer.amount.toLocaleString()} ${newTransfer.currency} from '${newTransfer.fromAccount}' to '${newTransfer.toAccount}'.`,
+      "success",
+      "system",
+      "treasury",
+      newTransfer.id
+    );
+  },
+
+  deleteInternalTransfer: async (id: string) => {
+    set((state) => ({ internalTransfers: state.internalTransfers.filter((t) => t.id !== id) }));
+    await treasuryService.deleteInternalTransfer(id);
+  },
+
+  addSalary: async (newSalary: SalaryPayment) => {
+    set((state) => ({ salaries: [newSalary, ...state.salaries] }));
+    await treasuryService.createSalary(newSalary);
+
+    get().triggerNotification(
+      "Salary Payment Logged",
+      `Disbursed ${newSalary.amount.toLocaleString()} ${newSalary.currency} (${newSalary.type}) to ${newSalary.employeeName} from '${newSalary.payingAccount}'.`,
+      "info",
+      "system",
+      "treasury",
+      newSalary.id
+    );
+  },
+
+  deleteSalary: async (id: string) => {
+    set((state) => ({ salaries: state.salaries.filter((s) => s.id !== id) }));
+    await treasuryService.deleteSalary(id);
+  },
+
+  addInvoiceLoss: async (newLoss: InvoiceLoss) => {
+    set((state) => ({ invoiceLosses: [newLoss, ...state.invoiceLosses] }));
+    await invoiceLossService.createLoss(newLoss);
+
+    get().triggerNotification(
+      "Invoice Loss Claim Logged",
+      `Attributed ${newLoss.lossAmount.toLocaleString()} ${newLoss.currency} loss for AWB ${newLoss.awb} to shipment date ${newLoss.shipmentDate}.`,
+      "warning",
+      "invoice",
+      "reports",
+      newLoss.id
+    );
+  },
+
+  deleteInvoiceLoss: async (id: string) => {
+    set((state) => ({ invoiceLosses: state.invoiceLosses.filter((l) => l.id !== id) }));
+    await invoiceLossService.deleteLoss(id);
+  },
+
   addInvoice: async (newInvoice: Invoice) => {
     set((state) => ({ invoices: [newInvoice, ...state.invoices] }));
     await invoiceService.createInvoice(newInvoice);
@@ -523,6 +741,7 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         (o) => o.status === "New Bookings" || o.status === "Ready for Dispatch"
       ).length,
       notifications: state.notifications.filter((n) => !n.isRead).length,
+      invoices: state.invoices.filter((i) => i.status === "Pending" || i.status === "Overdue").length,
     };
   },
 }));

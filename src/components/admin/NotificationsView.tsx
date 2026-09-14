@@ -202,10 +202,11 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
                   </Button>
                   <button
                     onClick={() => onDeleteNotification(notif.id)}
-                    className="p-1.5 rounded text-gray-400 hover:text-red-600 transition-colors cursor-pointer"
+                    className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                     title={t("common.delete")}
+                    aria-label={t("common.delete")}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Trash2 className="h-4 w-4" />
                   </button>
                 </div>
               </div>

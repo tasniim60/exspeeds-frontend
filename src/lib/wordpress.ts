@@ -32,6 +32,11 @@ export interface WPPost {
   meta?: Record<string, any>;
   _embedded?: any;
   locale?: string;
+  lang?: "ar" | "en";
+  translationOf?: string | number;
+  translations?: Record<string, string | number>;
+  translatedSlug?: string;
+  translatedTitle?: string;
 }
 
 export const FALLBACK_POSTS_EN: WPPost[] = [
@@ -628,6 +633,17 @@ export async function getPostBySlug(slug: string, locale: string = "ar"): Promis
   const secondaryFallback = normalizedLocale === "en" ? FALLBACK_POSTS_AR : FALLBACK_POSTS_EN;
   const crossMatch = secondaryFallback.find((p) => p.slug === slug);
   if (crossMatch) return crossMatch;
+  if (crossMatch) {
+    const cleanCrossSlug = crossMatch.slug.replace(/-(ar|en)$/, "");
+    const counterpartMatch = primaryFallback.find(
+      (p) =>
+        p.id === crossMatch.id ||
+        p.slug === crossMatch.slug ||
+        p.slug.replace(/-(ar|en)$/, "") === cleanCrossSlug
+    );
+    if (counterpartMatch) return counterpartMatch;
+    return crossMatch;
+  }
 
   return null;
 }
@@ -718,6 +734,11 @@ function transformWpPost(post: any, locale: string = "ar"): WPPost {
     slug: post.slug,
     status: post.status || "publish",
     locale: locale,
+    lang: post.lang || (locale as "ar" | "en"),
+    translationOf: post.translation_of || post.translationOf,
+    translations: post.translations,
+    translatedSlug: post.translatedSlug,
+    translatedTitle: post.translatedTitle,
     title: { rendered: rawTitle },
     content: { rendered: post.content?.rendered || post.content || "" },
     excerpt: { rendered: defaultDesc },
@@ -741,12 +762,13 @@ export async function createWordPressPost(data: {
   seoScore?: number;
   imageUrl?: string;
   locale?: string;
+  translationOf?: number;
 }): Promise<{ success: boolean; wpId?: number; post?: WPPost; message?: string }> {
   const locale = data.locale === "en" ? "en" : "ar";
   const apiUrl = getPrimaryApiUrl();
   const defaultImage = data.imageUrl || "/assets/xspeed_about_showcase.jpg";
 
-  const wpPayload = {
+  const wpPayload: any = {
     title: data.title,
     slug: data.slug,
     content: data.content,
@@ -760,9 +782,14 @@ export async function createWordPressPost(data: {
     },
   };
 
+  if (data.translationOf) {
+    wpPayload.translation_of = data.translationOf;
+  }
+
   // Attempt to persist into WordPress REST API
   try {
-    const url = `${apiUrl}/wp/v2/posts?lang=${locale}`;
+    const query = data.translationOf ? `lang=${locale}&translation_of=${data.translationOf}` : `lang=${locale}`;
+    const url = `${apiUrl}/wp/v2/posts?${query}`;
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 8000);
 

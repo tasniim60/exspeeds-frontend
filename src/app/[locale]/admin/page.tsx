@@ -24,6 +24,21 @@ const PostsView = dynamic(() => import("@/components/admin/PostsView").then((m) 
 const ShipmentRequestsView = dynamic(() => import("@/components/admin/ShipmentRequestsView"), {
   loading: () => <ViewSkeleton />,
 });
+const InvoicesView = dynamic(() => import("@/components/admin/InvoicesView").then((m) => m.InvoicesView), {
+  loading: () => <ViewSkeleton />,
+});
+const CustomersView = dynamic(() => import("@/components/admin/CustomersView").then((m) => m.CustomersView), {
+  loading: () => <ViewSkeleton />,
+});
+const CarriersView = dynamic(() => import("@/components/admin/CarriersView").then((m) => m.CarriersView), {
+  loading: () => <ViewSkeleton />,
+});
+const TreasuryView = dynamic(() => import("@/components/admin/TreasuryView").then((m) => m.TreasuryView), {
+  loading: () => <ViewSkeleton />,
+});
+const ExpensesView = dynamic(() => import("@/components/admin/ExpensesView").then((m) => m.ExpensesView), {
+  loading: () => <ViewSkeleton />,
+});
 
 function ViewSkeleton() {
   return (
@@ -55,6 +70,12 @@ function AdminPageContent() {
   const orders = useAdminStore((s) => s.orders);
   const customers = useAdminStore((s) => s.customers);
   const invoices = useAdminStore((s) => s.invoices);
+  const collections = useAdminStore((s) => s.collections);
+  const expenses = useAdminStore((s) => s.expenses);
+  const carrierTransfers = useAdminStore((s) => s.carrierTransfers);
+  const internalTransfers = useAdminStore((s) => s.internalTransfers);
+  const salaries = useAdminStore((s) => s.salaries);
+  const invoiceLosses = useAdminStore((s) => s.invoiceLosses);
   const notifications = useAdminStore((s) => s.notifications);
   const posts = useAdminStore((s) => s.posts);
 
@@ -73,6 +94,22 @@ function AdminPageContent() {
   const addShipment = useAdminStore((s) => s.addShipment);
   const updateShipment = useAdminStore((s) => s.updateShipment);
   const deleteShipment = useAdminStore((s) => s.deleteShipment);
+  const addCustomer = useAdminStore((s) => s.addCustomer);
+  const updateCustomer = useAdminStore((s) => s.updateCustomer);
+  const addCollection = useAdminStore((s) => s.addCollection);
+  const deleteCollection = useAdminStore((s) => s.deleteCollection);
+  const addExpense = useAdminStore((s) => s.addExpense);
+  const deleteExpense = useAdminStore((s) => s.deleteExpense);
+  const addCarrierTransfer = useAdminStore((s) => s.addCarrierTransfer);
+  const deleteCarrierTransfer = useAdminStore((s) => s.deleteCarrierTransfer);
+  const addInternalTransfer = useAdminStore((s) => s.addInternalTransfer);
+  const deleteInternalTransfer = useAdminStore((s) => s.deleteInternalTransfer);
+  const addSalary = useAdminStore((s) => s.addSalary);
+  const deleteSalary = useAdminStore((s) => s.deleteSalary);
+  const addInvoiceLoss = useAdminStore((s) => s.addInvoiceLoss);
+  const deleteInvoiceLoss = useAdminStore((s) => s.deleteInvoiceLoss);
+  const addInvoice = useAdminStore((s) => s.addInvoice);
+  const updateInvoice = useAdminStore((s) => s.updateInvoice);
   const addPost = useAdminStore((s) => s.addPost);
   const updatePost = useAdminStore((s) => s.updatePost);
   const deletePost = useAdminStore((s) => s.deletePost);
@@ -101,8 +138,9 @@ function AdminPageContent() {
       shipments: shipments.filter((s) => s.status === "In Transit").length,
       orders: orders.filter((o) => o.status === "New Bookings" || o.status === "Ready for Dispatch").length,
       notifications: notifications.filter((n) => !n.isRead).length,
+      invoices: invoices.filter((i) => i.status === "Pending" || i.status === "Overdue").length,
     }),
-    [shipments, orders, notifications]
+    [shipments, orders, notifications, invoices]
   );
 
   return (
@@ -218,11 +256,72 @@ function AdminPageContent() {
             />
           )}
 
+          {activeTab === "invoices" && (
+            <InvoicesView
+              invoices={invoices}
+              customers={customers}
+              shipments={shipments}
+              onAddInvoice={addInvoice}
+              onUpdateInvoice={updateInvoice}
+            />
+          )}
+
+          {activeTab === "customers" && (
+            <CustomersView
+              customers={customers}
+              shipments={shipments}
+              invoices={invoices}
+              collections={collections}
+              expenses={expenses}
+              onAddCustomer={addCustomer}
+              onUpdateCustomer={updateCustomer}
+              onAddCollection={addCollection}
+              onDeleteCollection={deleteCollection}
+            />
+          )}
+
+          {activeTab === "carriers" && (
+            <CarriersView
+              shipments={shipments}
+              carrierTransfers={carrierTransfers}
+              onAddCarrierTransfer={addCarrierTransfer}
+              onDeleteCarrierTransfer={deleteCarrierTransfer}
+            />
+          )}
+
+          {activeTab === "treasury" && (
+            <TreasuryView
+              collections={collections}
+              expenses={expenses}
+              carrierTransfers={carrierTransfers}
+              internalTransfers={internalTransfers}
+              salaries={salaries}
+              onAddInternalTransfer={addInternalTransfer}
+              onDeleteInternalTransfer={deleteInternalTransfer}
+              onAddSalary={addSalary}
+              onDeleteSalary={deleteSalary}
+            />
+          )}
+
+          {activeTab === "expenses" && (
+            <ExpensesView
+              expenses={expenses}
+              salaries={salaries}
+              onAddExpense={addExpense}
+              onDeleteExpense={deleteExpense}
+              onAddSalary={addSalary}
+              onDeleteSalary={deleteSalary}
+            />
+          )}
+
           {activeTab === "reports" && (
             <ReportsView
               shipments={shipments}
               invoices={invoices}
               customers={customers}
+              invoiceLosses={invoiceLosses}
+              onAddInvoiceLoss={addInvoiceLoss}
+              onDeleteInvoiceLoss={deleteInvoiceLoss}
             />
           )}
 

@@ -1,14 +1,16 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { WPPost, FALLBACK_POSTS_AR, FALLBACK_POSTS_EN } from "@/lib/wordpress";
 import { AdminStorage } from "@/lib/adminData";
-import { convertAdminPostToWP } from "@/lib/blogUtils";
+import { convertAdminPostToWP, detectPostLanguage, findCounterpartPost } from "@/lib/blogUtils";
 import { useLanguage } from "@/context/LanguageContext";
 import { sanitizeHtml } from "@/lib/sanitize";
 import {
   ArrowLeft,
+  ArrowRight,
   Calendar,
   Clock,
   User,
@@ -26,6 +28,8 @@ import {
   ArrowUpRight,
   BookmarkCheck,
   Loader2,
+  Globe,
+  Languages,
 } from "lucide-react";
 
 interface SinglePostClientProps {
@@ -40,7 +44,8 @@ interface HeadingItem {
 }
 
 export default function SinglePostClient({ slug, initialPost }: SinglePostClientProps) {
-  const { t, isRTL, formatDate, getLocalizedPath } = useLanguage();
+  const router = useRouter();
+  const { t, locale, isRTL, formatDate, getLocalizedPath, setLocale, setAlternateUrlMap } = useLanguage();
   const [post, setPost] = useState<WPPost | null>(initialPost);
   const [isLoading, setIsLoading] = useState(
     !initialPost &&
@@ -67,56 +72,115 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
   }, []);
 
   useEffect(() => {
-    // 1. If initialPost is available from SSR (matched for current route & locale), use it
+    const targetLang = isRTL ? "ar" : "en";
+    let isMounted = true;
+
+    // Helper to safely apply resolved post and synchronize URL if needed
+    const applyResolvedPost = (resolved: WPPost, newSlug?: string) => {
+      if (!isMounted) return;
+      setPost(resolved);
+      if (resolved.featured_image_url) {
+        setImgSrc(resolved.featured_image_url);
+      }
+      setIsLoading(false);
+
+      const resolvedSlug = newSlug || resolved.slug;
+      if (resolvedSlug && resolvedSlug !== slug && typeof window !== "undefined") {
+        const nextPath = getLocalizedPath(`/blog/${resolvedSlug}`, targetLang);
+        window.history.replaceState(null, "", nextPath);
+        router.replace(nextPath, { scroll: false });
+      }
+    };
+
+    // 1. If initialPost is available and matches targetLang, use it
     if (initialPost) {
-      setPost(initialPost);
-      if (initialPost.featured_image_url) {
-        setImgSrc(initialPost.featured_image_url);
+      const initialLang = detectPostLanguage(initialPost);
+      if (initialLang === targetLang) {
+        setPost(initialPost);
+        if (initialPost.featured_image_url) {
+          setImgSrc(initialPost.featured_image_url);
+        }
+        setIsLoading(false);
+        return;
       }
-      setIsLoading(false);
-      return;
     }
 
-    // 2. Fallback lookup in seeded posts matching the active locale
-    const primaryFallback = isRTL ? FALLBACK_POSTS_AR : FALLBACK_POSTS_EN;
-    const secondaryFallback = isRTL ? FALLBACK_POSTS_EN : FALLBACK_POSTS_AR;
-    const matchedFallback =
-      primaryFallback.find((p) => p.slug === slug) ||
-      secondaryFallback.find((p) => p.slug === slug);
-
-    if (matchedFallback) {
-      setPost(matchedFallback);
-      if (matchedFallback.featured_image_url) {
-        setImgSrc(matchedFallback.featured_image_url);
-      }
-      setIsLoading(false);
-      return;
-    }
-
-    // 3. Check local AdminStorage for custom user-created posts
+    // 2. Check local AdminStorage for custom user-created posts
     const adminPosts = AdminStorage.getBlogPosts();
-    const matchedAdmin = adminPosts.find((p) => p.slug === slug);
-
-    if (matchedAdmin) {
-      const converted = convertAdminPostToWP(matchedAdmin, 0);
-      setPost(converted);
-      if (converted.featured_image_url) {
-        setImgSrc(converted.featured_image_url);
+    if (adminPosts.length > 0) {
+      // Direct slug match
+      const matchedAdmin = adminPosts.find((p) => p.slug === slug);
+      if (matchedAdmin) {
+        const adminLang = detectPostLanguage(matchedAdmin);
+        if (adminLang === targetLang) {
+          applyResolvedPost(convertAdminPostToWP(matchedAdmin, 0));
+          return;
+        }
+        // Matched post is in opposite language: find counterpart in targetLang
+        const counterpartAdmin = findCounterpartPost(matchedAdmin, adminPosts, targetLang);
+        if (counterpartAdmin) {
+          applyResolvedPost(convertAdminPostToWP(counterpartAdmin as any, 0), counterpartAdmin.slug);
+          return;
+        }
       }
-      setIsLoading(false);
+
+      // Check if any post in targetLang points to this slug as translation or matches clean slug
+      const refMatch = adminPosts.find(
+        (p) =>
+          detectPostLanguage(p) === targetLang &&
+          (p.translationOf === slug || p.slug.replace(/-(ar|en)$/, "") === slug.replace(/-(ar|en)$/, ""))
+      );
+      if (refMatch) {
+        applyResolvedPost(convertAdminPostToWP(refMatch, 0), refMatch.slug);
+        return;
+      }
+    }
+
+    // 3. Fallback lookup in seeded posts matching the active locale
+    const primaryFallback = targetLang === "ar" ? FALLBACK_POSTS_AR : FALLBACK_POSTS_EN;
+    const secondaryFallback = targetLang === "ar" ? FALLBACK_POSTS_EN : FALLBACK_POSTS_AR;
+
+    // Direct match in primary fallback
+    const directFallback = primaryFallback.find((p) => p.slug === slug);
+    if (directFallback) {
+      applyResolvedPost(directFallback);
+      return;
+    }
+
+    // Counterpart match from secondary fallback
+    const secondaryMatch = secondaryFallback.find((p) => p.slug === slug);
+    if (secondaryMatch) {
+      const cleanSlug = secondaryMatch.slug.replace(/-(ar|en)$/, "");
+      const counterpartFallback = primaryFallback.find(
+        (p) =>
+          p.id === secondaryMatch.id ||
+          p.slug === secondaryMatch.slug ||
+          p.slug.replace(/-(ar|en)$/, "") === cleanSlug
+      );
+      if (counterpartFallback) {
+        applyResolvedPost(counterpartFallback, counterpartFallback.slug);
+        return;
+      }
+    }
+
+    // Heuristic match by clean slug in primary fallback
+    const cleanCurrentSlug = slug.replace(/-(ar|en)$/, "");
+    const cleanFallbackMatch = primaryFallback.find(
+      (p) => p.slug.replace(/-(ar|en)$/, "") === cleanCurrentSlug
+    );
+    if (cleanFallbackMatch) {
+      applyResolvedPost(cleanFallbackMatch, cleanFallbackMatch.slug);
       return;
     }
 
     // 4. Client-side live recovery: fetch directly from WordPress REST API with lang parameter
-    let isMounted = true;
     setIsLoading(true);
 
     const tryFetchPost = async () => {
-      const currentLocale = isRTL ? "ar" : "en";
       const endpoints = [
-        `/wordpress/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1&lang=${currentLocale}`,
-        `/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1&lang=${currentLocale}`,
-        `https://exspeeds.com/wordpress/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1&lang=${currentLocale}`,
+        `/wordpress/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1&lang=${targetLang}`,
+        `/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1&lang=${targetLang}`,
+        `https://exspeeds.com/wordpress/wp-json/wp/v2/posts?slug=${encodeURIComponent(slug)}&_embed=1&lang=${targetLang}`,
       ];
 
       for (const endpoint of endpoints) {
@@ -151,9 +215,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
                   (isRTL ? "التكنولوجيا واللوجستيات" : "Technology & Logistics"),
               };
 
-              setPost(formatted);
-              setImgSrc(defaultImage);
-              setIsLoading(false);
+              applyResolvedPost(formatted);
               return;
             }
           }
@@ -172,7 +234,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
     return () => {
       isMounted = false;
     };
-  }, [slug, initialPost, isRTL]);
+  }, [slug, initialPost, isRTL, getLocalizedPath, router]);
 
   // Handle Share / Copy Link
   const handleCopyLink = () => {
@@ -256,14 +318,131 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
   };
 
   // Determine if the post itself is written in Arabic or English
-  const isArabicPost = useMemo(() => {
-    if (!post) return isRTL;
-    const sampleText = `${post.title?.rendered || ""} ${post.excerpt?.rendered || ""} ${(post.content?.rendered || "").slice(0, 500)}`;
-    const cleanSample = sampleText.replace(/<[^>]*>?/gm, "");
-    const arabicMatches = cleanSample.match(/[\u0600-\u06FF]/g) || [];
-    const latinMatches = cleanSample.match(/[a-zA-Z]/g) || [];
-    return arabicMatches.length >= latinMatches.length;
+  const postLanguage = useMemo<"ar" | "en">(() => {
+    if (!post) return isRTL ? "ar" : "en";
+    return detectPostLanguage(post);
   }, [post, isRTL]);
+
+  const isArabicPost = postLanguage === "ar";
+
+  // Find counterpart translation if available (bidirectional linkage)
+  const translationInfo = useMemo(() => {
+    if (!post) return null;
+    const currentPostLang = detectPostLanguage(post);
+    const targetLang: "ar" | "en" = currentPostLang === "ar" ? "en" : "ar";
+
+    // 1. Direct translatedSlug on post object
+    if (post.translatedSlug) {
+      return {
+        slug: post.translatedSlug,
+        title: post.translatedTitle,
+        targetLocale: targetLang,
+        counterpartPost: null,
+      };
+    }
+
+    // 2. Direct translations map on post
+    if (post.translations && post.translations[targetLang]) {
+      const transRef = String(post.translations[targetLang]);
+      return {
+        slug: transRef,
+        title: post.translatedTitle,
+        targetLocale: targetLang,
+        counterpartPost: null,
+      };
+    }
+
+    // 3. Lookup in local AdminStorage
+    const adminPosts = AdminStorage.getBlogPosts();
+    const counterpartAdmin = findCounterpartPost(post, adminPosts, targetLang);
+    if (counterpartAdmin) {
+      const convertedWP = convertAdminPostToWP(counterpartAdmin as any, 0);
+      return {
+        slug: counterpartAdmin.slug,
+        title: counterpartAdmin.title,
+        targetLocale: targetLang,
+        counterpartPost: convertedWP,
+      };
+    }
+
+    // 4. Fallback seeds match
+    const counterpartFallbacks = targetLang === "ar" ? FALLBACK_POSTS_AR : FALLBACK_POSTS_EN;
+    const counterpartSeed = findCounterpartPost(post, counterpartFallbacks, targetLang) as WPPost | null;
+    if (counterpartSeed) {
+      return {
+        slug: counterpartSeed.slug,
+        title: typeof counterpartSeed.title === "string" ? counterpartSeed.title : counterpartSeed.title.rendered,
+        targetLocale: targetLang,
+        counterpartPost: counterpartSeed,
+      };
+    }
+
+    return null;
+  }, [post]);
+
+  // Seamless in-place language switcher with immediate state update
+  const handleSwitchLanguage = useCallback(
+    (targetLoc: "ar" | "en") => {
+      if (translationInfo?.counterpartPost) {
+        setPost(translationInfo.counterpartPost);
+        if (translationInfo.counterpartPost.featured_image_url) {
+          setImgSrc(translationInfo.counterpartPost.featured_image_url);
+        }
+      }
+      setLocale(targetLoc);
+      const targetSlug = translationInfo?.slug || (post?.translations?.[targetLoc] as string) || post?.slug || slug;
+      router.replace(getLocalizedPath(`/blog/${targetSlug}`, targetLoc));
+    },
+    [translationInfo, post, slug, setLocale, router, getLocalizedPath]
+  );
+
+  // Keep navbar LanguageSwitcher aware of this specific article's translated alternate URL
+  useEffect(() => {
+    if (!post) {
+      setAlternateUrlMap(null);
+      return;
+    }
+
+    const currentPostLang = detectPostLanguage(post);
+    const counterpartSlug = translationInfo?.slug;
+
+    if (counterpartSlug && counterpartSlug !== post.slug) {
+      setAlternateUrlMap({
+        ar: `/ar/blog/${currentPostLang === "ar" ? post.slug : counterpartSlug}`,
+        en: `/en/blog/${currentPostLang === "en" ? post.slug : counterpartSlug}`,
+      });
+    } else {
+      setAlternateUrlMap({
+        ar: `/ar/blog/${post.slug}`,
+        en: `/en/blog/${post.slug}`,
+      });
+    }
+
+    return () => {
+      setAlternateUrlMap(null);
+    };
+  }, [post, translationInfo, setAlternateUrlMap]);
+
+  // Auto-recovery if user explicitly toggled site language and landed on foreign-language slug
+  useEffect(() => {
+    if (!post) return;
+    const postLang = detectPostLanguage(post);
+    const currentRouteLang = isRTL ? "ar" : "en";
+
+    if (postLang !== currentRouteLang) {
+      if (translationInfo?.counterpartPost) {
+        setPost(translationInfo.counterpartPost);
+        if (translationInfo.counterpartPost.featured_image_url) {
+          setImgSrc(translationInfo.counterpartPost.featured_image_url);
+        }
+      }
+      if (translationInfo?.slug && translationInfo.slug !== slug) {
+        const nextPath = getLocalizedPath(`/blog/${translationInfo.slug}`, currentRouteLang);
+        window.history.replaceState(null, "", nextPath);
+        router.replace(nextPath, { scroll: false });
+      }
+    }
+  }, [post, isRTL, translationInfo, slug, router, getLocalizedPath]);
 
   const postDir = isArabicPost ? "rtl" : "ltr";
   const postAlign = isArabicPost ? "text-right" : "text-left";
@@ -471,6 +650,39 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
             </span>
           </div>
         </nav>
+
+        {/* Bilingual Article Notice (One post with two languages) */}
+        {translationInfo && (
+          <div className="bg-gradient-to-r from-indigo-50/90 via-blue-50/70 to-orange-50/60 p-4 sm:p-5 rounded-2xl border border-indigo-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
+                <Globe className="w-5 h-5" />
+              </div>
+              <div className="text-start">
+                <p className="text-xs sm:text-sm font-bold text-indigo-950">
+                  {isRTL
+                    ? "هذا المقال منشور أيضاً ومتاح باللغة الإنجليزية"
+                    : "This article is also published and available in Arabic"}
+                </p>
+                <p className="text-[11px] sm:text-xs text-indigo-800/80 font-medium line-clamp-1 mt-0.5">
+                  {isRTL
+                    ? `النسخة الإنجليزية المعتمدة: "${translationInfo.title || "English Version"}"`
+                    : `Verified Arabic edition: "${translationInfo.title || "النسخة العربية"}"`}
+                </p>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => handleSwitchLanguage(translationInfo.targetLocale)}
+              className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-5 rounded-xl shadow-xs transition-all hover:scale-[1.02] active:scale-95 cursor-pointer whitespace-nowrap min-h-[44px]"
+            >
+              <Languages className="w-3.5 h-3.5 shrink-0" />
+              <span>{isRTL ? "Read in English" : "اقرأ بالعربية"}</span>
+              <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "" : "rotate-180"}`} />
+            </button>
+          </div>
+        )}
 
         {/* Main Article Container */}
         <article

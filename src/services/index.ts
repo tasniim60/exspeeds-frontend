@@ -10,3 +10,8 @@ export * from "./invoiceService";
 export * from "./warehouseService";
 export * from "./notificationService";
 export * from "./postService";
+export * from "./collectionService";
+export * from "./expenseService";
+export * from "./carrierTransferService";
+export * from "./treasuryService";
+export * from "./invoiceLossService";

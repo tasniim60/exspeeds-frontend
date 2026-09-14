@@ -10,6 +10,18 @@ import {
   ShipmentRequest,
   BlogPost,
   initialBlogPosts,
+  CustomerCollection,
+  initialCustomers,
+  BusinessExpense,
+  initialExpenses,
+  CarrierTransfer,
+  initialCarrierTransfers,
+  InternalTransfer,
+  initialInternalTransfers,
+  SalaryPayment,
+  initialSalaries,
+  InvoiceLoss,
+  initialInvoiceLosses,
 } from "./adminData";
 
 const DATA_DIR = path.join(process.cwd(), ".data");
@@ -149,7 +161,12 @@ export const ServerStore = {
 
   // Customers
   getCustomers(): Customer[] {
-    return readStore<Customer[]>("customers", []);
+    const list = readStore<Customer[]>("customers", []);
+    if (!list || list.length === 0) {
+      this.saveCustomers(initialCustomers);
+      return initialCustomers;
+    }
+    return list;
   },
   saveCustomers(data: Customer[]): void {
     writeStore("customers", data);
@@ -177,6 +194,176 @@ export const ServerStore = {
     const current = this.getCustomers();
     const filtered = current.filter((c) => c.id !== id);
     this.saveCustomers(filtered);
+    return true;
+  },
+
+  // Customer Collections (تحصيلات العملاء)
+  getCollections(): CustomerCollection[] {
+    return readStore<CustomerCollection[]>("collections", [
+      {
+        id: "col-1",
+        clientName: "nour saied",
+        amount: 2500,
+        currency: "EGP",
+        date: "2026-08-15",
+        receivingAccount: "CIB account",
+        paymentMethod: "تحويل بنكي CIB",
+        receiptNumber: "COL-801",
+        recordedBy: "بسمة",
+        notes: "دفعة نقدية تحت حساب شحنات شهر أغسطس",
+      },
+      {
+        id: "col-2",
+        clientName: "sohib",
+        amount: 5000,
+        currency: "EGP",
+        date: "2026-08-22",
+        receivingAccount: "speedex wallet",
+        paymentMethod: "محفظة إلكترونية",
+        receiptNumber: "COL-802",
+        recordedBy: "مصطفي",
+        notes: "سداد جزئي بوليصة 875202548831",
+      },
+    ]);
+  },
+  saveCollections(data: CustomerCollection[]): void {
+    writeStore("collections", data);
+  },
+  addCollection(item: CustomerCollection): CustomerCollection {
+    const current = this.getCollections();
+    const updated = [item, ...current];
+    this.saveCollections(updated);
+    return item;
+  },
+  deleteCollection(id: string): boolean {
+    const current = this.getCollections();
+    const filtered = current.filter((c) => c.id !== id);
+    this.saveCollections(filtered);
+    return true;
+  },
+
+  // Business Expenses (المصروفات التشغيلية والمصاريف الإضافية)
+  getExpenses(): BusinessExpense[] {
+    const list = readStore<BusinessExpense[]>("expenses", []);
+    if (!list || list.length === 0) {
+      this.saveExpenses(initialExpenses);
+      return initialExpenses;
+    }
+    return list;
+  },
+  saveExpenses(data: BusinessExpense[]): void {
+    writeStore("expenses", data);
+  },
+  addExpense(item: BusinessExpense): BusinessExpense {
+    const current = this.getExpenses();
+    const updated = [item, ...current];
+    this.saveExpenses(updated);
+    return item;
+  },
+  deleteExpense(id: string): boolean {
+    const current = this.getExpenses();
+    const filtered = current.filter((e) => e.id !== id);
+    this.saveExpenses(filtered);
+    return true;
+  },
+
+  // Carrier Transfers (سندات سداد شركات الشحن والوسطاء)
+  getCarrierTransfers(): CarrierTransfer[] {
+    const list = readStore<CarrierTransfer[]>("carrier-transfers", []);
+    if (!list || list.length === 0) {
+      this.saveCarrierTransfers(initialCarrierTransfers);
+      return initialCarrierTransfers;
+    }
+    return list;
+  },
+  saveCarrierTransfers(data: CarrierTransfer[]): void {
+    writeStore("carrier-transfers", data);
+  },
+  addCarrierTransfer(item: CarrierTransfer): CarrierTransfer {
+    const current = this.getCarrierTransfers();
+    const updated = [item, ...current];
+    this.saveCarrierTransfers(updated);
+    return item;
+  },
+  deleteCarrierTransfer(id: string): boolean {
+    const current = this.getCarrierTransfers();
+    const filtered = current.filter((t) => t.id !== id);
+    this.saveCarrierTransfers(filtered);
+    return true;
+  },
+
+  // Internal Vault Transfers (مناقلات بين الخزائن والعهد)
+  getInternalTransfers(): InternalTransfer[] {
+    const list = readStore<InternalTransfer[]>("internal-transfers", []);
+    if (!list || list.length === 0) {
+      this.saveInternalTransfers(initialInternalTransfers);
+      return initialInternalTransfers;
+    }
+    return list;
+  },
+  saveInternalTransfers(data: InternalTransfer[]): void {
+    writeStore("internal-transfers", data);
+  },
+  addInternalTransfer(item: InternalTransfer): InternalTransfer {
+    const current = this.getInternalTransfers();
+    const updated = [item, ...current];
+    this.saveInternalTransfers(updated);
+    return item;
+  },
+  deleteInternalTransfer(id: string): boolean {
+    const current = this.getInternalTransfers();
+    const filtered = current.filter((t) => t.id !== id);
+    this.saveInternalTransfers(filtered);
+    return true;
+  },
+
+  // Salary Payments (سندات صرف المرتبات والسلف)
+  getSalaries(): SalaryPayment[] {
+    const list = readStore<SalaryPayment[]>("salaries", []);
+    if (!list || list.length === 0) {
+      this.saveSalaries(initialSalaries);
+      return initialSalaries;
+    }
+    return list;
+  },
+  saveSalaries(data: SalaryPayment[]): void {
+    writeStore("salaries", data);
+  },
+  addSalary(item: SalaryPayment): SalaryPayment {
+    const current = this.getSalaries();
+    const updated = [item, ...current];
+    this.saveSalaries(updated);
+    return item;
+  },
+  deleteSalary(id: string): boolean {
+    const current = this.getSalaries();
+    const filtered = current.filter((s) => s.id !== id);
+    this.saveSalaries(filtered);
+    return true;
+  },
+
+  // Invoice Losses (خسائر الفواتير المنسوبة لتاريخ البوليصة)
+  getInvoiceLosses(): InvoiceLoss[] {
+    const list = readStore<InvoiceLoss[]>("invoice-losses", []);
+    if (!list || list.length === 0) {
+      this.saveInvoiceLosses(initialInvoiceLosses);
+      return initialInvoiceLosses;
+    }
+    return list;
+  },
+  saveInvoiceLosses(data: InvoiceLoss[]): void {
+    writeStore("invoice-losses", data);
+  },
+  addInvoiceLoss(item: InvoiceLoss): InvoiceLoss {
+    const current = this.getInvoiceLosses();
+    const updated = [item, ...current];
+    this.saveInvoiceLosses(updated);
+    return item;
+  },
+  deleteInvoiceLoss(id: string): boolean {
+    const current = this.getInvoiceLosses();
+    const filtered = current.filter((l) => l.id !== id);
+    this.saveInvoiceLosses(filtered);
     return true;
   },
 

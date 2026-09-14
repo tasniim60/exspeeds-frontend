@@ -599,6 +599,11 @@
       "shipments": "Shipment Records",
       "history": "Shipment History",
       "customers": "Customers CRM",
+      "invoices": "Invoices & Billing",
+      "customers": "Customers & Accounts",
+      "carriers": "Carriers & Brokers",
+      "treasury": "Treasury & Multi-Vault",
+      "expenses": "Expenses & Salaries",
       "reports": "Reports & P&L",
       "posts": "Blog Posts & SEO",
       "expand": "Expand Sidebar",
@@ -673,6 +678,18 @@
         "invoices": {
           "title": "Invoices, Billing & Statements",
           "subtitle": "Multi-currency invoicing, VAT 14%, customs reconciliation, and payment logs"
+        },
+        "carriers": {
+          "title": "Carriers & Linehaul Brokers",
+          "subtitle": "Carrier cost reconciliation, excluded RTO deductions, and settlement transfers"
+        },
+        "treasury": {
+          "title": "Central Treasury & Multi-Vault",
+          "subtitle": "5-vault live balances, liquid cash flow, internal transfers, and payroll"
+        },
+        "expenses": {
+          "title": "Operating Expenses & Extra Fees",
+          "subtitle": "General operational overhead, shipment surcharges, and team payroll ledger"
         },
         "posts": {
           "title": "Marketing Blog & Rank Math SEO",

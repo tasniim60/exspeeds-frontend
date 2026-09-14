@@ -12,6 +12,11 @@ import {
   X,
   Calculator,
   ExternalLink,
+  Receipt,
+  Users,
+  Truck,
+  Landmark,
+  WalletCards,
 } from "lucide-react";
 import { AdminTab } from "./AdminSidebar";
 import { Shipment, Order, Customer, Invoice } from "@/lib/adminData";
@@ -85,6 +90,41 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       description: isRTL ? "سجل البوالص والقيد ومتابعة مسار الشحنات" : "Live AWB Ledger & Tracking",
       icon: Package,
       keywords: ["shipments", "awb", "tracking", "شحنات", "بوليصة", "بوالص", "تتبع", "قيد"],
+    },
+    {
+      id: "invoices",
+      label: t("admin.sidebar.invoices") || (isRTL ? "الفواتير والمطالبات" : "Invoices & Billing"),
+      description: isRTL ? "إصدار الفواتير الضريبية، تسجيل المدفوعات والتحصيل" : "Tax Invoices, Payment Tracking & Receivables",
+      icon: Receipt,
+      keywords: ["invoices", "billing", "فاتورة", "فواتير", "مطالبات", "تحصيل", "دفع", "ضرائب", "vat"],
+    },
+    {
+      id: "customers",
+      label: isRTL ? "العملاء ومراقبة الحسابات" : "Customers & Accounts",
+      description: isRTL ? "إدارة حسابات العملاء، الأرصدة التراكمية، وسندات التحصيل" : "Customer Accounts, Dynamic Balances & Collections",
+      icon: Users,
+      keywords: ["customers", "clients", "balance", "collections", "عملاء", "حسابات", "رصيد", "تحصيل", "سندات", "مديونية"],
+    },
+    {
+      id: "carriers",
+      label: isRTL ? "شركات الشحن والوسطاء" : "Carriers & Brokers",
+      description: isRTL ? "حسابات شركات الشحن (DHL, Aramex, etc.)، تكاليف البوالص والمسدّد" : "Carrier Accounts, Consignment Costs & Settlements",
+      icon: Truck,
+      keywords: ["carriers", "brokers", "dhl", "fedex", "aramex", "smsa", "شركات", "شحن", "ناقل", "وسطاء", "تكلفة", "سداد"],
+    },
+    {
+      id: "treasury",
+      label: isRTL ? "الخزينة ومراقبة السيولة" : "Treasury & Multi-Vault",
+      description: isRTL ? "أرصدة الحسابات الخمسة، السيولة النقدية، والمناقلات الداخلية" : "5 Vault Balances, Real-time Cash Flow & Transfers",
+      icon: Landmark,
+      keywords: ["treasury", "vault", "cash", "cib", "speedex", "wallet", "خزينة", "سيولة", "حسابات", "بنك", "مناقلة", "نقدية"],
+    },
+    {
+      id: "expenses",
+      label: isRTL ? "المصروفات والمرتبات" : "Expenses & Payroll",
+      description: isRTL ? "تسجيل المصروفات العامة، مرتبات وسلف الموظفين" : "Operating Expenses, Staff Salaries & Advance Ledger",
+      icon: WalletCards,
+      keywords: ["expenses", "salaries", "payroll", "advance", "مصروفات", "مصاريف", "مرتبات", "سلف", "رواتب", "سلفة"],
     },
     {
       id: "reports",

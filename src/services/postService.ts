@@ -38,6 +38,11 @@ export const postService = {
       content: post.content || "",
       excerpt: post.excerpt || "",
       imageUrl: post.imageUrl || "",
+      lang: post.lang,
+      translationOf: post.translationOf,
+      translations: post.translations,
+      deeplStatus: post.deeplStatus,
+      deeplError: post.deeplError,
     };
     const updated = [newPost, ...current.filter((p) => p.id !== newPost.id)];
     AdminStorage.saveBlogPosts(updated);

@@ -10,22 +10,24 @@ import { BookOpen, Search, Filter, X } from "lucide-react";
 
 interface BlogListProps {
   initialPosts: WPPost[];
+  locale?: string;
 }
 
-export default function BlogList({ initialPosts }: BlogListProps) {
+export default function BlogList({ initialPosts, locale }: BlogListProps) {
+  const { t, isRTL, locale: contextLocale } = useLanguage();
+  const currentLocale = (locale || contextLocale || (isRTL ? "ar" : "en")) === "en" ? "en" : "ar";
   const [posts, setPosts] = useState<WPPost[]>(initialPosts);
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState<string>("");
-  const { t, isRTL } = useLanguage();
 
   useEffect(() => {
     const adminPosts = AdminStorage.getBlogPosts();
     if (adminPosts && adminPosts.length > 0) {
-      setPosts(mergeAdminPosts(initialPosts, adminPosts));
+      setPosts(mergeAdminPosts(initialPosts, adminPosts, currentLocale));
     } else {
-      setPosts(initialPosts);
+      setPosts(initialPosts.filter((p) => (p.lang || p.locale || (isRTL ? "ar" : "en")) === currentLocale));
     }
-  }, [initialPosts]);
+  }, [initialPosts, currentLocale, isRTL]);
 
   const categories = [
     { id: "all", labelAr: "جميع المقالات", labelEn: "All Articles" },

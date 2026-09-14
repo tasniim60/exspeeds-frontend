@@ -55,25 +55,72 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
 
   // Form State for New Invoice
   const [invoiceNumber, setInvoiceNumber] = useState(`INV-2026-${Math.floor(8800 + Math.random() * 99)}`);
-  const [customerId, setCustomerId] = useState("CUST-401");
-  const [dueDate, setDueDate] = useState("2026-09-15");
-  const [subtotal, setSubtotal] = useState("9400");
-  const [fuelSurcharge, setFuelSurcharge] = useState("450");
-  const [customsDuties, setCustomsDuties] = useState("800");
+  const [customerId, setCustomerId] = useState(customers[0]?.id || "custom");
+  const [customCustomerName, setCustomCustomerName] = useState("");
+  const [customCompanyName, setCustomCompanyName] = useState("");
+  const [customTaxNumber, setCustomTaxNumber] = useState("");
+  const [dueDate, setDueDate] = useState(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + 30);
+    return d.toISOString().split("T")[0];
+  });
+  const [subtotal, setSubtotal] = useState("5000");
+  const [fuelSurcharge, setFuelSurcharge] = useState("0");
+  const [customsDuties, setCustomsDuties] = useState("0");
   const [discount, setDiscount] = useState("0");
   const [currency, setCurrency] = useState<"EGP" | "USD">("EGP");
-  const [linkedAwb, setLinkedAwb] = useState("XS-98421054");
+  const [linkedAwb, setLinkedAwb] = useState("");
+  const [invoiceNotes, setInvoiceNotes] = useState("شروط السداد: استحقاق خلال 30 يوماً. التحويل البنكي أو السداد النقدي معتمد.");
 
   // Payment Recording Form
   const [paymentMethod, setPaymentMethod] = useState<Invoice["paymentMethod"]>("Bank Wire");
 
-  const selectedCust = customers.find((c) => c.id === customerId) || customers[0];
+  const selectedCust = customerId === "custom"
+    ? {
+        id: "cust-custom",
+        name: customCustomerName || (isRTL ? "عميل نقدي" : "Cash Client"),
+        company: customCompanyName || customCustomerName || (isRTL ? "شركة غير مسجلة" : "Direct Client"),
+        taxRegistrationNumber: customTaxNumber || "EG-000-000-000",
+      }
+    : customers.find((c) => c.id === customerId) || {
+        id: "cust-default",
+        name: isRTL ? "عميل عام" : "General Client",
+        company: isRTL ? "شركة إكس سبيد" : "Xspeed Client",
+        taxRegistrationNumber: "EG-849-210-994",
+      };
+
+  const handleSelectAwb = (awb: string) => {
+    setLinkedAwb(awb);
+    if (!awb) return;
+    const match = shipments.find((s) => s.awb === awb);
+    if (match) {
+      const price = match.sellingPrice !== undefined ? match.sellingPrice : match.priceEgp || match.priceUsd || 0;
+      if (price > 0) setSubtotal(String(price));
+      const isUsd = match.priceUsd > 0 && (!match.priceEgp || match.priceEgp === 0);
+      setCurrency(isUsd ? "USD" : "EGP");
+
+      const clientKey = (match.account || match.company || "").toLowerCase();
+      const existing = customers.find(
+        (c) =>
+          (c.company && c.company.toLowerCase().includes(clientKey)) ||
+          (c.name && c.name.toLowerCase().includes(clientKey)) ||
+          (clientKey && (c.company.toLowerCase() === clientKey || c.name.toLowerCase() === clientKey))
+      );
+      if (existing) {
+        setCustomerId(existing.id);
+      } else if (match.company || match.account) {
+        setCustomerId("custom");
+        setCustomCompanyName(match.company || match.account || "");
+        setCustomCustomerName(match.senderName || match.account || "");
+      }
+    }
+  };
 
   const subNum = parseFloat(subtotal) || 0;
   const fuelNum = parseFloat(fuelSurcharge) || 0;
   const custNum = parseFloat(customsDuties) || 0;
   const discNum = parseFloat(discount) || 0;
-  const taxable = subNum + fuelNum + custNum - discNum;
+  const taxable = Math.max(0, subNum + fuelNum + custNum - discNum);
   const vatAmount = taxable * 0.14;
   const totalCalculated = taxable + vatAmount;
 
@@ -88,7 +135,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
       customerName: selectedCust.name,
       companyName: selectedCust.company,
       customerTaxNumber: selectedCust.taxRegistrationNumber,
-      linkedAwbs: [linkedAwb],
+      linkedAwbs: linkedAwb ? [linkedAwb] : [],
       subtotal: subNum,
       fuelSurcharge: fuelNum,
       customsDuties: custNum,
@@ -98,7 +145,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
       totalAmount: Math.round(totalCalculated * 100) / 100,
       currency: currency,
       status: "Pending",
-      notes: "Standard Net 30 terms. Electronic wire payment accepted.",
+      notes: invoiceNotes || "Standard Net 30 terms. Electronic wire payment accepted.",
     };
 
     onAddInvoice(newInv);
@@ -294,12 +341,19 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                   <div className="space-y-0.5 font-mono text-xs text-start">
                     <span className="text-gray-700">${inv.subtotal}</span>
                     <p className="text-[10px] text-gray-400">+${inv.vatAmount} VAT</p>
+                    <span className="text-gray-700">
+                      {inv.currency === "USD" ? `$${inv.subtotal.toLocaleString()}` : `${inv.subtotal.toLocaleString()} ${t("common.egp")}`}
+                    </span>
+                    <p className="text-[10px] text-gray-400">
+                      +{inv.currency === "USD" ? `$${inv.vatAmount}` : `${inv.vatAmount.toLocaleString()} ${t("common.egp")}`} VAT
+                    </p>
                   </div>
                 </TableCell>
 
                 <TableCell>
                   <span className="font-mono font-black text-xs text-gray-900 text-start ltr-preserve">
                     {inv.currency === "USD" ? `$${inv.totalAmount}` : `${inv.totalAmount.toLocaleString()} ${t("common.egp")}`}
+                    {inv.currency === "USD" ? `$${inv.totalAmount.toLocaleString()}` : `${inv.totalAmount.toLocaleString()} ${t("common.egp")}`}
                   </span>
                 </TableCell>
 
@@ -393,14 +447,60 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                 <div className="flex justify-between">
                   <span>{isRTL ? "المجموع الفرعي للشحن:" : "Freight Subtotal:"}</span>
                   <span>${printableInvoice.subtotal}</span>
+                  <span>
+                    {printableInvoice.currency === "USD"
+                      ? `$${printableInvoice.subtotal.toLocaleString()}`
+                      : `${printableInvoice.subtotal.toLocaleString()} ${t("common.egp")}`}
+                  </span>
                 </div>
+                {printableInvoice.fuelSurcharge > 0 && (
+                  <div className="flex justify-between">
+                    <span>{isRTL ? "رسوم الوقود:" : "Fuel Surcharge:"}</span>
+                    <span>
+                      {printableInvoice.currency === "USD"
+                        ? `+$${printableInvoice.fuelSurcharge.toLocaleString()}`
+                        : `+${printableInvoice.fuelSurcharge.toLocaleString()} ${t("common.egp")}`}
+                    </span>
+                  </div>
+                )}
+                {printableInvoice.customsDuties > 0 && (
+                  <div className="flex justify-between">
+                    <span>{isRTL ? "رسوم جمركية وتخليص:" : "Customs & Clearance:"}</span>
+                    <span>
+                      {printableInvoice.currency === "USD"
+                        ? `+$${printableInvoice.customsDuties.toLocaleString()}`
+                        : `+${printableInvoice.customsDuties.toLocaleString()} ${t("common.egp")}`}
+                    </span>
+                  </div>
+                )}
+                {printableInvoice.discount > 0 && (
+                  <div className="flex justify-between text-emerald-600">
+                    <span>{isRTL ? "الخصم الممنوح:" : "Special Discount:"}</span>
+                    <span>
+                      {printableInvoice.currency === "USD"
+                        ? `-$${printableInvoice.discount.toLocaleString()}`
+                        : `-${printableInvoice.discount.toLocaleString()} ${t("common.egp")}`}
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>{isRTL ? "ضريبة القيمة المضافة (14%):" : "VAT (14%):"}</span>
                   <span>+${printableInvoice.vatAmount}</span>
+                  <span>
+                    {printableInvoice.currency === "USD"
+                      ? `+$${printableInvoice.vatAmount.toLocaleString()}`
+                      : `+${printableInvoice.vatAmount.toLocaleString()} ${t("common.egp")}`}
+                  </span>
                 </div>
                 <div className="flex justify-between font-black text-sm text-[#C45B2A] pt-2 border-t border-gray-200">
                   <span>{isRTL ? "الإجمالي الكلي:" : "TOTAL DUE:"}</span>
                   <span className="ltr-preserve">${printableInvoice.totalAmount} USD</span>
+                  <span>{isRTL ? "الإجمالي الكلي المستحق:" : "TOTAL DUE:"}</span>
+                  <span className="ltr-preserve">
+                    {printableInvoice.currency === "USD"
+                      ? `$${printableInvoice.totalAmount.toLocaleString()} USD`
+                      : `${printableInvoice.totalAmount.toLocaleString()} ${t("common.egp")}`}
+                  </span>
                 </div>
               </div>
             </div>
@@ -505,11 +605,11 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleCreateInvoice} className="space-y-3.5">
+          <form onSubmit={handleCreateInvoice} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
-                  {t("admin.invoices.table.invoiceNo")}
+                  {t("admin.invoices.table.invoiceNo")} <span className="text-red-500">*</span>
                 </label>
                 <Input
                   required
@@ -518,9 +618,10 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                   className="font-mono text-xs uppercase font-bold ltr-preserve"
                 />
               </div>
+
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
-                  {t("admin.invoices.modal.customer")}
+                  {t("admin.invoices.modal.customer")} <span className="text-red-500">*</span>
                 </label>
                 <select
                   value={customerId}
@@ -532,86 +633,198 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                       {c.company} ({c.name})
                     </option>
                   ))}
+                  <option value="custom">+ {isRTL ? "عميل مباشر / جهة أخرى" : "Direct / Custom Client"}</option>
                 </select>
               </div>
             </div>
 
+            {/* Custom Customer Fields if selected */}
+            {customerId === "custom" && (
+              <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl space-y-2">
+                <p className="text-[11px] font-bold text-amber-900">
+                  {isRTL ? "بيانات العميل المباشر:" : "Direct Client Details:"}
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <Input
+                    required
+                    placeholder={isRTL ? "اسم الشركة / الجهة" : "Company / Entity Name"}
+                    value={customCompanyName}
+                    onChange={(e) => setCustomCompanyName(e.target.value)}
+                    className="text-xs bg-white"
+                  />
+                  <Input
+                    placeholder={isRTL ? "اسم المسؤول / العميل" : "Contact Person"}
+                    value={customCustomerName}
+                    onChange={(e) => setCustomCustomerName(e.target.value)}
+                    className="text-xs bg-white"
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Shipment Linking & Due Date */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
-                  {isRTL ? "رقم بوليصة الشحن (AWB)" : "Linked AWB Reference"}
+                  {isRTL ? "ربط بوليصة شحن (AWB)" : "Link Shipment AWB"}
                 </label>
-                <Input
-                  required
-                  value={linkedAwb}
-                  onChange={(e) => setLinkedAwb(e.target.value)}
-                  className="font-mono text-xs uppercase ltr-preserve"
-                />
+                {shipments.length > 0 ? (
+                  <div className="space-y-1">
+                    <select
+                      value={shipments.some((s) => s.awb === linkedAwb) ? linkedAwb : "manual"}
+                      onChange={(e) => {
+                        if (e.target.value === "manual") {
+                          setLinkedAwb("");
+                        } else {
+                          handleSelectAwb(e.target.value);
+                        }
+                      }}
+                      className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700 cursor-pointer"
+                    >
+                      <option value="manual">-- {isRTL ? "إدخال يدوي أو بدون بوليصة" : "Manual entry or None"} --</option>
+                      {shipments.map((s) => (
+                        <option key={s.id} value={s.awb}>
+                          {s.awb} - {s.account || s.company || s.receiverName} ({s.country})
+                        </option>
+                      ))}
+                    </select>
+                    <Input
+                      placeholder={isRTL ? "أو اكتب رقم البوليصة يدوياً..." : "Or type AWB manually..."}
+                      value={linkedAwb}
+                      onChange={(e) => handleSelectAwb(e.target.value)}
+                      className="font-mono text-xs uppercase ltr-preserve mt-1"
+                    />
+                  </div>
+                ) : (
+                  <Input
+                    value={linkedAwb}
+                    onChange={(e) => setLinkedAwb(e.target.value)}
+                    placeholder="e.g. 875202433089"
+                    className="font-mono text-xs uppercase ltr-preserve"
+                  />
+                )}
               </div>
-              <div>
-                <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
-                  {t("admin.invoices.table.dueDate")}
-                </label>
-                <Input
-                  type="date"
-                  required
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="font-mono text-xs"
-                />
+
+              <div className="space-y-2">
+                <div>
+                  <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
+                    {t("admin.invoices.table.dueDate")} <span className="text-red-500">*</span>
+                  </label>
+                  <Input
+                    type="date"
+                    required
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="font-mono text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
+                    {isRTL ? "عملة الفاتورة" : "Invoice Currency"}
+                  </label>
+                  <select
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value as "EGP" | "USD")}
+                    className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700 cursor-pointer"
+                  >
+                    <option value="EGP">{isRTL ? "جنيه مصري (EGP)" : "Egyptian Pound (EGP)"}</option>
+                    <option value="USD">{isRTL ? "دولار أمريكي (USD)" : "US Dollar (USD)"}</option>
+                  </select>
+                </div>
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+            {/* Financial Numbers Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
-                  {t("admin.invoices.modal.subtotal")}
+                  {t("admin.invoices.modal.subtotal")} <span className="text-red-500">*</span>
                 </label>
                 <Input
                   type="number"
+                  step="0.01"
                   required
                   value={subtotal}
                   onChange={(e) => setSubtotal(e.target.value)}
                   className="font-mono text-xs"
                 />
               </div>
+
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
                   {isRTL ? "رسوم الوقود" : "Fuel Surcharge"}
                 </label>
                 <Input
                   type="number"
+                  step="0.01"
                   value={fuelSurcharge}
                   onChange={(e) => setFuelSurcharge(e.target.value)}
                   className="font-mono text-xs"
                 />
               </div>
+
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
-                  {isRTL ? "الرسوم الجمركية" : "Customs Fees"}
+                  {isRTL ? "رسوم الجمارك" : "Customs Fees"}
                 </label>
                 <Input
                   type="number"
+                  step="0.01"
                   value={customsDuties}
                   onChange={(e) => setCustomsDuties(e.target.value)}
                   className="font-mono text-xs"
                 />
               </div>
+
+              <div>
+                <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
+                  {isRTL ? "الخصم الممنوح" : "Discount"}
+                </label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={discount}
+                  onChange={(e) => setDiscount(e.target.value)}
+                  className="font-mono text-xs text-emerald-700 font-bold"
+                />
+              </div>
+            </div>
+
+            {/* Payment Terms & Notes */}
+            <div>
+              <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
+                {isRTL ? "ملاحظات وشروط السداد" : "Payment Terms & Notes"}
+              </label>
+              <Input
+                value={invoiceNotes}
+                onChange={(e) => setInvoiceNotes(e.target.value)}
+                placeholder={isRTL ? "شروط الاستحقاق، تعليمات التحويل، إلخ..." : "Due terms, payment wire notes..."}
+                className="text-xs"
+              />
             </div>
 
             {/* Live Calculation Preview */}
             <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 text-xs space-y-1 font-mono">
               <div className="flex justify-between text-gray-600">
-                <span>{isRTL ? "المبلغ الخاضع للضريبة:" : "Taxable Base:"}</span>
-                <span>${taxable.toFixed(2)}</span>
+                <span>{isRTL ? "المبلغ الخاضع للضريبة (قبل الضريبة):" : "Taxable Base (Net):"}</span>
+                <span>
+                  {currency === "USD" ? `$${taxable.toFixed(2)}` : `${taxable.toFixed(2)} ${t("common.egp")}`}
+                </span>
               </div>
               <div className="flex justify-between text-gray-600">
                 <span>{isRTL ? "ضريبة القيمة المضافة 14%:" : "VAT 14%:"}</span>
-                <span>+${vatAmount.toFixed(2)}</span>
+                <span>
+                  +{currency === "USD" ? `$${vatAmount.toFixed(2)}` : `${vatAmount.toFixed(2)} ${t("common.egp")}`}
+                </span>
               </div>
-              <div className="flex justify-between font-bold text-sm text-[#C45B2A] pt-1 border-t border-gray-200">
-                <span>{isRTL ? "القيمة الإجمالية:" : "Total Invoice Value:"}</span>
-                <span className="ltr-preserve">${totalCalculated.toFixed(2)} USD</span>
+              <div className="flex justify-between font-bold text-sm text-[#C45B2A] pt-1.5 border-t border-gray-200">
+                <span>{isRTL ? "القيمة الإجمالية المستحقة:" : "Total Invoice Value:"}</span>
+                <span className="ltr-preserve">
+                  {currency === "USD"
+                    ? `$${totalCalculated.toFixed(2)} USD`
+                    : `${totalCalculated.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${t("common.egp")}`}
+                </span>
               </div>
             </div>
 

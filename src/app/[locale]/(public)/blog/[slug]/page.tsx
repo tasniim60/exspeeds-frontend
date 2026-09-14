@@ -1,6 +1,8 @@
-import { getPostBySlug, getPosts, getRankMathSchema } from "@/lib/wordpress";
+import { getPostBySlug, getPosts, getRankMathSchema, WPPost, FALLBACK_POSTS_AR, FALLBACK_POSTS_EN } from "@/lib/wordpress";
 import SinglePostClient from "@/components/SinglePostClient";
 import { Metadata } from "next";
+import { ServerStore } from "@/lib/serverStore";
+import { convertAdminPostToWP, detectPostLanguage, findCounterpartPost } from "@/lib/blogUtils";
 
 export const revalidate = 60; // ISR: revalidate every 60 seconds
 
@@ -9,6 +11,62 @@ interface PageProps {
     locale: string;
     slug: string;
   };
+}
+
+/**
+ * Server-side post resolution supporting multilingual pairs and automatic counterpart redirection
+ */
+async function resolveServerPost(slug: string, locale: "ar" | "en"): Promise<WPPost | null> {
+  // 1. Check ServerStore for user-created / DeepL translated posts
+  try {
+    const serverPosts = ServerStore.getBlogPosts();
+    if (serverPosts && serverPosts.length > 0) {
+      const directMatch = serverPosts.find((p) => p.slug === slug);
+      if (directMatch) {
+        if (detectPostLanguage(directMatch) === locale) {
+          return convertAdminPostToWP(directMatch, 0);
+        }
+        // Direct match exists in opposite language: find counterpart in target locale
+        const counterpart = findCounterpartPost(directMatch, serverPosts, locale);
+        if (counterpart) {
+          return convertAdminPostToWP(counterpart as any, 0);
+        }
+      }
+
+      // Check if slug belongs to a translation of a post in this locale
+      const refMatch = serverPosts.find(
+        (p) =>
+          detectPostLanguage(p) === locale &&
+          (p.translationOf === slug || p.slug.replace(/-(ar|en)$/, "") === slug.replace(/-(ar|en)$/, ""))
+      );
+      if (refMatch) {
+        return convertAdminPostToWP(refMatch, 0);
+      }
+    }
+  } catch {
+    // Continue to WordPress REST lookup
+  }
+
+  // 2. Query WordPress REST API and fallbacks
+  const post = await getPostBySlug(slug, locale);
+  if (post) {
+    const postLang = detectPostLanguage(post);
+    if (postLang === locale) {
+      return post;
+    }
+    // Cross-language recovery from seeded fallbacks
+    const targetFallback = locale === "en" ? FALLBACK_POSTS_EN : FALLBACK_POSTS_AR;
+    const counterpartMatch = targetFallback.find(
+      (p) =>
+        p.id === post.id ||
+        p.slug === post.slug ||
+        p.slug.replace(/-(ar|en)$/, "") === post.slug.replace(/-(ar|en)$/, "")
+    );
+    if (counterpartMatch) return counterpartMatch;
+    return post;
+  }
+
+  return null;
 }
 
 export async function generateStaticParams() {
@@ -32,8 +90,8 @@ export async function generateStaticParams() {
 }
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
-  const locale = params?.locale === "en" ? "en" : "ar";
-  const post = await getPostBySlug(params.slug, locale);
+  const locale = (params?.locale === "en" ? "en" : "ar") as "ar" | "en";
+  const post = await resolveServerPost(params.slug, locale);
   const rawTitle = post?.rank_math_seo?.title || post?.title.rendered || "Logistics Insights";
   const cleanTitle = rawTitle.replace(/<[^>]*>?/gm, "").replace(/&#\d+;/g, "").trim();
   const pageTitle = cleanTitle.replace(/\s*\|\s*XSPEED/gi, "").replace(/\s*\|\s*إكس سبيد/gi, "").trim();
@@ -101,9 +159,10 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function SinglePostPage({ params }: PageProps) {
-  const locale = params?.locale === "en" ? "en" : "ar";
-  const post = await getPostBySlug(params.slug, locale);
-  const postUrl = "https://exspeeds.com/" + locale + "/blog/" + params.slug;
+  const locale = (params?.locale === "en" ? "en" : "ar") as "ar" | "en";
+  const post = await resolveServerPost(params.slug, locale);
+  const canonicalSlug = post?.slug || params.slug;
+  const postUrl = "https://exspeeds.com/" + locale + "/blog/" + canonicalSlug;
 
   // Fetch canonical Rank Math Schema
   const schemas = await getRankMathSchema(postUrl, post);

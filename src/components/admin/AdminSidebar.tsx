@@ -14,6 +14,11 @@ import {
   ExternalLink,
   LogOut,
   Calculator,
+  Receipt,
+  Users,
+  Truck,
+  Landmark,
+  WalletCards,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +29,11 @@ export type AdminTab =
   | "statistics"
   | "requests"
   | "shipments"
+  | "invoices"
+  | "customers"
+  | "carriers"
+  | "treasury"
+  | "expenses"
   | "reports"
   | "posts";
 
@@ -35,6 +45,7 @@ export interface AdminSidebarProps {
   badgeCounts: {
     requests?: number;
     shipments?: number;
+    invoices?: number;
     orders?: number;
     notifications?: number;
     exceptions?: number;
@@ -48,7 +59,7 @@ interface NavItemConfig {
   icon: React.ComponentType<{ className?: string }>;
   badge?: number;
   badgeVariant?: "brand" | "warning" | "destructive" | "secondary" | "success";
-  group: "operations" | "analytics";
+  group: "operations" | "finance" | "analytics";
   fallbackEn: string;
   fallbackAr: string;
 }
@@ -98,6 +109,43 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       fallbackAr: "سجل الشحنات والقيد",
     },
     {
+      id: "invoices",
+      icon: Receipt,
+      badge: badgeCounts.invoices,
+      badgeVariant: "warning",
+      group: "finance",
+      fallbackEn: "Invoices & Billing",
+      fallbackAr: "الفواتير والمطالبات",
+    },
+    {
+      id: "customers",
+      icon: Users,
+      group: "finance",
+      fallbackEn: "Customers & Accounts",
+      fallbackAr: "العملاء ومراقبة الحسابات",
+    },
+    {
+      id: "carriers",
+      icon: Truck,
+      group: "finance",
+      fallbackEn: "Carriers & Brokers",
+      fallbackAr: "شركات الشحن والوسطاء",
+    },
+    {
+      id: "treasury",
+      icon: Landmark,
+      group: "finance",
+      fallbackEn: "Treasury & Vaults",
+      fallbackAr: "الخزينة ومراقبة السيولة",
+    },
+    {
+      id: "expenses",
+      icon: WalletCards,
+      group: "finance",
+      fallbackEn: "Expenses & Salaries",
+      fallbackAr: "المصروفات والمرتبات",
+    },
+    {
       id: "reports",
       icon: FileSpreadsheet,
       group: "analytics",
@@ -114,6 +162,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   ];
 
   const operationsItems = navItems.filter((item) => item.group === "operations");
+  const financeItems = navItems.filter((item) => item.group === "finance");
   const analyticsItems = navItems.filter((item) => item.group === "analytics");
 
   const renderNavButton = (item: NavItemConfig) => {
@@ -260,6 +309,21 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           </div>
 
           {/* Group 2: Analytics & Content */}
+          {/* Group 2: Financial & Ledgers */}
+          <div className="space-y-1 pt-1 border-t border-slate-800/80">
+            {!collapsed && (
+              <div
+                className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${
+                  isRTL ? "text-right" : "text-left"
+                }`}
+              >
+                {isRTL ? "الإدارة المالية والدفاتر" : "Financial & Ledgers"}
+              </div>
+            )}
+            {financeItems.map(renderNavButton)}
+          </div>
+
+          {/* Group 3: Analytics & Content */}
           <div className="space-y-1 pt-1 border-t border-slate-800/80">
             {!collapsed && (
               <div

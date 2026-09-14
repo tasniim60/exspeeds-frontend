@@ -18,6 +18,8 @@ interface LanguageContextType {
   formatNumber: (num: number) => string;
   formatCurrency: (amount: number, currencyCode?: string) => string;
   formatWeight: (weightKg: number | string) => string;
+  alternateUrlMap: Partial<Record<Locale, string>> | null;
+  setAlternateUrlMap: (urls: Partial<Record<Locale, string>> | null) => void;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -41,6 +43,7 @@ export function LanguageProvider({
   const router = useRouter();
   const pathname = usePathname();
   const [locale, setLocaleState] = useState<Locale>(initialLocale);
+  const [alternateUrlMap, setAlternateUrlMap] = useState<Partial<Record<Locale, string>> | null>(null);
   const [mounted, setMounted] = useState(false);
 
   // Sync DOM attributes (lang and dir)
@@ -65,6 +68,18 @@ export function LanguageProvider({
       applyLocaleToDom(initialLocale);
     }
   }, [initialLocale, locale, applyLocaleToDom]);
+
+  // Sync locale dynamically if pathname changes to an alternate locale prefix
+  useEffect(() => {
+    if (pathname) {
+      const match = pathname.match(/^\/(ar|en)($|\/)/);
+      if (match && match[1] && match[1] !== locale) {
+        const pathLocale = match[1] as Locale;
+        setLocaleState(pathLocale);
+        applyLocaleToDom(pathLocale);
+      }
+    }
+  }, [pathname, locale, applyLocaleToDom]);
 
   useEffect(() => {
     applyLocaleToDom(locale);
@@ -100,6 +115,15 @@ export function LanguageProvider({
       }
 
       // Navigate to the localized URL if route is available
+      // 1. If page registered an explicit alternate URL (e.g. single post with translated slug), navigate directly
+      if (alternateUrlMap && alternateUrlMap[newLocale]) {
+        const targetUrl = alternateUrlMap[newLocale]!;
+        setAlternateUrlMap(null);
+        router.push(targetUrl);
+        return;
+      }
+
+      // 2. Fallback: navigate to localized pathname
       if (pathname) {
         const nextUrl = getLocalizedPath(pathname, newLocale);
         if (nextUrl !== pathname) {
@@ -107,7 +131,7 @@ export function LanguageProvider({
         }
       }
     },
-    [applyLocaleToDom, getLocalizedPath, pathname, router]
+    [applyLocaleToDom, getLocalizedPath, pathname, router, alternateUrlMap]
   );
 
   const toggleLocale = useCallback(() => {
@@ -240,8 +264,26 @@ export function LanguageProvider({
       formatNumber,
       formatCurrency,
       formatWeight,
+      alternateUrlMap,
+      setAlternateUrlMap,
     }),
-    [locale, dir, isRTL, setLocale, toggleLocale, getLocalizedPath, t, formatDate, formatTime, formatDateTime, formatNumber, formatCurrency, formatWeight]
+    [
+      locale,
+      dir,
+      isRTL,
+      setLocale,
+      toggleLocale,
+      getLocalizedPath,
+      t,
+      formatDate,
+      formatTime,
+      formatDateTime,
+      formatNumber,
+      formatCurrency,
+      formatWeight,
+      alternateUrlMap,
+      setAlternateUrlMap,
+    ]
   );
 
   return <LanguageContext.Provider value={value}>{children}</LanguageContext.Provider>;

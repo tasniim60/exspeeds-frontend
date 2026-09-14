@@ -29,6 +29,9 @@ import {
   Layers,
   FileText,
   HelpCircle,
+  Languages,
+  RefreshCw,
+  AlertTriangle,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -114,11 +117,37 @@ export const PostsView: React.FC<PostsViewProps> = ({
 }) => {
   const { t, isRTL } = useLanguage();
   const [search, setSearch] = useState("");
+  const [languageFilter, setLanguageFilter] = useState<"all" | "ar" | "en">("all");
   const [newModalOpen, setNewModalOpen] = useState(false);
   const [editingPost, setEditingPost] = useState<BlogPost | null>(null);
   const [previewDevice, setPreviewDevice] = useState<"desktop" | "mobile">("desktop");
-  const [createModalTab, setCreateModalTab] = useState<"content" | "seo">("content");
+  const [createModalTab, setCreateModalTab] = useState<"content" | "seo" | "translation">("content");
   const [editModalTab, setEditModalTab] = useState<"content" | "seo">("content");
+
+  // DeepL Automated Multilingual Translation State
+  const [articleLang, setArticleLang] = useState<"ar" | "en">("ar");
+  const [autoTranslateEnabled, setAutoTranslateEnabled] = useState(true);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [hasGeneratedTranslation, setHasGeneratedTranslation] = useState(false);
+  const [translatedTitle, setTranslatedTitle] = useState("");
+  const [translatedSlug, setTranslatedSlug] = useState("");
+  const [translatedExcerpt, setTranslatedExcerpt] = useState("");
+  const [translatedKeyword, setTranslatedKeyword] = useState("");
+  const [translatedContent, setTranslatedContent] = useState("");
+  const [deeplUsage, setDeeplUsage] = useState<{ character_count: number; character_limit: number; percentage: number; remaining: number } | null>(null);
+  const [retryingPostId, setRetryingPostId] = useState<string | null>(null);
+
+  // Fetch live DeepL character quota on mount
+  React.useEffect(() => {
+    fetch("/api/posts/translate")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.usage) {
+          setDeeplUsage(data.usage);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   // Image selection tabs
   const [imageUploadMode, setImageUploadMode] = useState<"presets" | "upload" | "url">("presets");
@@ -245,6 +274,68 @@ export const PostsView: React.FC<PostsViewProps> = ({
     reader.readAsDataURL(file);
   };
 
+  const handleTranslateWithDeepL = async () => {
+    if (!title.trim() && !content.trim()) {
+      alert(isRTL ? "يرجى كتابة عنوان أو محتوى المقال أولاً للترجمة." : "Please enter title or content first.");
+      return;
+    }
+    setIsTranslating(true);
+    try {
+      const res = await fetch("/api/posts/translate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          excerpt: metaDesc,
+          content,
+          focusKeyword,
+          sourceLang: articleLang,
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.translated) {
+        setTranslatedTitle(data.translated.title || "");
+        setTranslatedSlug(data.translated.slug || "");
+        setTranslatedExcerpt(data.translated.excerpt || "");
+        setTranslatedKeyword(data.translated.focusKeyword || "");
+        setTranslatedContent(data.translated.content || "");
+        setHasGeneratedTranslation(true);
+        if (data.usage) {
+          setDeeplUsage(data.usage);
+        }
+        setCreateModalTab("translation");
+      }
+    } catch (err) {
+      console.error("[DeepL UI] Translation request failed:", err);
+    } finally {
+      setIsTranslating(false);
+    }
+  };
+
+  const handleRetryTranslation = async (postId: string) => {
+    setRetryingPostId(postId);
+    try {
+      const res = await fetch("/api/posts/retry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ postId }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        if (data.original && onUpdatePost) {
+          onUpdatePost(data.original);
+        }
+        if (data.translation) {
+          onAddPost(data.translation);
+        }
+      }
+    } catch (err) {
+      console.error("[DeepL UI] Retry failed:", err);
+    } finally {
+      setRetryingPostId(null);
+    }
+  };
+
   const handleCreatePost = async (e?: React.FormEvent, targetStatus: "published" | "draft" = postStatus) => {
     if (e) e.preventDefault();
     setIsPublishing(true);
@@ -263,6 +354,12 @@ export const PostsView: React.FC<PostsViewProps> = ({
       seoScore: seoAudit.score,
       status: targetStatus,
       imageUrl: imageUrl || "/assets/xspeed_about_showcase.jpg",
+      lang: articleLang,
+      autoTranslate: autoTranslateEnabled,
+      translatedTitle: hasGeneratedTranslation ? translatedTitle : undefined,
+      translatedSlug: hasGeneratedTranslation ? translatedSlug : undefined,
+      translatedExcerpt: hasGeneratedTranslation ? translatedExcerpt : undefined,
+      translatedContent: hasGeneratedTranslation ? translatedContent : undefined,
     };
 
     try {
@@ -274,25 +371,33 @@ export const PostsView: React.FC<PostsViewProps> = ({
       });
       const data = await res.json();
 
-      const newPost: BlogPost = {
-        id: data.wpId ? `wp-${data.wpId}` : `post-${Date.now()}`,
-        title: title,
-        slug: finalSlug,
-        author: author,
-        category: category,
-        date: new Date().toISOString(),
-        status: targetStatus,
-        views: 1,
-        seoScore: seoAudit.score,
-        focusKeyword: payload.focusKeyword,
-        wordCount: wordCountTotal,
-        wpEditUrl: `/wp-admin/post.php?post=${data.wpId || 101}&action=edit`,
-        imageUrl: imageUrl || "/assets/xspeed_about_showcase.jpg",
-        excerpt: payload.excerpt,
-        content: payload.content,
-      };
-
-      onAddPost(newPost);
+      if (data.original) {
+        onAddPost(data.original);
+        if (data.translation) {
+          onAddPost(data.translation);
+        }
+      } else {
+        const newPost: BlogPost = {
+          id: data.wpId ? `wp-${data.wpId}` : `post-${Date.now()}`,
+          title: title,
+          slug: finalSlug,
+          author: author,
+          category: category,
+          date: new Date().toISOString(),
+          status: targetStatus,
+          views: 1,
+          seoScore: seoAudit.score,
+          focusKeyword: payload.focusKeyword,
+          wordCount: wordCountTotal,
+          wpEditUrl: `/wp-admin/post.php?post=${data.wpId || 101}&action=edit`,
+          imageUrl: imageUrl || "/assets/xspeed_about_showcase.jpg",
+          excerpt: payload.excerpt,
+          content: payload.content,
+          lang: articleLang,
+          deeplStatus: autoTranslateEnabled ? "translated" : "none",
+        };
+        onAddPost(newPost);
+      }
     } catch {
       // Graceful fallback
       const fallbackPost: BlogPost = {
@@ -311,6 +416,8 @@ export const PostsView: React.FC<PostsViewProps> = ({
         imageUrl: imageUrl || "/assets/xspeed_about_showcase.jpg",
         excerpt: payload.excerpt,
         content: payload.content,
+        lang: articleLang,
+        deeplStatus: "none",
       };
       onAddPost(fallbackPost);
     } finally {
@@ -326,6 +433,13 @@ export const PostsView: React.FC<PostsViewProps> = ({
       setImageUrl("/assets/xspeed_about_showcase.jpg");
       setCreateModalTab("content");
       setPostStatus("published");
+      setArticleLang("ar");
+      setTranslatedTitle("");
+      setTranslatedSlug("");
+      setTranslatedExcerpt("");
+      setTranslatedKeyword("");
+      setTranslatedContent("");
+      setHasGeneratedTranslation(false);
     }
   };
 
@@ -341,13 +455,18 @@ export const PostsView: React.FC<PostsViewProps> = ({
     setEditingPost(null);
   };
 
-  const filteredPosts = posts.filter(
-    (p) =>
+  const filteredPosts = posts.filter((p) => {
+    const pLang = p.lang || (/[\u0600-\u06FF]/.test(p.title) ? "ar" : "en");
+    if (languageFilter !== "all" && pLang !== languageFilter) {
+      return false;
+    }
+    return (
       p.title.toLowerCase().includes(search.toLowerCase()) ||
       p.author.toLowerCase().includes(search.toLowerCase()) ||
       p.category.toLowerCase().includes(search.toLowerCase()) ||
       (p.focusKeyword && p.focusKeyword.toLowerCase().includes(search.toLowerCase()))
-  );
+    );
+  });
 
   return (
     <div className="space-y-6 text-start">
@@ -459,6 +578,56 @@ export const PostsView: React.FC<PostsViewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
+          {deeplUsage && (
+            <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 rounded-xl border border-indigo-200/80 bg-indigo-50/70 text-indigo-950 text-xs shadow-2xs">
+              <Languages className="w-4 h-4 text-indigo-600 shrink-0" />
+              <div className="flex flex-col text-[11px] leading-tight text-start">
+                <span className="font-bold flex items-center gap-1.5">
+                  <span>{isRTL ? "استهلاك ترجمة DeepL" : "DeepL Free Quota"}</span>
+                  <span className="text-[10px] px-1 py-0.2 rounded bg-indigo-200/70 text-indigo-800 font-mono">
+                    {deeplUsage.percentage}%
+                  </span>
+                </span>
+                <span className="font-mono text-[10px] text-indigo-700" dir="ltr">
+                  {deeplUsage.character_count.toLocaleString()} / {deeplUsage.character_limit.toLocaleString()} chars
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Language Filter Tabs */}
+          <div className="flex items-center gap-0.5 bg-gray-100/90 p-0.5 rounded-xl border border-gray-200 text-xs">
+            <button
+              type="button"
+              onClick={() => setLanguageFilter("all")}
+              className={`px-2.5 py-1.5 rounded-lg font-bold transition-all cursor-pointer text-[11px] ${
+                languageFilter === "all" ? "bg-white text-gray-900 shadow-2xs" : "text-gray-500 hover:text-gray-900"
+              }`}
+            >
+              {isRTL ? "الكل" : "All"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setLanguageFilter("ar")}
+              className={`px-2.5 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1 text-[11px] ${
+                languageFilter === "ar" ? "bg-white text-emerald-800 shadow-2xs" : "text-gray-500 hover:text-gray-900"
+              }`}
+            >
+              <span>🇸🇦</span>
+              <span>{isRTL ? "العربية" : "Arabic"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setLanguageFilter("en")}
+              className={`px-2.5 py-1.5 rounded-lg font-bold transition-all cursor-pointer flex items-center gap-1 text-[11px] ${
+                languageFilter === "en" ? "bg-white text-blue-800 shadow-2xs" : "text-gray-500 hover:text-gray-900"
+              }`}
+            >
+              <span>🇬🇧</span>
+              <span>{isRTL ? "الإنجليزية" : "English"}</span>
+            </button>
+          </div>
+
           <div className="relative">
             <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400`} />
             <Input
@@ -486,14 +655,17 @@ export const PostsView: React.FC<PostsViewProps> = ({
       {/* ── Posts Table ── */}
       <Card className="border border-gray-200/90 shadow-2xs rounded-2xl overflow-hidden bg-white">
         <div className="overflow-x-auto w-full">
-          <Table className="min-w-[1000px]">
+          <Table className="min-w-[1050px]">
             <TableHeader className="bg-gray-50/80 border-b border-gray-100">
               <TableRow>
-                <TableHead className="w-[320px] text-xs font-bold text-gray-600 text-start py-3.5 px-4">
+                <TableHead className="w-[300px] text-xs font-bold text-gray-600 text-start py-3.5 px-4">
                   {isRTL ? "عنوان المقال والرابط" : "Article Title & URL"}
                 </TableHead>
                 <TableHead className="text-xs font-bold text-gray-600 text-start py-3.5 px-4">
                   {isRTL ? "القسم والمؤلف" : "Category & Author"}
+                </TableHead>
+                <TableHead className="text-xs font-bold text-gray-600 text-start py-3.5 px-4">
+                  {isRTL ? "اللغة والترجمة" : "Language & DeepL"}
                 </TableHead>
                 <TableHead className="text-xs font-bold text-gray-600 text-start py-3.5 px-4">
                   {isRTL ? "الكلمة المفتاحية" : "Focus Keyword"}
@@ -515,7 +687,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
             <TableBody>
               {filteredPosts.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12 text-gray-400 text-xs">
+                  <TableCell colSpan={8} className="text-center py-12 text-gray-400 text-xs">
                     {isRTL ? "لا توجد مقالات مطابقة لمعايير البحث." : "No blog posts matched your search."}
                   </TableCell>
                 </TableRow>
@@ -552,6 +724,56 @@ export const PostsView: React.FC<PostsViewProps> = ({
                       <Badge variant="secondary" className="text-[10px] py-0 px-1.5 mt-1 font-normal bg-gray-100 text-gray-600 border border-gray-200">
                         {post.category}
                       </Badge>
+                    </TableCell>
+
+                    <TableCell className="text-xs text-start py-3 px-4">
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-1.5">
+                          {post.lang === "en" ? (
+                            <Badge variant="outline" className="text-[10px] font-bold bg-blue-50 text-blue-700 border-blue-200 gap-1 px-1.5 py-0.5">
+                              <span>🇬🇧</span>
+                              <span>English</span>
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border-emerald-200 gap-1 px-1.5 py-0.5">
+                              <span>🇪🇬</span>
+                              <span>العربية</span>
+                            </Badge>
+                          )}
+
+                          {post.translationOf ? (
+                            <span className="text-[10px] text-indigo-600 bg-indigo-50 border border-indigo-100 px-1.5 py-0.5 rounded font-semibold flex items-center gap-1" title={isRTL ? "نسخة مترجمة مرتبطة بمقال رئيسي" : "Linked translation"}>
+                              <LinkIcon className="w-2.5 h-2.5" />
+                              <span>{isRTL ? "مترجم" : "Linked"}</span>
+                            </span>
+                          ) : null}
+                        </div>
+
+                        {/* Status / Pending Retry action */}
+                        {post.status === "pending_translation" || post.deeplStatus === "failed" ? (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[10px] font-bold text-amber-600 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 flex items-center gap-1">
+                              <AlertTriangle className="w-2.5 h-2.5 text-amber-500 shrink-0" />
+                              <span>{isRTL ? "ترجمة معلّقة" : "Pending"}</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleRetryTranslation(post.id)}
+                              disabled={retryingPostId === post.id}
+                              className="text-[10px] font-bold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 px-1.5 py-0.5 rounded cursor-pointer transition-colors flex items-center gap-1"
+                              title={isRTL ? "إعادة محاولة الترجمة التلقائية عبر DeepL" : "Retry DeepL translation"}
+                            >
+                              <RefreshCw className={`w-2.5 h-2.5 ${retryingPostId === post.id ? "animate-spin text-indigo-600" : ""}`} />
+                              <span>{isRTL ? "إعادة" : "Retry"}</span>
+                            </button>
+                          </div>
+                        ) : post.deeplStatus === "translated" ? (
+                          <span className="text-[10px] text-emerald-600 font-medium flex items-center gap-1">
+                            <CheckCircle2 className="w-2.5 h-2.5 text-emerald-500" />
+                            <span>{isRTL ? "ترجمة آلية مكتملة" : "DeepL Synced"}</span>
+                          </span>
+                        ) : null}
+                      </div>
                     </TableCell>
 
                     <TableCell className="text-xs text-start py-3 px-4">
@@ -668,53 +890,119 @@ export const PostsView: React.FC<PostsViewProps> = ({
               </div>
             </div>
 
-            {/* Live SEO Score Gauge */}
-            <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-xl mr-8">
-              <span className="text-[11px] font-bold text-gray-500">{t("admin.posts.modal.seoScoreLabel")}</span>
-              <span
-                className={`font-mono text-xs font-extrabold px-2 py-0.5 rounded-md ${
-                  seoAudit.score >= 80
-                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                    : seoAudit.score >= 50
-                    ? "bg-amber-50 text-amber-700 border border-amber-200"
-                    : "bg-red-50 text-red-600 border border-red-200"
-                }`}
-              >
-                {seoAudit.score}/100
-              </span>
+            <div className="flex items-center gap-2.5">
+              {/* Article Language Selector (Stage 4 requirement 1) */}
+              <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl border border-gray-200">
+                <span className="text-[11px] font-bold text-gray-500 px-1">
+                  {isRTL ? "لغة المقال:" : "Lang:"}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setArticleLang("ar")}
+                  className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
+                    articleLang === "ar"
+                      ? "bg-white text-emerald-700 shadow-2xs"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  <span>🇸🇦</span>
+                  <span>العربية</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setArticleLang("en")}
+                  className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all flex items-center gap-1 cursor-pointer ${
+                    articleLang === "en"
+                      ? "bg-white text-blue-700 shadow-2xs"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  <span>🇬🇧</span>
+                  <span>English</span>
+                </button>
+              </div>
+
+              {/* Live SEO Score Gauge */}
+              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-xl mr-2">
+                <span className="text-[11px] font-bold text-gray-500">{t("admin.posts.modal.seoScoreLabel")}</span>
+                <span
+                  className={`font-mono text-xs font-extrabold px-2 py-0.5 rounded-md ${
+                    seoAudit.score >= 80
+                      ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                      : seoAudit.score >= 50
+                      ? "bg-amber-50 text-amber-700 border border-amber-200"
+                      : "bg-red-50 text-red-600 border border-red-200"
+                  }`}
+                >
+                  {seoAudit.score}/100
+                </span>
+              </div>
             </div>
           </div>
 
           {/* Sub-Header Navigation Tabs */}
-          <div className="flex border-b border-gray-100 bg-gray-50/80 px-6 py-2 gap-2 shrink-0">
-            <button
-              type="button"
-              onClick={() => setCreateModalTab("content")}
-              className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                createModalTab === "content"
-                  ? "bg-white text-[#C45B2A] shadow-xs border border-gray-200"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-              }`}
-            >
-              <FileText className="w-3.5 h-3.5" />
-              <span>{t("admin.posts.modal.tabContent")}</span>
-            </button>
+          <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/80 px-6 py-2 gap-2 shrink-0">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setCreateModalTab("content")}
+                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                  createModalTab === "content"
+                    ? "bg-white text-[#C45B2A] shadow-xs border border-gray-200"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>{t("admin.posts.modal.tabContent")}</span>
+              </button>
 
-            <button
+              <button
+                type="button"
+                onClick={() => setCreateModalTab("seo")}
+                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                  createModalTab === "seo"
+                    ? "bg-white text-[#C45B2A] shadow-xs border border-gray-200"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+              >
+                <Globe className="w-3.5 h-3.5" />
+                <span>{t("admin.posts.modal.tabSeo")}</span>
+                <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-gray-200 text-gray-700 ml-1">
+                  {seoAudit.score}%
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCreateModalTab("translation")}
+                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
+                  createModalTab === "translation"
+                    ? "bg-white text-indigo-700 shadow-xs border border-indigo-200"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+                }`}
+              >
+                <Languages className="w-3.5 h-3.5 text-indigo-600" />
+                <span>{isRTL ? "مراجعة ترجمة DeepL" : "DeepL Translation Review"}</span>
+                {hasGeneratedTranslation && (
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                )}
+              </button>
+            </div>
+
+            <Button
               type="button"
-              onClick={() => setCreateModalTab("seo")}
-              className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                createModalTab === "seo"
-                  ? "bg-white text-[#C45B2A] shadow-xs border border-gray-200"
-                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-              }`}
+              size="sm"
+              onClick={handleTranslateWithDeepL}
+              disabled={isTranslating}
+              className="h-8 px-3 text-[11px] font-bold bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 rounded-lg shadow-2xs cursor-pointer"
             >
-              <Globe className="w-3.5 h-3.5" />
-              <span>{t("admin.posts.modal.tabSeo")}</span>
-              <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-gray-200 text-gray-700 ml-1">
-                {seoAudit.score}%
+              <Sparkles className={`w-3.5 h-3.5 ${isTranslating ? "animate-spin" : ""}`} />
+              <span>
+                {isTranslating
+                  ? (isRTL ? "جاري استدعاء DeepL..." : "Translating with DeepL...")
+                  : (isRTL ? "⚡ ترجمة فورية ومعاينة" : "⚡ Instant DeepL Translate")}
               </span>
-            </button>
+            </Button>
           </div>
 
           {/* Modal Form Body */}
@@ -1000,7 +1288,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
                     />
                   </div>
                 </div>
-              ) : (
+              ) : createModalTab === "seo" ? (
                 /* Tab 2: SEO & SERP Preview */
                 <div className="space-y-5">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -1128,6 +1416,122 @@ export const PostsView: React.FC<PostsViewProps> = ({
                     </div>
                   </div>
                 </div>
+              ) : (
+                /* Tab 3: DeepL Translation Pre-Publish Review (Stage 6) */
+                <div className="space-y-5">
+                  <div className="bg-gradient-to-r from-indigo-50/90 via-blue-50/60 to-purple-50/50 p-4 rounded-2xl border border-indigo-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+                    <div className="flex items-start gap-3">
+                      <div className="p-2 rounded-xl bg-indigo-600 text-white shrink-0 mt-0.5 shadow-xs">
+                        <Languages className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-indigo-950">
+                          {isRTL
+                            ? "مراجعة وضبط ترجمة DeepL قبل النشر النهائي (Stage 6)"
+                            : "DeepL Pre-Publish Translation Review (Stage 6)"}
+                        </h4>
+                        <p className="text-xs text-indigo-800/80 mt-0.5 leading-relaxed">
+                          {isRTL
+                            ? `الترجمة التلقائية المستهدفة: من (${articleLang === "ar" ? "العربية 🇸🇦" : "الإنجليزية 🇬🇧"}) إلى (${articleLang === "ar" ? "الإنجليزية 🇬🇧" : "العربية 🇸🇦"}). يمكنك مراجعة وتعديل المصطلحات التقنية والجمارك (مثل Nafeza، AWB، B/L) قبل الحفظ المزدوج في ووردبريس.`
+                            : `Translating from (${articleLang === "ar" ? "Arabic" : "English"}) to (${articleLang === "ar" ? "English" : "Arabic"}). Review and customize logistics terms before dual-language publishing.`}
+                        </p>
+                      </div>
+                    </div>
+
+                    <Button
+                      type="button"
+                      size="sm"
+                      onClick={handleTranslateWithDeepL}
+                      disabled={isTranslating}
+                      className="shrink-0 h-9 px-4 text-xs font-bold bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow-xs cursor-pointer flex items-center gap-1.5"
+                    >
+                      <RefreshCw className={`w-3.5 h-3.5 ${isTranslating ? "animate-spin" : ""}`} />
+                      <span>{isTranslating ? (isRTL ? "جاري الترجمة..." : "Translating...") : (isRTL ? "تحديث الترجمة عبر DeepL" : "Re-Translate with DeepL")}</span>
+                    </Button>
+                  </div>
+
+                  {/* Toggle: Enable Automated Dual-Language Publishing */}
+                  <div className="flex items-center justify-between p-3.5 rounded-xl border border-gray-200 bg-white">
+                    <div className="flex items-center gap-2.5">
+                      <input
+                        type="checkbox"
+                        id="autoTranslateToggle"
+                        checked={autoTranslateEnabled}
+                        onChange={(e) => setAutoTranslateEnabled(e.target.checked)}
+                        className="w-4 h-4 rounded text-[#C45B2A] focus:ring-[#C45B2A] border-gray-300 cursor-pointer"
+                      />
+                      <label htmlFor="autoTranslateToggle" className="text-xs font-bold text-gray-800 cursor-pointer">
+                        {isRTL
+                          ? "نشر النسختين معاً وربطهما تلقائياً عبر Polylang REST API (translation_of)"
+                          : "Publish both language versions and link them via Polylang REST API (translation_of)"}
+                      </label>
+                    </div>
+                    {deeplUsage && (
+                      <span className="text-[11px] font-mono text-gray-500">
+                        {deeplUsage.remaining.toLocaleString()} {isRTL ? "حرف متبقي مجاناً" : "chars free left"}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Translated Title & Slug */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase text-gray-700 mb-1">
+                        {isRTL ? "عنوان المقال المترجم" : "Translated Article Headline"}
+                      </label>
+                      <Input
+                        value={translatedTitle}
+                        onChange={(e) => setTranslatedTitle(e.target.value)}
+                        placeholder={isRTL ? "العنوان باللغة الإنجليزية..." : "Headline in Arabic..."}
+                        className="text-xs font-semibold text-gray-900"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[11px] font-bold uppercase text-gray-700 mb-1">
+                        {isRTL ? "رابط المقال المترجم (Slug)" : "Translated URL Slug"}
+                      </label>
+                      <Input
+                        value={translatedSlug}
+                        onChange={(e) => setTranslatedSlug(e.target.value)}
+                        placeholder={isRTL ? "translated-article-slug" : "slug"}
+                        className="font-mono text-xs ltr-preserve"
+                        dir="ltr"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Translated Excerpt */}
+                  <div>
+                    <label className="block text-[11px] font-bold uppercase text-gray-700 mb-1">
+                      {isRTL ? "ملخص المقال المترجم (Meta Description)" : "Translated Excerpt (Meta Description)"}
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={translatedExcerpt}
+                      onChange={(e) => setTranslatedExcerpt(e.target.value)}
+                      placeholder={isRTL ? "ملخص المقال المترجم للظهور في نتائج البحث ومقتطفات التواصل..." : "Translated excerpt for SEO and search snippets..."}
+                      className="w-full rounded-xl border border-gray-200 bg-white p-3 text-xs font-normal text-gray-800 placeholder:text-gray-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                  </div>
+
+                  {/* Translated Content */}
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-[11px] font-bold uppercase text-gray-700">
+                        {isRTL ? "محتوى المقال المترجم (مع الحفاظ على وسوم HTML)" : "Translated Content (Preserving HTML Tags)"}
+                      </label>
+                      <span className="text-[10px] text-gray-400">
+                        {isRTL ? "تنسيقات المقال والفقرات والجداول محفوظة بالكامل" : "HTML tags and formatting preserved"}
+                      </span>
+                    </div>
+                    <RichPostEditor
+                      value={translatedContent}
+                      onChange={setTranslatedContent}
+                      placeholder={isRTL ? "المحتوى المترجم..." : "Translated content..."}
+                      minHeight="260px"
+                    />
+                  </div>
+                </div>
               )}
             </div>
 
@@ -1152,7 +1556,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
                   {isRTL ? "إلغاء" : "Cancel"}
                 </Button>
 
-                {createModalTab === "content" ? (
+                {createModalTab === "content" && (
                   <Button
                     type="button"
                     variant="outline"
@@ -1162,39 +1566,54 @@ export const PostsView: React.FC<PostsViewProps> = ({
                     <span>{isRTL ? "SEO والمعاينة" : "SEO & Preview"}</span>
                     <ChevronRight className={`w-3.5 h-3.5 shrink-0 ${isRTL ? "rotate-180" : ""}`} />
                   </Button>
-                ) : (
-                  <>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      disabled={isPublishing}
-                      onClick={() => handleCreatePost(undefined, "draft")}
-                      className="w-full sm:w-auto h-10 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer text-gray-700 hover:bg-gray-100"
-                    >
-                      <span>{isRTL ? "حفظ كمسودة" : "Save as Draft"}</span>
-                    </Button>
-
-                    <Button
-                      type="submit"
-                      variant="brand"
-                      disabled={isPublishing}
-                      onClick={() => setPostStatus("published")}
-                      className="w-full sm:w-auto h-10 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
-                    >
-                      {isPublishing ? (
-                        <>
-                          <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                          <span className="truncate">{isRTL ? "جاري النشر..." : "Publishing..."}</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="h-3.5 w-3.5 shrink-0" />
-                          <span className="truncate">{isRTL ? "نشر ومزامنة" : "Publish & Sync"}</span>
-                        </>
-                      )}
-                    </Button>
-                  </>
                 )}
+
+                {createModalTab === "seo" && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setCreateModalTab("translation")}
+                    className="w-full sm:w-auto h-10 text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer text-indigo-700 border-indigo-200 hover:bg-indigo-50"
+                  >
+                    <Languages className="w-3.5 h-3.5 shrink-0 text-indigo-600" />
+                    <span>{isRTL ? "مراجعة الترجمة" : "Translation Review"}</span>
+                    <ChevronRight className={`w-3.5 h-3.5 shrink-0 ${isRTL ? "rotate-180" : ""}`} />
+                  </Button>
+                )}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={isPublishing}
+                  onClick={() => handleCreatePost(undefined, "draft")}
+                  className="w-full sm:w-auto h-10 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer text-gray-700 hover:bg-gray-100"
+                >
+                  <span>{isRTL ? "حفظ كمسودة" : "Save as Draft"}</span>
+                </Button>
+
+                <Button
+                  type="submit"
+                  variant="brand"
+                  disabled={isPublishing}
+                  onClick={() => setPostStatus("published")}
+                  className="w-full sm:w-auto h-10 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
+                >
+                  {isPublishing ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span className="truncate">{isRTL ? "جاري النشر..." : "Publishing..."}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                      <span className="truncate">
+                        {autoTranslateEnabled
+                          ? (isRTL ? "نشر وتزامن ثنائي (Polylang)" : "Publish Dual-Language")
+                          : (isRTL ? "نشر ومزامنة" : "Publish & Sync")}
+                      </span>
+                    </>
+                  )}
+                </Button>
               </div>
             </div>
           </form>

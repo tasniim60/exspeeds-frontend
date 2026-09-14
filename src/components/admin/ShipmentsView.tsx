@@ -1525,10 +1525,11 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                             size="icon"
                             variant="ghost"
                             onClick={() => onDeleteShipment(s.id)}
-                            className="h-8 w-8 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg cursor-pointer"
+                            className="h-8 w-8 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                             title={t("admin.shipments.table.delete")}
+                            aria-label={t("admin.shipments.table.delete")}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
