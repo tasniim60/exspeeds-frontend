@@ -71,13 +71,14 @@ export default function FloatingWidgets() {
         <a
           href="tel:+201208027171"
           aria-label={isRTL ? "اتصال هاتفي مباشر" : "Direct Phone Call"}
-          className="group relative flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-[#0F172A] to-[#1E293B] text-white border-2 border-slate-700 shadow-[0_10px_25px_rgba(15,23,42,0.4)] hover:shadow-[0_15px_35px_rgba(196,91,42,0.4)] hover:border-[#C45B2A] transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer"
+          className="group relative flex items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-brand-dark to-brand-dark-border text-white border-2 border-[#543336] shadow-[0_10px_25px_rgba(37,21,22,0.4)] hover:shadow-[0_15px_35px_rgba(196,91,42,0.4)] hover:border-brand-orange transition-all duration-300 hover:scale-110 active:scale-95 cursor-pointer"
         >
-          <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-[#C45B2A] group-hover:rotate-12 transition-transform duration-300" />
+          <Phone className="w-5 h-5 sm:w-6 sm:h-6 text-brand-orange group-hover:rotate-12 transition-transform duration-300" />
 
           {/* Pulsing indicator */}
           <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-orange-500 border-2 border-[#0F172A] animate-ping opacity-75" />
-          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-orange-500 border-2 border-[#0F172A]" />
+          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-orange-500 border-2 border-brand-dark animate-ping opacity-75" />
+          <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-orange-500 border-2 border-brand-dark" />
 
           {/* Desktop Hover Tooltip */}
           <span

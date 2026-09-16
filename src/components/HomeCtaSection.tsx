@@ -18,7 +18,7 @@ export default function HomeCtaSection() {
 
   if (!mounted || isLoading) {
     return (
-      <section className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white py-16 sm:py-20 relative overflow-hidden border-t border-slate-800">
+      <section className="bg-gradient-to-r from-brand-dark-deep via-brand-dark to-brand-dark-deep text-white py-16 sm:py-20 relative overflow-hidden border-t border-brand-dark-border">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8 text-center md:text-left">
             <div className="space-y-2">
@@ -30,7 +30,7 @@ export default function HomeCtaSection() {
               </p>
             </div>
             <Link href={getLocalizedPath("/ship")}>
-              <button className="bg-gradient-to-r from-[#C45B2A] to-[#E65100] text-white font-bold py-4 px-8 text-base rounded-full shadow-lg shadow-orange-500/25">
+              <button className="bg-gradient-to-r from-brand-orange to-[#E65100] text-white font-bold py-4 px-8 text-base rounded-full shadow-lg shadow-orange-500/25">
                 {t("home.cta.requestBtn")}
               </button>
             </Link>
@@ -43,12 +43,12 @@ export default function HomeCtaSection() {
   // 1. Logged in as Admin
   if (user && user.role === "admin") {
     return (
-      <section className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white py-16 sm:py-20 border-t border-orange-900/30 relative overflow-hidden">
+      <section className="bg-gradient-to-r from-brand-dark-deep via-brand-dark to-brand-dark-deep text-white py-16 sm:py-20 border-t border-brand-dark-border relative overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8 text-start">
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 bg-white/10 text-orange-300 border border-white/15 px-3.5 py-1 rounded-md text-xs font-semibold">
-                <ShieldCheck className="h-3.5 w-3.5 text-[#C45B2A]" />
+                <ShieldCheck className="h-3.5 w-3.5 text-brand-orange" />
                 <span>{isRTL ? "مسؤول النظام المسجل" : "Logged in as System Administrator"}</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-display font-black tracking-[-0.03em]">
@@ -61,7 +61,7 @@ export default function HomeCtaSection() {
 
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
               <Link href={getLocalizedPath("/admin")}>
-                <button className="bg-gradient-to-r from-[#C45B2A] to-[#E65100] hover:from-[#A34920] hover:to-[#C45B2A] text-white font-bold py-4 px-8 rounded-full shadow-lg shadow-orange-500/25 flex items-center gap-2 cursor-pointer transition-all hover:scale-[1.02]">
+                <button className="bg-gradient-to-r from-brand-orange to-[#E65100] hover:from-brand-orange-deep hover:to-brand-orange text-white font-bold py-4 px-8 rounded-full shadow-lg shadow-orange-500/25 flex items-center gap-2 cursor-pointer transition-all hover:scale-[1.02]">
                   <LayoutDashboard className="h-4 w-4" />
                   <span>{t("nav.adminDashboard")}</span>
                   <ArrowRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
@@ -69,7 +69,7 @@ export default function HomeCtaSection() {
               </Link>
               <Link href={getLocalizedPath("/track")}>
                 <button className="border border-white/20 bg-white/10 hover:bg-white/20 text-white font-bold py-4 px-6 rounded-full flex items-center gap-2 cursor-pointer transition-all">
-                  <Truck className="h-4 w-4 text-[#C45B2A]" />
+                  <Truck className="h-4 w-4 text-brand-orange" />
                   <span>{t("nav.track")}</span>
                 </button>
               </Link>
@@ -83,12 +83,12 @@ export default function HomeCtaSection() {
   // 2. Logged in as Customer / Shipper
   if (user) {
     return (
-      <section className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white py-16 sm:py-20 border-t border-slate-800 relative overflow-hidden">
+      <section className="bg-gradient-to-r from-brand-dark-deep via-brand-dark to-brand-dark-deep text-white py-16 sm:py-20 border-t border-brand-dark-border relative overflow-hidden">
         <div className="max-w-[1400px] mx-auto px-4 sm:px-6 relative z-10">
           <div className="flex flex-col md:flex-row items-center justify-between gap-8 text-start">
             <div className="space-y-3">
               <div className="inline-flex items-center gap-2 bg-white/10 text-orange-300 border border-white/15 px-3.5 py-1 rounded-md text-xs font-semibold">
-                <User className="h-3.5 w-3.5 text-[#C45B2A]" />
+                <User className="h-3.5 w-3.5 text-brand-orange" />
                 <span>{t("client.dashboard.welcomeBack")}, {user.name}</span>
               </div>
               <h2 className="text-3xl md:text-4xl font-display font-black tracking-[-0.03em]">
@@ -101,7 +101,7 @@ export default function HomeCtaSection() {
 
             <div className="flex flex-wrap items-center justify-center md:justify-start gap-4">
               <Link href={getLocalizedPath("/ship")}>
-                <button className="bg-gradient-to-r from-[#C45B2A] to-[#E65100] hover:from-[#A34920] hover:to-[#C45B2A] text-white font-bold py-4 px-8 rounded-full shadow-lg shadow-orange-500/25 flex items-center gap-2 cursor-pointer transition-all hover:scale-[1.02]">
+                <button className="bg-gradient-to-r from-brand-orange to-[#E65100] hover:from-brand-orange-deep hover:to-brand-orange text-white font-bold py-4 px-8 rounded-full shadow-lg shadow-orange-500/25 flex items-center gap-2 cursor-pointer transition-all hover:scale-[1.02]">
                   <Package className="w-4 h-4 stroke-[2.2]" />
                   <span>{t("nav.requestShipment")}</span>
                 </button>
@@ -121,7 +121,7 @@ export default function HomeCtaSection() {
 
   // 3. Guest User CTA
   return (
-    <section className="bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 text-white py-16 sm:py-20 relative overflow-hidden border-t border-slate-800">
+    <section className="bg-gradient-to-r from-brand-dark-deep via-brand-dark to-brand-dark-deep text-white py-16 sm:py-20 relative overflow-hidden border-t border-brand-dark-border">
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 relative z-10">
         <div className="flex flex-col md:flex-row items-center justify-between gap-8 text-start">
           <div className="space-y-3">
@@ -139,7 +139,7 @@ export default function HomeCtaSection() {
           </div>
           <div className="flex flex-wrap gap-4 items-center">
             <Link href={getLocalizedPath("/login?redirect=/ship")}>
-              <button className="bg-gradient-to-r from-[#C45B2A] to-[#E65100] hover:from-[#A34920] hover:to-[#C45B2A] text-white font-bold py-4 px-8 rounded-full shadow-lg shadow-orange-500/30 flex items-center gap-2.5 cursor-pointer transition-all hover:scale-[1.02]">
+              <button className="bg-gradient-to-r from-brand-orange to-[#E65100] hover:from-brand-orange-deep hover:to-brand-orange text-white font-bold py-4 px-8 rounded-full shadow-lg shadow-orange-500/30 flex items-center gap-2.5 cursor-pointer transition-all hover:scale-[1.02]">
                 <Package className="w-5 h-5 stroke-[2.2]" />
                 <span>{t("home.cta.requestBtn")}</span>
               </button>

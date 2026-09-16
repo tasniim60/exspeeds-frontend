@@ -651,38 +651,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
           </div>
         </nav>
 
-        {/* Bilingual Article Notice (One post with two languages) */}
-        {translationInfo && (
-          <div className="bg-gradient-to-r from-indigo-50/90 via-blue-50/70 to-orange-50/60 p-4 sm:p-5 rounded-2xl border border-indigo-200/80 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center shrink-0 shadow-xs">
-                <Globe className="w-5 h-5" />
-              </div>
-              <div className="text-start">
-                <p className="text-xs sm:text-sm font-bold text-indigo-950">
-                  {isRTL
-                    ? "هذا المقال منشور أيضاً ومتاح باللغة الإنجليزية"
-                    : "This article is also published and available in Arabic"}
-                </p>
-                <p className="text-[11px] sm:text-xs text-indigo-800/80 font-medium line-clamp-1 mt-0.5">
-                  {isRTL
-                    ? `النسخة الإنجليزية المعتمدة: "${translationInfo.title || "English Version"}"`
-                    : `Verified Arabic edition: "${translationInfo.title || "النسخة العربية"}"`}
-                </p>
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => handleSwitchLanguage(translationInfo.targetLocale)}
-              className="inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold py-2.5 px-5 rounded-xl shadow-xs transition-all hover:scale-[1.02] active:scale-95 cursor-pointer whitespace-nowrap min-h-[44px]"
-            >
-              <Languages className="w-3.5 h-3.5 shrink-0" />
-              <span>{isRTL ? "Read in English" : "اقرأ بالعربية"}</span>
-              <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "" : "rotate-180"}`} />
-            </button>
-          </div>
-        )}
+        
 
         {/* Main Article Container */}
         <article
@@ -701,27 +670,8 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
 
             {/* Meta Row: Author, Upload Date, Modified Date, Reading Time */}
             <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-gray-600 pt-2">
-              {/* Author */}
-              <div
-                className="flex items-center gap-2 font-bold text-gray-900"
-                itemProp="author"
-                itemScope
-                itemType="https://schema.org/Person"
-              >
-                <div className="w-8 h-8 rounded-full bg-orange-100 text-[#C45B2A] flex items-center justify-center font-black text-xs border border-orange-200/80 shrink-0">
-                  {post.author_name?.charAt(0) || "X"}
-                </div>
-                <span itemProp="name">
-                  {isArabicPost ? getLocalizedAuthor(post.author_name) : (post.author_name || "XSPEED Editorial Team")}
-                </span>
-                <span className="text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full text-[10px] font-bold border border-emerald-200 flex items-center gap-1">
-                  <ShieldCheck className="w-3 h-3 text-emerald-600 shrink-0" />
-                  {isArabicPost ? "فريق موثق" : "Verified Author"}
-                </span>
-              </div>
-
-              <span className="text-gray-300">•</span>
-
+             
+              
               {/* Upload Date & Time of Publishing */}
               <time
                 dateTime={post.date || new Date().toISOString()}
@@ -763,6 +713,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
                 </>
               )}
 
+              
               <span className="text-gray-300">•</span>
               <span className="flex items-center gap-1 text-gray-500 font-medium">
                 <Clock className="w-3.5 h-3.5 text-gray-400" />
@@ -925,7 +876,7 @@ export default function SinglePostClient({ slug, initialPost }: SinglePostClient
         </article>
 
         {/* Commercial Conversion Callout Card */}
-        <section className="bg-gradient-to-r from-slate-950 via-[#0F172A] to-slate-950 text-white rounded-[32px] p-8 sm:p-10 lg:p-12 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 border border-slate-800 text-start">
+        <section className="bg-gradient-to-r from-brand-dark-deep via-brand-dark to-brand-dark-deep text-white rounded-[32px] p-8 sm:p-10 lg:p-12 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6 border border-brand-dark-border text-start">
           <div className="space-y-2 max-w-2xl">
             <span className="bg-[#C45B2A]/30 text-orange-300 text-[10px] font-extrabold uppercase px-3 py-1 rounded-full border border-[#C45B2A]/40 inline-block">
               {t("blogPage.cargoBadge") || (isRTL ? "شحن دولي سريع وسلس" : "Express Cargo & Global Logistics")}

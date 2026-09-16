@@ -367,13 +367,13 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
             {/* Filter controls */}
             <div className="flex items-center gap-2 flex-wrap">
               <div className="relative">
-                <Search className="absolute top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 right-2.5" />
+                <Search className={`absolute top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 ${isRTL ? "right-2.5" : "left-2.5"}`} />
                 <Input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={isRTL ? "بحث في البنود..." : "Search..."}
-                  className="pr-8 h-8 text-xs bg-[#FAF8F5] border-slate-300 w-44"
+                  className={`${isRTL ? "pr-8 text-right" : "pl-8 text-left"} h-8 text-xs bg-[#FAF8F5] border-slate-300 w-44`}
                 />
               </div>
 
@@ -416,13 +416,13 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
             <Table>
               <TableHeader className="bg-[#FAF8F5]">
                 <TableRow>
-                  <TableHead className="text-right text-xs font-extrabold text-slate-700">{isRTL ? "التاريخ" : "Date"}</TableHead>
-                  <TableHead className="text-right text-xs font-extrabold text-slate-700">{isRTL ? "بند المصروف" : "Item Title"}</TableHead>
+                  <TableHead className="text-start text-xs font-extrabold text-slate-700">{isRTL ? "التاريخ" : "Date"}</TableHead>
+                  <TableHead className="text-start text-xs font-extrabold text-slate-700">{isRTL ? "بند المصروف" : "Item Title"}</TableHead>
                   <TableHead className="text-center text-xs font-extrabold text-slate-700">{isRTL ? "طبيعة المصروف" : "Nature"}</TableHead>
-                  <TableHead className="text-right text-xs font-extrabold text-slate-700">{isRTL ? "الخزينة المخصوم منها" : "Vault"}</TableHead>
-                  <TableHead className="text-right text-xs font-extrabold text-slate-700">{isRTL ? "المسؤول" : "Recorder"}</TableHead>
-                  <TableHead className="text-right text-xs font-extrabold text-slate-700">{isRTL ? "رقم الفاتورة / الإشعار" : "Receipt"}</TableHead>
-                  <TableHead className="text-right text-xs font-extrabold text-slate-700">{isRTL ? "المبلغ" : "Amount"}</TableHead>
+                  <TableHead className="text-start text-xs font-extrabold text-slate-700">{isRTL ? "الخزينة المخصوم منها" : "Vault"}</TableHead>
+                  <TableHead className="text-start text-xs font-extrabold text-slate-700">{isRTL ? "المسؤول" : "Recorder"}</TableHead>
+                  <TableHead className="text-start text-xs font-extrabold text-slate-700">{isRTL ? "رقم الفاتورة / الإشعار" : "Receipt"}</TableHead>
+                  <TableHead className="text-center text-xs font-extrabold text-slate-700">{isRTL ? "المبلغ" : "Amount"}</TableHead>
                   <TableHead className="text-center text-xs font-extrabold text-slate-700">{isRTL ? "إجراء" : "Action"}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -486,7 +486,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
                         {e.receiptNumber || "-"}
                       </TableCell>
 
-                      <TableCell className="text-right font-mono font-bold text-xs text-rose-600">
+                      <TableCell className="text-end font-mono font-bold text-xs text-rose-600">
                         {formatCurrency(e.amount, e.currency || "EGP")}
                       </TableCell>
 
@@ -501,7 +501,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
                                 onDeleteExpense(e.id);
                               }
                             }}
-                            className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            className="h-10 w-10 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                             title={isRTL ? "حذف المصروف" : "Delete expense"}
                             aria-label={isRTL ? "حذف المصروف" : "Delete expense"}
                           >
@@ -520,13 +520,13 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
             <Table>
               <TableHeader className="bg-[#FAF8F5]">
                 <TableRow>
-                  <TableHead className="text-right text-xs font-extrabold text-slate-700">{isRTL ? "التاريخ" : "Date"}</TableHead>
-                  <TableHead className="text-right text-xs font-extrabold text-slate-700">{isRTL ? "اسم الموظف" : "Employee"}</TableHead>
+                  <TableHead className="text-start text-xs font-extrabold text-slate-700">{isRTL ? "التاريخ" : "Date"}</TableHead>
+                  <TableHead className="text-start text-xs font-extrabold text-slate-700">{isRTL ? "اسم الموظف" : "Employee"}</TableHead>
                   <TableHead className="text-center text-xs font-extrabold text-slate-700">{isRTL ? "نوع الصرف" : "Type"}</TableHead>
-                  <TableHead className="text-right text-xs font-extrabold text-slate-700">{isRTL ? "عن شهر" : "Period"}</TableHead>
-                  <TableHead className="text-right text-xs font-extrabold text-slate-700">{isRTL ? "الخزينة المخصوم منها" : "Vault"}</TableHead>
-                  <TableHead className="text-right text-xs font-extrabold text-slate-700">{isRTL ? "المسؤول" : "Recorder"}</TableHead>
-                  <TableHead className="text-right text-xs font-extrabold text-slate-700">{isRTL ? "المبلغ" : "Amount"}</TableHead>
+                  <TableHead className="text-start text-xs font-extrabold text-slate-700">{isRTL ? "عن شهر" : "Period"}</TableHead>
+                  <TableHead className="text-start text-xs font-extrabold text-slate-700">{isRTL ? "الخزينة المخصوم منها" : "Vault"}</TableHead>
+                  <TableHead className="text-start text-xs font-extrabold text-slate-700">{isRTL ? "المسؤول" : "Recorder"}</TableHead>
+                  <TableHead className="text-end text-xs font-extrabold text-slate-700">{isRTL ? "المبلغ" : "Amount"}</TableHead>
                   <TableHead className="text-center text-xs font-extrabold text-slate-700">{isRTL ? "إجراء" : "Action"}</TableHead>
                 </TableRow>
               </TableHeader>
@@ -578,7 +578,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
                         {s.recordedBy || "-"}
                       </TableCell>
 
-                      <TableCell className="text-right font-mono font-bold text-xs text-rose-600">
+                      <TableCell className="text-end font-mono font-bold text-xs text-rose-600">
                         {formatCurrency(s.amount, s.currency || "EGP")}
                       </TableCell>
 

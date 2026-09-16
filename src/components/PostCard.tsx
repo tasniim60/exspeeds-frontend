@@ -37,12 +37,7 @@ export default function PostCard({ post }: { post: WPPost }) {
       })
     : isRTL ? "مؤخراً" : "Recently";
 
-  const timeStr = hasValidDate && publishDateObj
-    ? publishDateObj.toLocaleTimeString(isRTL ? "ar-EG" : "en-US", {
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : "";
+
 
   const rawExcerpt = post.excerpt?.rendered
     ? post.excerpt.rendered.replace(/<[^>]*>?/gm, "").trim()
@@ -122,24 +117,13 @@ export default function PostCard({ post }: { post: WPPost }) {
             <time
               dateTime={post.date}
               className="flex items-center gap-1.5 text-gray-700 font-medium"
-              title={hasValidDate && timeStr ? `${dateStr} - ${timeStr}` : dateStr}
+              title={dateStr}
             >
               <Calendar className="w-3.5 h-3.5 text-[#C45B2A] shrink-0" />
               <span>{dateStr}</span>
             </time>
-            {timeStr && (
-              <>
-                <span className="text-gray-300">•</span>
-                <span className="flex items-center gap-1 font-mono text-[11px] text-gray-600 bg-orange-50/60 px-2 py-0.5 rounded-full border border-orange-100/80">
-                  <Clock className="w-3 h-3 text-[#C45B2A] shrink-0" />
-                  <span>{timeStr}</span>
-                </span>
-              </>
-            )}
-            <span className="text-gray-300">•</span>
-            <span className="flex items-center gap-1 text-gray-400">
-              <span>3 {isRTL ? "دقائق" : "min read"}</span>
-            </span>
+            
+            
 
             {post.translatedSlug && (
               <>

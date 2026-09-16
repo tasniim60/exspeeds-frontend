@@ -4,7 +4,36 @@
 @tailwind utilities;
 
 /* ── XSPEED Design Tokens (Aether: Snow White + Brand Orange + Slate) ── */
+/* ── XSPEED Single Master Palette (Earth & Espresso Brand Identity) ── */
 :root {
+  /* Master Brand Colors - matching xspeed_logo_earth_dark.jpg */
+  --brand-orange: #C45B2A;
+  --brand-orange-light: #D4723F;
+  --brand-orange-deep: #A94A1F;
+  --brand-orange-ink: #7A3416;
+  --brand-orange-soft: rgba(196, 91, 42, 0.1);
+  --brand-orange-glow: rgba(196, 91, 42, 0.25);
+
+  /* Deep Brand Espresso Ink (from the logo globe continents & XSPEED title) */
+  --brand-dark: #251516;
+  --brand-dark-surface: #251516;
+  --brand-dark-deep: #180D0E;
+  --brand-dark-border: #3D2426;
+  --brand-dark-hover: #351D1F;
+  --brand-dark-subtle: #2D191B;
+
+  /* Text & Neutral Scale */
+  --brand-text-primary: #251516;
+  --brand-text-secondary: #64748B;
+  --brand-text-muted: #94A3B8;
+
+  /* Surfaces & Canvas */
+  --brand-canvas: #FAFBFC;
+  --brand-card-bg: #FFFFFF;
+  --brand-border: #E8E2D9;
+  --brand-border-subtle: #F1ECE6;
+
+  /* Backward-compatible design tokens referencing single palette */
   --xspeed-900: #FFFFFF;
   --xspeed-800: #FAFBFC;
   --xspeed-700: #F1F5F9;
@@ -17,6 +46,12 @@
   --xspeed-orange-light: #E06C3B;
   --xspeed-orange-deep: #A94A1F;
   --xspeed-orange-ink: #7A3416;
+  --xspeed-dark: var(--brand-dark);
+  --xspeed-ink: var(--brand-dark);
+  --xspeed-orange: var(--brand-orange);
+  --xspeed-orange-light: var(--brand-orange-light);
+  --xspeed-orange-deep: var(--brand-orange-deep);
+  --xspeed-orange-ink: var(--brand-orange-ink);
   --xspeed-cream: #FAFBFC;
   --xspeed-cream-dim: #64748B;
   --latte-50: #FFFFFF;
@@ -30,8 +65,8 @@
 
 /* ── Base: Snow White Canvas ── */
 body {
-  background-color: #FAFBFC;
-  color: #1E293B;
+  background-color: var(--brand-canvas);
+  color: var(--brand-text-primary);
   font-family: "General Sans", var(--font-inter, 'Inter', sans-serif), system-ui, -apple-system, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -43,22 +78,22 @@ body {
   background: #FFFFFF;
   border: 1px solid #E2E8F0;
   border-radius: var(--radius-card);
-  box-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03);
+  box-shadow: 0 4px 20px -2px rgba(37, 21, 22, 0.05), 0 2px 6px -1px rgba(37, 21, 22, 0.03);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 }
 
 .deck-card:hover,
 .card-elevated:hover {
   border-color: #CBD5E1;
-  box-shadow: 0 12px 30px -4px rgba(15, 23, 42, 0.08), 0 4px 12px -2px rgba(196, 91, 42, 0.08);
+  box-shadow: 0 12px 30px -4px rgba(37, 21, 22, 0.08), 0 4px 12px -2px rgba(196, 91, 42, 0.08);
   transform: translateY(-2px);
 }
 
 .deck-ribbon {
-  background: #0F172A;
+  background: var(--brand-dark);
   color: #F8FAFC;
-  border-top: 1px solid #1E293B;
-  border-bottom: 1px solid #1E293B;
+  border-top: 1px solid var(--brand-dark-border);
+  border-bottom: 1px solid var(--brand-dark-border);
 }
 
 .deck-chip {
@@ -138,6 +173,7 @@ body {
   border: 1px solid #E2E8F0;
   border-radius: var(--radius-button);
   color: #0F172A;
+  color: var(--brand-dark);
   font-size: 0.875rem;
   font-weight: 500;
   transition: all 0.2s ease;
@@ -163,7 +199,7 @@ body {
 
 /* ── Modern Glassmorphism & Hero Overlay Classes ── */
 .glass-card-dark {
-  background: rgba(15, 23, 42, 0.85);
+  background: rgba(37, 21, 22, 0.88);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -175,7 +211,7 @@ body {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(226, 232, 240, 0.8);
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  box-shadow: 0 10px 30px rgba(37, 21, 22, 0.06);
 }
 
 .glow-orange {
@@ -185,9 +221,9 @@ body {
 .hero-dark-overlay {
   background: linear-gradient(
     135deg,
-    rgba(15, 23, 42, 0.92) 0%,
-    rgba(30, 41, 59, 0.85) 50%,
-    rgba(15, 23, 42, 0.90) 100%
+    rgba(23, 13, 14, 0.94) 0%,
+    rgba(37, 21, 22, 0.88) 50%,
+    rgba(18, 9, 10, 0.92) 100%
   );
 }
 
@@ -214,6 +250,7 @@ body {
   font-weight: 600;
   line-height: 1.7;
   color: #0F172A;
+  color: var(--brand-text-primary);
   border-inline-start: 4px solid var(--xspeed-orange);
   padding-inline-start: 1.25rem;
   margin-bottom: 2rem;
@@ -251,6 +288,7 @@ body {
 .prose-xspeed h3,
 .prose-xspeed h4 {
   color: #0F172A;
+  color: var(--brand-text-primary);
   font-weight: 700;
   letter-spacing: -0.02em;
 }
@@ -342,10 +380,12 @@ body {
   background-color: #F8FAFC;
   font-weight: 600;
   color: #0F172A;
+  color: var(--brand-text-primary);
 }
 
 .prose-xspeed pre {
   background-color: #0F172A;
+  background-color: var(--brand-dark);
   color: #F8FAFC;
   padding: 1.25rem;
   border-radius: 12px;
@@ -358,6 +398,7 @@ body {
 .prose-xspeed code:not(pre code) {
   background-color: #F1F5F9;
   color: #C45B2A;
+  color: var(--brand-orange);
   padding: 0.2rem 0.4rem;
   border-radius: 4px;
   font-size: 0.875em;
@@ -407,6 +448,7 @@ body {
 ::selection {
   background: rgba(196, 91, 42, 0.18);
   color: #0F172A;
+  color: var(--brand-dark);
 }
 
 /* ── RTL & Arabic Typography Master Engine ── */
@@ -492,13 +534,13 @@ html[lang="ar"],
 /* ── Admin Eye-Comfort Off-White Palette ── */
 .admin-canvas {
   background-color: #F4F1EA !important;
-  color: #1E293B;
+  color: var(--brand-dark);
 }
 
-/* Preserve dark slate sidebar aesthetic matching footer */
+/* Preserve dark brand sidebar aesthetic matching footer */
 .admin-canvas aside {
-  background-color: #0F172A !important;
-  border-color: #1E293B !important;
+  background-color: var(--brand-dark) !important;
+  border-color: var(--brand-dark-border) !important;
 }
 
 /* Eye-comfort softening for admin workspace cards and containers */
@@ -548,7 +590,7 @@ html[lang="ar"],
 
 /* Calmer text tones for extended operational reading */
 .admin-canvas main .text-gray-900 {
-  color: #1E293B !important;
+  color: var(--brand-dark) !important;
 }
 
 .admin-canvas main .text-gray-800 {
@@ -573,13 +615,13 @@ html[lang="ar"],
 .admin-canvas main textarea {
   background-color: #FAF8F5;
   border-color: #E2DDD1;
-  color: #1E293B;
+  color: var(--brand-dark);
 }
 
 .admin-canvas main input:focus,
 .admin-canvas main select:focus,
 .admin-canvas main textarea:focus {
-  border-color: #C45B2A;
+  border-color: var(--brand-orange);
   outline: none;
 }
 

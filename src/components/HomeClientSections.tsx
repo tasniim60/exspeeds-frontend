@@ -34,7 +34,7 @@ export function HomeHeroSection() {
   };
 
   return (
-    <section className="relative min-h-[calc(100vh-74px)] flex flex-col justify-between overflow-hidden bg-[#FAFBFC] text-[#0F172A] pt-10 pb-16 lg:pt-14 lg:pb-20">
+    <section className="relative min-h-[calc(100vh-74px)] flex flex-col justify-between overflow-hidden bg-[#FAFBFC] text-brand-dark pt-10 pb-16 lg:pt-14 lg:pb-20">
       {/* Generated 3D Logistics Composition Background Image with RTL mirror inversion */}
       <div className="absolute inset-0 z-0 select-none pointer-events-none overflow-hidden">
         <Image

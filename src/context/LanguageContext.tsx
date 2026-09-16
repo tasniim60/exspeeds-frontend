@@ -233,7 +233,7 @@ export function LanguageProvider({
             : currencyCode;
         return `${formatNumber(amount)} ${currLabel}`;
       }
-      return `${currencyCode} ${formatNumber(amount)}`;
+      return `${formatNumber(amount)} ${currencyCode}`;
     },
     [locale, formatNumber]
   );

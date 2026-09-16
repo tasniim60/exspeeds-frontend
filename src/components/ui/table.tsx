@@ -4,10 +4,14 @@ export function Table({
   className = "",
   ...props
 }: React.HTMLAttributes<HTMLTableElement>) {
+  const hasCustomMinW = className.includes("min-w-");
   return (
-    <div className="relative w-full overflow-x-auto rounded-2xl border border-[#E2DDD1] bg-[#FAF8F5] shadow-xs">
+    <div 
+      className="relative w-full overflow-x-auto rounded-2xl border border-[#E2DDD1] bg-[#FAF8F5] shadow-xs"
+      style={{ WebkitOverflowScrolling: "touch" }}
+    >
       <table
-        className={`w-full min-w-[1800px] border-collapse text-xs text-start text-[#334155] ${className}`}
+        className={`w-full ${hasCustomMinW ? "" : "min-w-[650px]"} border-collapse text-xs text-start text-[#334155] ${className}`}
         style={{ tableLayout: "auto" }}
         {...props}
       />
@@ -45,7 +49,7 @@ export function TableFooter({
 }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
     <tfoot
-      className={`border-t border-[#E2DDD1] bg-[#EFEBE2] font-medium text-[#0F172A] ${className}`}
+      className={`border-t border-[#E2DDD1] bg-[#EFEBE2] font-medium text-brand-dark ${className}`}
       {...props}
     />
   );

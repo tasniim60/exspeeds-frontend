@@ -670,7 +670,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
       {/* ── 1. HEADER & ACTION TOOLBAR ── */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-5 rounded-3xl border border-gray-200/90 shadow-2xs">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-2xl bg-orange-50 text-[#C45B2A] flex items-center justify-center shrink-0 shadow-2xs">
+          <div className="w-10 h-10 rounded-2xl bg-orange-50 text-brand-orange flex items-center justify-center shrink-0 shadow-2xs">
             <FileSpreadsheet className="w-5 h-5" />
           </div>
           <div>
@@ -686,14 +686,14 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
         </div>
 
         {/* Currency Toggle & Action Buttons */}
-        <div className="flex items-center gap-2.5 flex-wrap shrink-0">
+        <div className="flex items-center gap-2 flex-wrap w-full md:w-auto">
           {/* Currency Toggle Pill */}
           <div className="flex items-center bg-gray-100 p-1 rounded-xl border border-gray-200 text-xs font-bold">
             <button
               type="button"
               onClick={() => setSelectedCurrency("EGP")}
               className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                selectedCurrency === "EGP" ? "bg-white text-[#C45B2A] shadow-2xs" : "text-gray-600 hover:text-gray-900"
+                selectedCurrency === "EGP" ? "bg-white text-brand-orange shadow-2xs" : "text-gray-600 hover:text-gray-900"
               }`}
             >
               {isRTL ? "جنيه (EGP)" : "EGP"}
@@ -702,7 +702,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
               type="button"
               onClick={() => setSelectedCurrency("USD")}
               className={`px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
-                selectedCurrency === "USD" ? "bg-white text-[#C45B2A] shadow-2xs" : "text-gray-600 hover:text-gray-900"
+                selectedCurrency === "USD" ? "bg-white text-brand-orange shadow-2xs" : "text-gray-600 hover:text-gray-900"
               }`}
             >
               USD ($)
@@ -1080,9 +1080,6 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                 : "Itemized breakdown of shipment volumes, cost, sales, transport, and net profit per client account"}
             </CardDescription>
           </div>
-          <Badge variant="brand" size="sm" className="font-mono bg-[#C45B2A] self-start sm:self-auto">
-            {clientPnlRows.length} {isRTL ? "عميل" : "Clients"}
-          </Badge>
         </CardHeader>
 
         <div className="overflow-x-auto w-full">
@@ -1839,7 +1836,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
           pointerEvents: "none",
           width: "1260px",
           backgroundColor: "#FFFFFF",
-          color: "#0F172A",
+          color: "#251516",
           padding: "36px 44px 30px 44px",
           fontFamily: "'Segoe UI', Tahoma, Arial, sans-serif",
           boxSizing: "border-box",
@@ -1849,7 +1846,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
         <div style={{ height: "5px", background: "linear-gradient(90deg, #C45B2A 0%, #EA580C 50%, #251516 100%)", borderRadius: "4px", marginBottom: "20px" }} />
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", paddingBottom: "20px", marginBottom: "22px", borderBottom: "2px solid #E2E8F0" }}>
           <div>
-            <div style={{ fontSize: "20px", fontWeight: "900", color: "#1E293B", lineHeight: "1.2", marginBottom: "4px" }}>
+            <div style={{ fontSize: "20px", fontWeight: "900", color: "#251516", lineHeight: "1.2", marginBottom: "4px" }}>
               {isRTL ? "شركة إكس سبيد لخدمات الشحن السريع واللوجستيات" : "XSPEED Express Freight & Logistics"}
             </div>
             <div style={{ fontSize: "11.5px", fontWeight: "700", color: "#C45B2A", marginBottom: "2px" }}>
@@ -1867,15 +1864,15 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
         <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "12px", marginBottom: "20px" }}>
           <div style={{ padding: "12px", background: "#F1F5F9", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
             <div style={{ fontSize: "10px", color: "#64748B", fontWeight: "bold" }}>{isRTL ? "إجمالي الإيرادات" : "Gross Revenue"}</div>
-            <div style={{ fontSize: "16px", fontWeight: "900", color: "#0F172A", marginTop: "4px" }}>{formatCurrency(grandTotalSales)} {currencySymbol}</div>
+            <div style={{ fontSize: "16px", fontWeight: "900", color: "#251516", marginTop: "4px" }}>{formatCurrency(grandTotalSales)} {currencySymbol}</div>
           </div>
           <div style={{ padding: "12px", background: "#F1F5F9", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
             <div style={{ fontSize: "10px", color: "#64748B", fontWeight: "bold" }}>{isRTL ? "التكلفة المباشرة" : "Direct Costs"}</div>
-            <div style={{ fontSize: "16px", fontWeight: "900", color: "#0F172A", marginTop: "4px" }}>{formatCurrency(grandTotalDirectCosts)} {currencySymbol}</div>
+            <div style={{ fontSize: "16px", fontWeight: "900", color: "#251516", marginTop: "4px" }}>{formatCurrency(grandTotalDirectCosts)} {currencySymbol}</div>
           </div>
           <div style={{ padding: "12px", background: "#F1F5F9", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
             <div style={{ fontSize: "10px", color: "#64748B", fontWeight: "bold" }}>{isRTL ? "المصروفات العامة" : "General Expenses"}</div>
-            <div style={{ fontSize: "16px", fontWeight: "900", color: "#0F172A", marginTop: "4px" }}>{formatCurrency(grandTotalGeneralExpenses)} {currencySymbol}</div>
+            <div style={{ fontSize: "16px", fontWeight: "900", color: "#251516", marginTop: "4px" }}>{formatCurrency(grandTotalGeneralExpenses)} {currencySymbol}</div>
           </div>
           <div style={{ padding: "12px", background: grandTotalNetProfit >= 0 ? "#ECFDF5" : "#FEF2F2", borderRadius: "8px", border: "1px solid #CBD5E1" }}>
             <div style={{ fontSize: "10px", color: grandTotalNetProfit >= 0 ? "#065F46" : "#991B1B", fontWeight: "bold" }}>{isRTL ? "صافي الربح" : "Net Profit"}</div>

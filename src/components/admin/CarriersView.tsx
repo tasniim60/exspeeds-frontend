@@ -334,7 +334,7 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
             {/* Search Input */}
             <div className="relative flex-1">
-              <Search className="absolute top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 right-3" />
+              <Search className={`absolute top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 ${isRTL ? "right-3" : "left-3"}`} />
               <Input
                 type="text"
                 value={search}
@@ -344,7 +344,7 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
                     ? "بحث باسم شركة الشحن، الوسيط (DHL, Aramex, SMSA, etc.)..."
                     : "Search by carrier name, broker, courier..."
                 }
-                className="pr-10 h-10 text-xs sm:text-sm bg-[#FAF8F5] border-slate-300 focus:bg-white"
+                className={`${isRTL ? "pr-10 text-right" : "pl-10 text-left"} h-10 text-xs sm:text-sm bg-[#FAF8F5] border-slate-300 focus:bg-white`}
               />
             </div>
 
@@ -434,7 +434,7 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
           <Table>
             <TableHeader className="bg-[#FAF8F5] border-b border-slate-200">
               <TableRow>
-                <TableHead className="text-right text-xs font-extrabold text-slate-700">
+                <TableHead className="text-start text-xs font-extrabold text-slate-700">
                   {isRTL ? "شركة الشحن / الوسيط" : "Carrier / Broker"}
                 </TableHead>
                 <TableHead className="text-center text-xs font-extrabold text-slate-700">
@@ -443,19 +443,19 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
                 <TableHead className="text-center text-xs font-extrabold text-slate-700">
                   {isRTL ? "عدد البوالص" : "Shipments"}
                 </TableHead>
-                <TableHead className="text-right text-xs font-extrabold text-slate-700">
+                <TableHead className="text-end text-xs font-extrabold text-slate-700">
                   {isRTL ? "إجمالي التكلفة" : "Gross Cost"}
                 </TableHead>
-                <TableHead className="text-right text-xs font-extrabold text-slate-700">
+                <TableHead className="text-end text-xs font-extrabold text-slate-700">
                   {isRTL ? "مرتجع مستبعد (RTO)" : "Excluded RTO"}
                 </TableHead>
-                <TableHead className="text-right text-xs font-extrabold text-slate-700">
+                <TableHead className="text-end text-xs font-extrabold text-slate-700">
                   {isRTL ? "صافي التكلفة" : "Net Cost"}
                 </TableHead>
-                <TableHead className="text-right text-xs font-extrabold text-slate-700">
+                <TableHead className="text-end text-xs font-extrabold text-slate-700">
                   {isRTL ? "المسدد (التحويلات)" : "Paid Transfers"}
                 </TableHead>
-                <TableHead className="text-right text-xs font-extrabold text-slate-700">
+                <TableHead className="text-end text-xs font-extrabold text-slate-700">
                   {isRTL ? "المتبقي للناقل" : "Net Due"}
                 </TableHead>
                 <TableHead className="text-center text-xs font-extrabold text-slate-700">
@@ -484,7 +484,7 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
 
                   return (
                     <TableRow key={carrier.carrier} className="hover:bg-slate-50/80 transition-colors">
-                      <TableCell className="font-bold text-slate-900 text-sm">
+                      <TableCell className="text-start font-bold text-slate-900 text-sm">
                         <div className="flex items-center gap-2">
                           <div className="w-8 h-8 rounded-lg bg-orange-50 text-[#C45B2A] flex items-center justify-center shrink-0">
                             <Truck className="h-4 w-4" />
@@ -522,11 +522,11 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
                         {carrier.shipmentCount}
                       </TableCell>
 
-                      <TableCell className="text-right font-mono text-xs text-slate-600">
+                      <TableCell className="text-end font-mono text-xs text-slate-600">
                         {formatCurrency(carrier.totalCost, "EGP")}
                       </TableCell>
 
-                      <TableCell className="text-right font-mono text-xs">
+                      <TableCell className="text-end font-mono text-xs">
                         {carrier.rtoCost > 0 ? (
                           <span className="text-rose-600 font-semibold">
                             -{formatCurrency(carrier.rtoCost, "EGP")}
@@ -536,15 +536,15 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
                         )}
                       </TableCell>
 
-                      <TableCell className="text-right font-mono font-bold text-xs text-slate-900">
+                      <TableCell className="text-end font-mono font-bold text-xs text-slate-900">
                         {formatCurrency(carrier.netCost, "EGP")}
                       </TableCell>
 
-                      <TableCell className="text-right font-mono font-bold text-xs text-emerald-600">
+                      <TableCell className="text-end font-mono font-bold text-xs text-emerald-600">
                         {formatCurrency(carrier.totalPaid, "EGP")}
                       </TableCell>
 
-                      <TableCell className="text-right font-mono font-extrabold text-xs">
+                      <TableCell className="text-end font-mono font-extrabold text-xs">
                         <span
                           className={`px-2 py-0.5 rounded-md ${
                             isSettled
@@ -709,11 +709,11 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
                       <Table className="min-w-[560px]">
                         <TableHeader className="bg-slate-50">
                           <TableRow>
-                            <TableHead className="text-right text-xs font-bold text-slate-700">AWB</TableHead>
-                            <TableHead className="text-right text-xs font-bold text-slate-700">{isRTL ? "التاريخ" : "Date"}</TableHead>
-                            <TableHead className="text-right text-xs font-bold text-slate-700">{isRTL ? "الوجهة" : "Dest"}</TableHead>
+                            <TableHead className="text-start text-xs font-bold text-slate-700">AWB</TableHead>
+                            <TableHead className="text-start text-xs font-bold text-slate-700">{isRTL ? "التاريخ" : "Date"}</TableHead>
+                            <TableHead className="text-start text-xs font-bold text-slate-700">{isRTL ? "الوجهة" : "Dest"}</TableHead>
                             <TableHead className="text-center text-xs font-bold text-slate-700">{isRTL ? "الوزن" : "Weight"}</TableHead>
-                            <TableHead className="text-right text-xs font-bold text-slate-700">{isRTL ? "التكلفة" : "Cost"}</TableHead>
+                            <TableHead className="text-end text-xs font-bold text-slate-700">{isRTL ? "التكلفة" : "Cost"}</TableHead>
                             <TableHead className="text-center text-xs font-bold text-slate-700">{isRTL ? "الحالة" : "Status"}</TableHead>
                           </TableRow>
                         </TableHeader>
@@ -728,19 +728,19 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
 
                             return (
                               <TableRow key={s.id || s.awb} className={isRto ? "bg-rose-50/40" : ""}>
-                                <TableCell className="font-mono font-bold text-xs text-slate-900">
+                                <TableCell className="text-start font-mono font-bold text-xs text-slate-900">
                                   {s.awb}
                                 </TableCell>
-                                <TableCell className="text-xs text-slate-600">
+                                <TableCell className="text-start text-xs text-slate-600">
                                   {s.date || "-"}
                                 </TableCell>
-                                <TableCell className="text-xs text-slate-700">
+                                <TableCell className="text-start text-xs text-slate-700">
                                   {s.country || "-"}
                                 </TableCell>
                                 <TableCell className="text-center font-mono text-xs text-slate-600">
                                   {s.weight || "-"} kg
                                 </TableCell>
-                                <TableCell className="text-right font-mono font-bold text-xs">
+                                <TableCell className="text-end font-mono font-bold text-xs">
                                   {isRto ? (
                                     <span className="line-through text-slate-400">
                                       {formatCurrency(s.costPrice || 0, "EGP")}

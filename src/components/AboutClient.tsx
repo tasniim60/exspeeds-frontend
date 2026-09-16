@@ -21,25 +21,25 @@ export default function AboutClient() {
     {
       title: t("about.values.speed"),
       desc: t("about.values.speedDesc"),
-      icon: <Zap className="w-6 h-6 text-[#C45B2A]" />,
+      icon: <Zap className="w-6 h-6 text-brand-orange" />,
       badge: isRTL ? "السرعة والأداء" : "Speed & Agility",
     },
     {
       title: t("about.values.integrity"),
       desc: t("about.values.integrityDesc"),
-      icon: <Eye className="w-6 h-6 text-[#C45B2A]" />,
+      icon: <Eye className="w-6 h-6 text-brand-orange" />,
       badge: isRTL ? "الشفافية الكاملة" : "Radical Transparency",
     },
     {
       title: t("about.values.innovation"),
       desc: t("about.values.innovationDesc"),
-      icon: <Cpu className="w-6 h-6 text-[#C45B2A]" />,
+      icon: <Cpu className="w-6 h-6 text-brand-orange" />,
       badge: isRTL ? "الابتكار والتقنية" : "Tech-Driven Logistics",
     },
     {
       title: t("about.values.customer"),
       desc: t("about.values.customerDesc"),
-      icon: <HeartHandshake className="w-6 h-6 text-[#C45B2A]" />,
+      icon: <HeartHandshake className="w-6 h-6 text-brand-orange" />,
       badge: isRTL ? "خدمة متميزة" : "24/7 Care",
     },
   ];
@@ -80,11 +80,11 @@ export default function AboutClient() {
               <span>15+ {isRTL ? "سنوات خبرة" : "Years Experience"}</span>
             </div>
             <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full border border-slate-200 shadow-2xs flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-[#C45B2A]" />
+              <span className="w-2 h-2 rounded-full bg-brand-orange" />
               <span>220+ {isRTL ? "دولة ووجهة" : "Countries Covered"}</span>
             </div>
             <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full border border-slate-200 shadow-2xs flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-blue-500" />
+              <span className="w-2 h-2 rounded-full bg-brand-orange" />
               <span>2.5M+ {isRTL ? "طرد تم تسليمه" : "Consignments Delivered"}</span>
             </div>
             <div className="bg-white/90 backdrop-blur-md px-4 py-2 rounded-full border border-slate-200 shadow-2xs flex items-center gap-2">
@@ -101,7 +101,7 @@ export default function AboutClient() {
         <div className={`lg:col-span-6 space-y-8 ${isRTL ? "text-right" : "text-left"}`}>
           {/* Mission Card */}
           <div className="bg-white/95 backdrop-blur-md rounded-[28px] p-7 sm:p-8 border border-slate-200 shadow-[0_10px_30px_rgba(15,23,42,0.04)] space-y-3">
-            <div className="inline-flex items-center gap-2 text-xs font-bold text-[#C45B2A] uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 text-xs font-bold text-brand-orange uppercase tracking-wider">
               <TrendingUp className="w-4 h-4" />
               <span>{isRTL ? "هدفنا الأساسي" : "Strategic Purpose"}</span>
             </div>
@@ -115,7 +115,7 @@ export default function AboutClient() {
 
           {/* Vision Card */}
           <div className="bg-white/95 backdrop-blur-md rounded-[28px] p-7 sm:p-8 border border-slate-200 shadow-[0_10px_30px_rgba(15,23,42,0.04)] space-y-3">
-            <div className="inline-flex items-center gap-2 text-xs font-bold text-[#C45B2A] uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 text-xs font-bold text-brand-orange uppercase tracking-wider">
               <Globe className="w-4 h-4" />
               <span>{isRTL ? "رؤيتنا المستقبلية" : "Global Horizon"}</span>
             </div>
@@ -139,15 +139,15 @@ export default function AboutClient() {
               className="object-cover"
               loading="lazy"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#0F172A]/80 via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-brand-dark/80 via-transparent to-transparent" />
 
             {/* Bottom Floating Stats Box */}
             <div className="absolute bottom-6 inset-x-6 bg-white/95 backdrop-blur-xl rounded-2xl p-5 border border-white/80 shadow-xl grid grid-cols-2 gap-4 z-10">
-              <div className={`${isRTL ? "border-r-3 pr-4 border-[#C45B2A]" : "border-l-3 pl-4 border-[#C45B2A]"}`}>
+              <div className={`${isRTL ? "border-r-3 pr-4 border-brand-orange" : "border-l-3 pl-4 border-brand-orange"}`}>
                 <span className="text-2xl sm:text-3xl font-display font-black text-gray-950 block">220+</span>
                 <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{t("home.hero.stats.destinations")}</span>
               </div>
-              <div className={`${isRTL ? "border-r-3 pr-4 border-[#C45B2A]" : "border-l-3 pl-4 border-[#C45B2A]"}`}>
+              <div className={`${isRTL ? "border-r-3 pr-4 border-brand-orange" : "border-l-3 pl-4 border-brand-orange"}`}>
                 <span className="text-2xl sm:text-3xl font-display font-black text-gray-950 block">99.4%</span>
                 <span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">{t("home.hero.stats.onTimeRate")}</span>
               </div>
@@ -158,7 +158,7 @@ export default function AboutClient() {
         {/* Brand & Digital Infrastructure Statement */}
         <div className="lg:col-span-12">
           <div className="bg-gradient-to-r from-slate-50 via-white to-slate-50/80 rounded-[28px] p-6 sm:p-8 border border-slate-200 shadow-sm flex flex-col md:flex-row items-center gap-6">
-            <div className="w-14 h-14 rounded-2xl bg-[#C45B2A] text-white flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/20">
+            <div className="w-14 h-14 rounded-2xl bg-brand-orange text-white flex items-center justify-center shrink-0 shadow-lg shadow-orange-500/20">
               <ShieldCheck className="w-7 h-7" />
             </div>
             <div className={`space-y-1.5 flex-1 ${isRTL ? "text-right" : "text-left"}`}>
@@ -181,7 +181,7 @@ export default function AboutClient() {
       <section className="bg-white border-t border-b border-gray-200/80 py-16 lg:py-24 px-4 sm:px-6 lg:px-8">
         <div className="max-w-[1400px] mx-auto space-y-12">
           <div className="text-center space-y-3 max-w-2xl mx-auto">
-            <span className="text-[#C45B2A] text-xs font-black uppercase tracking-wider">
+            <span className="text-brand-orange text-xs font-black uppercase tracking-wider">
               {t("about.valuesTitle")}
             </span>
             <h2 className="text-3xl sm:text-4xl font-display font-black text-gray-950 tracking-tight">
@@ -200,7 +200,7 @@ export default function AboutClient() {
                     {val.icon}
                   </div>
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#C45B2A] block mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-brand-orange block mb-1">
                       {val.badge}
                     </span>
                     <h3 className="text-lg font-display font-bold text-gray-950">
@@ -221,19 +221,19 @@ export default function AboutClient() {
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-[1400px] mx-auto grid grid-cols-2 lg:grid-cols-4 gap-6 text-center">
           <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 border border-slate-200 shadow-2xs">
-            <span className="text-3xl sm:text-4xl font-display font-black text-[#C45B2A] block mb-1">18</span>
+            <span className="text-3xl sm:text-4xl font-display font-black text-brand-orange block mb-1">18</span>
             <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t("about.stats.globalHubs")}</span>
           </div>
           <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 border border-slate-200 shadow-2xs">
-            <span className="text-3xl sm:text-4xl font-display font-black text-[#C45B2A] block mb-1">2.5M+</span>
+            <span className="text-3xl sm:text-4xl font-display font-black text-brand-orange block mb-1">2.5M+</span>
             <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t("about.stats.packagesDelivered")}</span>
           </div>
           <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 border border-slate-200 shadow-2xs">
-            <span className="text-3xl sm:text-4xl font-display font-black text-[#C45B2A] block mb-1">99.4%</span>
+            <span className="text-3xl sm:text-4xl font-display font-black text-brand-orange block mb-1">99.4%</span>
             <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t("about.stats.clientSatisfaction")}</span>
           </div>
           <div className="bg-white/95 backdrop-blur-md rounded-2xl p-6 border border-slate-200 shadow-2xs">
-            <span className="text-3xl sm:text-4xl font-display font-black text-[#C45B2A] block mb-1">15+</span>
+            <span className="text-3xl sm:text-4xl font-display font-black text-brand-orange block mb-1">15+</span>
             <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">{t("about.stats.yearsExp")}</span>
           </div>
         </div>
@@ -241,7 +241,7 @@ export default function AboutClient() {
 
       {/* 5. Bottom CTA */}
       <section className="pb-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-[1400px] mx-auto bg-gradient-to-r from-slate-950 via-[#0F172A] to-slate-950 rounded-[32px] p-8 sm:p-12 text-white text-center space-y-6 relative overflow-hidden shadow-2xl border border-slate-800">
+        <div className="max-w-[1400px] mx-auto bg-gradient-to-r from-brand-dark-deep via-brand-dark to-brand-dark-deep rounded-[32px] p-8 sm:p-12 text-white text-center space-y-6 relative overflow-hidden shadow-2xl border border-brand-dark-border">
           <div className="max-w-2xl mx-auto space-y-3 relative z-10">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-display font-black tracking-tight">
               {isRTL ? "مستعد لتجربة خدمات الشحن السريع مع XSPEED؟" : "Ready to Experience Premium Logistics with XSPEED?"}
@@ -256,7 +256,7 @@ export default function AboutClient() {
           <div className="flex flex-wrap items-center justify-center gap-4 relative z-10">
             <Link
               href={getLocalizedPath("/ship")}
-              className="bg-gradient-to-r from-[#C45B2A] to-[#E65100] hover:from-[#A34920] hover:to-[#C45B2A] text-white font-bold text-xs sm:text-sm px-8 py-3.5 rounded-full shadow-lg shadow-orange-500/30 transition-all hover:scale-105 active:scale-95 cursor-pointer min-h-[44px]"
+              className="bg-brand-orange hover:bg-brand-orange-deep text-white font-bold text-xs sm:text-sm px-8 py-3.5 rounded-full shadow-lg shadow-brand-orange/30 transition-all hover:scale-105 active:scale-95 cursor-pointer min-h-[44px]"
             >
               {t("home.cta.requestBtn")}
             </Link>

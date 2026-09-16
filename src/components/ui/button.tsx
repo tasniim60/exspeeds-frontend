@@ -19,25 +19,25 @@ export interface ButtonProps
 
 const variantStyles: Record<string, string> = {
   default:
-    "bg-[#0F172A] text-white hover:bg-[#1E293B] shadow-sm active:translate-y-0",
+    "bg-brand-dark text-white hover:bg-brand-dark-hover shadow-sm active:translate-y-0",
   destructive:
     "bg-red-600 text-white hover:bg-red-700 shadow-sm active:translate-y-0",
   outline:
     "border border-[#E2E8F0] bg-white text-[#334155] hover:bg-[#F8FAFC] hover:border-[#CBD5E1] shadow-xs",
   secondary:
-    "bg-[#F1F5F9] text-[#0F172A] hover:bg-[#E2E8F0] active:translate-y-0",
+    "bg-[#F1F5F9] text-brand-dark hover:bg-[#E2E8F0] active:translate-y-0",
   ghost:
-    "text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#0F172A]",
+    "text-[#64748B] hover:bg-[#F1F5F9] hover:text-brand-dark",
   link:
-    "text-[#C45B2A] underline-offset-4 hover:underline p-0 h-auto font-semibold",
+    "text-brand-orange underline-offset-4 hover:underline p-0 h-auto font-semibold",
   brand:
-    "bg-[#C45B2A] text-white hover:bg-[#A94A1F] shadow-[0_4px_14px_rgba(196,91,42,0.28)] hover:shadow-[0_6px_20px_rgba(196,91,42,0.35)] active:translate-y-0",
+    "bg-brand-orange text-white hover:bg-brand-orange-deep shadow-[0_4px_14px_rgba(196,91,42,0.28)] hover:shadow-[0_6px_20px_rgba(196,91,42,0.35)] active:translate-y-0",
   brandOutline:
-    "border border-[#C45B2A]/30 text-[#C45B2A] bg-[#C45B2A]/5 hover:bg-[#C45B2A]/10 hover:border-[#C45B2A]",
+    "border border-brand-orange/30 text-brand-orange bg-brand-orange/5 hover:bg-brand-orange/10 hover:border-brand-orange",
   sidebar:
     "bg-transparent text-slate-300 hover:bg-white/[0.08] hover:text-white active:bg-white/[0.12]",
   sidebarActive:
-    "bg-[#C45B2A] text-white shadow-[0_10px_24px_rgba(196,91,42,0.25)] hover:bg-[#A34920]",
+    "bg-brand-orange text-white shadow-[0_10px_24px_rgba(196,91,42,0.25)] hover:bg-brand-orange-deep",
   sidebarDanger:
     "bg-transparent text-red-200 hover:bg-red-500/10 hover:text-red-100",
 };

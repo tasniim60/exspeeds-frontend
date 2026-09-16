@@ -61,24 +61,25 @@ export function DialogContent({
   children: React.ReactNode;
   onClose?: () => void;
 }) {
-  const hasCustomMaxW = className.includes("max-w-");
-  const hasCustomPadding = className.includes("p-0") || className.includes("p-");
+  const maxWMatch = className.match(/\bmax-w-\S+/);
+  const maxWClass = maxWMatch ? maxWMatch[0] : "max-w-lg";
 
   return (
     <div
-      className={`relative z-[100000] w-full ${hasCustomMaxW ? "" : "max-w-lg"} max-h-[88vh] flex flex-col rounded-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden ${className}`}
+      className={`relative z-[100000] w-full ${maxWClass} max-h-[90vh] flex flex-col rounded-2xl bg-white shadow-2xl border border-gray-200 overflow-hidden`}
+      style={{ WebkitOverflowScrolling: "touch" }}
     >
       {onClose && (
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors z-20 cursor-pointer"
+          className="absolute right-3.5 top-3.5 rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors z-20 cursor-pointer"
           aria-label="Close"
         >
           <X className="h-5 w-5" />
         </button>
       )}
-      <div className={`flex-1 overflow-y-auto ${hasCustomPadding ? "" : "p-4 sm:p-6 md:p-8"}`}>
+      <div className={`flex-1 overflow-y-auto p-4 sm:p-6 ${className}`}>
         {children}
       </div>
     </div>
@@ -103,7 +104,7 @@ export function DialogTitle({
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h2
-      className={`text-base sm:text-xl font-bold tracking-tight text-[#0F172A] flex items-center gap-2 ${className}`}
+      className={`text-base sm:text-xl font-bold tracking-tight text-brand-dark flex items-center gap-2 ${className}`}
       {...props}
     />
   );

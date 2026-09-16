@@ -274,9 +274,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     onSelectTab("shipments");
                     onOpenChange(false);
                   }}
-                  className="flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-bold text-gray-700 bg-gray-50 hover:bg-[#C45B2A]/10 hover:text-[#C45B2A] border border-gray-200/80 hover:border-[#C45B2A]/30 transition-all cursor-pointer text-start"
+                  className="flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-bold text-gray-700 bg-gray-50 hover:bg-brand-orange/10 hover:text-brand-orange border border-gray-200/80 hover:border-brand-orange/30 transition-all cursor-pointer text-start"
                 >
-                  <PlusCircle className="h-4 w-4 text-[#C45B2A] shrink-0" />
+                  <PlusCircle className="h-4 w-4 text-brand-orange shrink-0" />
                   <span>{isRTL ? "تسجيل بوليصة جديدة (AWB)" : "Book New Shipment (AWB)"}</span>
                 </button>
                 <button
@@ -284,7 +284,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     onSelectTab("requests");
                     onOpenChange(false);
                   }}
-                  className="flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-bold text-[#1E293B] bg-[#EFEBE2] hover:bg-amber-100 hover:text-amber-900 border border-[#E2DDD1] hover:border-amber-300 transition-all cursor-pointer text-start"
+                  className="flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-bold text-brand-dark bg-[#EFEBE2] hover:bg-amber-100 hover:text-amber-900 border border-[#E2DDD1] hover:border-amber-300 transition-all cursor-pointer text-start"
                 >
                   <Package className="h-4 w-4 text-amber-600 shrink-0" />
                   <span>{isRTL ? "مراجعة طلبات الشحن والتسعير" : "Review Shipment Requests"}</span>
@@ -294,7 +294,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     onSelectTab("reports");
                     onOpenChange(false);
                   }}
-                  className="flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-bold text-[#1E293B] bg-[#EFEBE2] hover:bg-emerald-100 hover:text-emerald-900 border border-[#E2DDD1] hover:border-emerald-300 transition-all cursor-pointer text-start"
+                  className="flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-bold text-brand-dark bg-[#EFEBE2] hover:bg-emerald-100 hover:text-emerald-900 border border-[#E2DDD1] hover:border-emerald-300 transition-all cursor-pointer text-start"
                 >
                   <FileSpreadsheet className="h-4 w-4 text-emerald-600 shrink-0" />
                   <span>{isRTL ? "التقارير المالية والفواتير" : "Financial Reports & Invoices"}</span>
@@ -304,9 +304,9 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                     onSelectTab("posts");
                     onOpenChange(false);
                   }}
-                  className="flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-bold text-[#1E293B] bg-[#EFEBE2] hover:bg-blue-100 hover:text-blue-900 border border-[#E2DDD1] hover:border-blue-300 transition-all cursor-pointer text-start"
+                  className="flex items-center gap-2.5 p-2.5 rounded-xl text-xs font-bold text-brand-dark bg-[#EFEBE2] hover:bg-orange-100 hover:text-orange-900 border border-[#E2DDD1] hover:border-orange-300 transition-all cursor-pointer text-start"
                 >
-                  <FileCode className="h-4 w-4 text-blue-600 shrink-0" />
+                  <FileCode className="h-4 w-4 text-brand-orange shrink-0" />
                   <span>{isRTL ? "إدارة مقالات المدونة والـ SEO" : "Manage Blog & SEO"}</span>
                 </button>
               </div>

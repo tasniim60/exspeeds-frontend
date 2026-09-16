@@ -63,7 +63,7 @@ export default async function Home({
   const posts = await getPosts(6, locale);
 
   return (
-    <main className="min-h-screen bg-white text-[#0F172A]">
+    <main className="min-h-screen bg-white text-brand-dark">
       {/* 1. Hero Banner Section with Integrated Track & Ship Hub */}
       <HomeHeroSection />
 

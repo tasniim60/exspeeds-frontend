@@ -471,8 +471,8 @@ export const PostsView: React.FC<PostsViewProps> = ({
   return (
     <div className="space-y-6 text-start">
       {/* ── Top Knowledge Hub Stats ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
-        <Card className="p-4 bg-white border border-gray-200/90 shadow-2xs hover:shadow-xs transition-shadow space-y-1.5">
+      <div className=" grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <Card className="text-start p-4 bg-white border border-gray-200/90 shadow-2xs hover:shadow-xs transition-shadow space-y-1.5">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
               {isRTL ? "إجمالي المقالات المنشورة" : "Published Articles"}
@@ -481,7 +481,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
               <FileCode2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="flex items-baseline gap-1.5" dir="ltr">
+          <div className="text-start flex items-baseline gap-1.5" >
             <span className="text-2xl font-black font-mono text-gray-900">{posts.length}</span>
             <span className="text-xs font-bold text-gray-500">{isRTL ? "مقال" : "Posts"}</span>
           </div>
@@ -500,7 +500,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
-          <div className="flex items-baseline gap-1.5" dir="ltr">
+          <div className="flex items-baseline gap-1.5" >
             <span className="text-2xl font-black font-mono text-emerald-800">
               {posts.length > 0
                 ? Math.round(posts.reduce((acc, p) => acc + p.seoScore, 0) / posts.length)
@@ -525,7 +525,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
               <Eye className="w-4 h-4" />
             </div>
           </div>
-          <div className="flex items-baseline gap-1.5" dir="ltr">
+          <div className="flex items-baseline gap-1.5" >
             <span className="text-2xl font-black font-mono text-gray-900">
               {posts.reduce((acc, p) => acc + p.views, 0).toLocaleString()}
             </span>

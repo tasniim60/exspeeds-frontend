@@ -105,7 +105,7 @@ function RegisterForm() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-68px)] flex flex-col justify-between relative overflow-hidden font-sans bg-[#FAFBFC]">
+    <div className="min-h-[calc(100vh-68px)] flex flex-col justify-between relative overflow-hidden font-sans bg-[#FAF8F5]">
       {/* Background Image - Mirrors horizontally in Arabic (RTL) for perfect visual harmony */}
       <div
         className={`absolute inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-transform duration-700 ease-in-out ${
@@ -113,8 +113,15 @@ function RegisterForm() {
         }`}
         style={{ backgroundImage: "url('/assets/xspeed_login_bg.jpg')" }}
       />
-      {/* Subtle warm overlay for optimal readability and depth */}
-      <div className="absolute inset-0 z-0 bg-[#FAFBFC]/60 backdrop-blur-[0.5px] pointer-events-none" />
+      {/* Directional warm overlay for optimal readability, text protection, and depth */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none backdrop-blur-[0.5px]"
+        style={{
+          background: isRTL
+            ? "linear-gradient(to left, rgba(250, 248, 245, 0.96) 0%, rgba(250, 248, 245, 0.88) 45%, rgba(250, 248, 245, 0.45) 100%)"
+            : "linear-gradient(to right, rgba(250, 248, 245, 0.96) 0%, rgba(250, 248, 245, 0.88) 45%, rgba(250, 248, 245, 0.45) 100%)",
+        }}
+      />
 
       {/* Main Content Grid */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 flex-grow grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-10 lg:gap-12 items-center relative z-10 w-full">
@@ -128,13 +135,13 @@ function RegisterForm() {
 
           {/* Main Headline */}
           <div className="space-y-3">
-            <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-black text-[#0F172A] leading-[1.08] tracking-[-0.03em]">
+            <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-black text-brand-dark leading-[1.08] tracking-[-0.03em]">
               {isRTL ? "انضم إلى شبكة" : "Join The World's"}
-              <span className="text-[#C45B2A] block mt-1">
+              <span className="text-brand-orange block mt-1">
                 {isRTL ? "الشحن الأسرع والأكثر موثوقية" : "Fastest Shipping Network"}
               </span>
             </h1>
-            <p className="text-[#64748B] text-sm sm:text-base leading-relaxed font-medium max-w-lg">
+            <p className="text-slate-700 text-sm sm:text-base leading-relaxed font-medium max-w-lg">
               {isRTL
                 ? "أنشئ حسابك مجاناً الآن للاستفادة من حلول لوجستية متطورة، عروض أسعار تفضيلية للشركات، وتتبع مباشر لكافة شحناتك."
                 : "Create your free account today to access smart logistics, instant freight quotes, and exclusive business shipping rates."}
@@ -143,43 +150,43 @@ function RegisterForm() {
 
           {/* 3 Service Highlights */}
           <div className="grid gap-3 pt-2 max-w-xl sm:grid-cols-3">
-            <div className="bg-white p-4 rounded-2xl border border-[#E2E8F0] shadow-xs flex flex-col items-start gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#C45B2A] flex items-center justify-center shrink-0">
+            <div className="bg-white/95 backdrop-blur-xs p-4 rounded-2xl border border-[#E2E8F0] shadow-xs flex flex-col items-start gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-orange-50 text-brand-orange flex items-center justify-center shrink-0">
                 <Clock className="w-4 h-4" />
               </div>
               <div className="text-start">
-                <h4 className="text-sm font-bold text-[#0F172A]">
+                <h4 className="text-sm font-bold text-brand-dark">
                   {isRTL ? "سرعة فائقة في التسليم" : "Express Delivery Speed"}
                 </h4>
-                <p className="text-xs text-[#64748B] font-medium mt-0.5">
+                <p className="text-xs text-slate-600 font-medium mt-0.5">
                   {isRTL ? "مواعيد دقيقة وشحن سريع عبر رحلات يومية" : "Precise transit times with daily departures"}
                 </p>
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl border border-[#E2E8F0] shadow-xs flex flex-col items-start gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#C45B2A] flex items-center justify-center shrink-0">
+            <div className="bg-white/95 backdrop-blur-xs p-4 rounded-2xl border border-[#E2E8F0] shadow-xs flex flex-col items-start gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-orange-50 text-brand-orange flex items-center justify-center shrink-0">
                 <ShieldCheck className="w-4 h-4" />
               </div>
               <div className="text-start">
-                <h4 className="text-sm font-bold text-[#0F172A]">
+                <h4 className="text-sm font-bold text-brand-dark">
                   {isRTL ? "أمان وحماية شاملة" : "Complete Cargo Safety"}
                 </h4>
-                <p className="text-xs text-[#64748B] font-medium mt-0.5">
+                <p className="text-xs text-slate-600 font-medium mt-0.5">
                   {isRTL ? "تأمين معتمد ومتابعة دقيقة لكافة البضائع" : "Comprehensive insurance and strict security"}
                 </p>
               </div>
             </div>
 
-            <div className="bg-white p-4 rounded-2xl border border-[#E2E8F0] shadow-xs flex flex-col items-start gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#C45B2A] flex items-center justify-center shrink-0">
+            <div className="bg-white/95 backdrop-blur-xs p-4 rounded-2xl border border-[#E2E8F0] shadow-xs flex flex-col items-start gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-orange-50 text-brand-orange flex items-center justify-center shrink-0">
                 <Headphones className="w-4 h-4" />
               </div>
               <div className="text-start">
-                <h4 className="text-sm font-bold text-[#0F172A]">
+                <h4 className="text-sm font-bold text-brand-dark">
                   {isRTL ? "دعم لوجستي 24/7" : "24/7 Dedicated Support"}
                 </h4>
-                <p className="text-xs text-[#64748B] font-medium mt-0.5">
+                <p className="text-xs text-slate-600 font-medium mt-0.5">
                   {isRTL ? "فريق دعم ومتابعة متخصص جاهز لمساعدتكم" : "Specialized logistics desk ready 24/7"}
                 </p>
               </div>
@@ -191,13 +198,13 @@ function RegisterForm() {
         <div className="md:col-span-5 lg:col-span-6 flex justify-center lg:justify-end w-full">
           <div className="bg-white rounded-2xl border border-[#E2E8F0] shadow-[0_10px_30px_rgba(15,23,42,0.06)] w-full max-w-[440px] p-6 sm:p-8 text-center space-y-4 relative z-20">
             {/* Emblem Badge */}
-            <div className="w-12 h-12 rounded-xl bg-[#C45B2A] flex items-center justify-center text-white mx-auto shadow-sm">
+            <div className="w-12 h-12 rounded-xl bg-brand-orange flex items-center justify-center text-white mx-auto shadow-sm">
               <Truck className="w-6 h-6" />
             </div>
 
             {/* Titles */}
             <div className="space-y-1">
-              <h2 className="text-2xl font-bold text-[#0F172A] tracking-tight">
+              <h2 className="text-2xl font-bold text-brand-dark tracking-tight">
                 {isRTL ? "إنشاء حساب جديد" : "Create an Account"}
               </h2>
               <p className="text-xs text-[#64748B] font-medium">
@@ -217,7 +224,7 @@ function RegisterForm() {
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-3.5 text-start pt-1" noValidate>
               {/* Full Name */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-[#0F172A]">
+                <label className="block text-xs font-semibold text-brand-dark">
                   {isRTL ? "الاسم الكامل" : "Full Name"}
                 </label>
                 <div className="relative flex items-center">
@@ -235,7 +242,7 @@ function RegisterForm() {
                       isRTL ? "pr-10 pl-4 text-right" : "pl-10 pr-4 text-left"
                     } bg-white border ${
                       errors.name ? "border-red-500 bg-red-50/50" : "border-[#E2E8F0]"
-                    } text-xs sm:text-sm font-medium text-[#0F172A] outline-none focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/15 transition-all placeholder:text-[#94A3B8] shadow-xs`}
+                    } text-xs sm:text-sm font-medium text-brand-dark outline-none focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/15 transition-all placeholder:text-[#94A3B8] shadow-xs`}
                   />
                   <User className={`absolute ${isRTL ? "right-3.5" : "left-3.5"} w-4 h-4 text-[#94A3B8] pointer-events-none`} />
                 </div>
@@ -249,7 +256,7 @@ function RegisterForm() {
 
               {/* Email */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-[#0F172A]">
+                <label className="block text-xs font-semibold text-brand-dark">
                   {isRTL ? "البريد الإلكتروني" : "Email Address"}
                 </label>
                 <div className="relative flex items-center">
@@ -267,7 +274,8 @@ function RegisterForm() {
                       isRTL ? "pr-10 pl-4 text-right" : "pl-10 pr-4 text-left"
                     } bg-white border ${
                       errors.email ? "border-red-500 bg-red-50/50" : "border-[#E2E8F0]"
-                    } text-xs sm:text-sm font-medium text-[#0F172A] outline-none focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/15 transition-all placeholder:text-[#94A3B8] shadow-xs`}
+                    } 
+                    text-xs sm:text-sm font-medium text-brand-dark outline-none focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/15 transition-all placeholder:text-[#94A3B8] shadow-xs`}
                   />
                   <Mail className={`absolute ${isRTL ? "right-3.5" : "left-3.5"} w-4 h-4 text-[#94A3B8] pointer-events-none`} />
                 </div>
@@ -281,7 +289,7 @@ function RegisterForm() {
 
               {/* Password */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-[#0F172A]">
+                <label className="block text-xs font-semibold text-brand-dark">
                   {isRTL ? "كلمة المرور" : "Password"}
                 </label>
                 <div className="relative flex items-center">
@@ -299,14 +307,14 @@ function RegisterForm() {
                       isRTL ? "pr-10 pl-10 text-right" : "pl-10 pr-10 text-left"
                     } bg-white border ${
                       errors.password ? "border-red-500 bg-red-50/50" : "border-[#E2E8F0]"
-                    } text-xs sm:text-sm font-medium text-[#0F172A] outline-none focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/15 transition-all placeholder:text-[#94A3B8] shadow-xs`}
+                    } text-xs sm:text-sm font-medium text-brand-dark outline-none focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/15 transition-all placeholder:text-[#94A3B8] shadow-xs`}
                   />
                   <Lock className={`absolute ${isRTL ? "right-3.5" : "left-3.5"} w-4 h-4 text-[#94A3B8] pointer-events-none`} />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     aria-label={showPassword ? (t("auth.hidePassword") || "Hide password") : (t("auth.showPassword") || "Show password")}
-                    className={`absolute ${isRTL ? "left-3" : "right-3"} text-[#94A3B8] hover:text-[#0F172A] rounded-lg p-1 transition-colors cursor-pointer`}
+                    className={`absolute ${isRTL ? "left-3" : "right-3"} text-[#94A3B8] hover:text-brand-dark rounded-lg p-1 transition-colors cursor-pointer`}
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -321,7 +329,7 @@ function RegisterForm() {
 
               {/* Confirm Password */}
               <div className="space-y-1.5">
-                <label className="block text-xs font-semibold text-[#0F172A]">
+                <label className="block text-xs font-semibold text-brand-dark">
                   {isRTL ? "تأكيد كلمة المرور" : "Confirm Password"}
                 </label>
                 <div className="relative flex items-center">
@@ -337,14 +345,14 @@ function RegisterForm() {
                       isRTL ? "pr-10 pl-10 text-right" : "pl-10 pr-10 text-left"
                     } bg-white border ${
                       errors.confirmPassword ? "border-red-500 bg-red-50/50" : "border-[#E2E8F0]"
-                    } text-xs sm:text-sm font-medium text-[#0F172A] outline-none focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/15 transition-all placeholder:text-[#94A3B8] shadow-xs`}
+                    } text-xs sm:text-sm font-medium text-brand-dark outline-none focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/15 transition-all placeholder:text-[#94A3B8] shadow-xs`}
                   />
                   <Lock className={`absolute ${isRTL ? "right-3.5" : "left-3.5"} w-4 h-4 text-[#94A3B8] pointer-events-none`} />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     aria-label={showConfirmPassword ? (t("auth.hidePassword") || "Hide password") : (t("auth.showPassword") || "Show password")}
-                    className={`absolute ${isRTL ? "left-3" : "right-3"} text-[#94A3B8] hover:text-[#0F172A] rounded-lg p-1 transition-colors cursor-pointer`}
+                    className={`absolute ${isRTL ? "left-3" : "right-3"} text-[#94A3B8] hover:text-brand-dark rounded-lg p-1 transition-colors cursor-pointer`}
                   >
                     {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -361,7 +369,7 @@ function RegisterForm() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-11 py-2.5 rounded-xl bg-[#C45B2A] text-white font-semibold text-sm shadow-md hover:bg-[#A94A1F] transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full h-11 py-2.5 rounded-xl bg-brand-orange text-white font-semibold text-sm shadow-md hover:bg-brand-orange-deep transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer mt-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? (
                   <>
@@ -388,11 +396,11 @@ function RegisterForm() {
                 type="button"
                 onClick={handleGoogleSignUp}
                 disabled={isGoogleLoading || isSubmitting}
-                className="w-full h-10 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-[#0F172A] font-semibold text-xs sm:text-sm flex items-center justify-center gap-2.5 shadow-xs transition-all cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full h-10 rounded-xl border border-[#E2E8F0] bg-white hover:bg-[#F8FAFC] text-brand-dark font-semibold text-xs sm:text-sm flex items-center justify-center gap-2.5 shadow-xs transition-all cursor-pointer disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isGoogleLoading ? (
                   <>
-                    <Loader2 className="w-4 h-4 animate-spin text-[#C45B2A]" />
+                    <Loader2 className="w-4 h-4 animate-spin text-brand-orange" />
                     <span className="text-gray-700">
                       {isRTL ? "جاري الاتصال بـ Google..." : "Connecting to Google..."}
                     </span>
@@ -417,7 +425,7 @@ function RegisterForm() {
                 {isRTL ? "لديك حساب بالفعل؟" : "Already have an account?"}{" "}
                 <Link
                   href={getLocalizedPath(redirectParam ? `/login?redirect=${encodeURIComponent(redirectParam)}` : "/login")}
-                  className="text-[#C45B2A] font-bold hover:underline transition-colors"
+                  className="text-brand-orange font-bold hover:underline transition-colors"
                 >
                   {isRTL ? "تسجيل الدخول" : "Log In"}
                 </Link>
@@ -432,7 +440,7 @@ function RegisterForm() {
 
 export default function RegisterPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#FAFBFC] flex items-center justify-center text-[#0F172A] text-sm font-bold">...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center text-brand-dark text-sm font-bold">...</div>}>
       <RegisterForm />
     </Suspense>
   );

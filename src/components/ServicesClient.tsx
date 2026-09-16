@@ -292,7 +292,7 @@ export default function ServicesClient() {
 
       {/* 4. Bottom CTA Strip */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-[1400px] mx-auto bg-gradient-to-r from-slate-950 via-[#0F172A] to-slate-950 rounded-[32px] p-8 sm:p-12 text-white text-center space-y-6 relative overflow-hidden shadow-2xl border border-slate-800">
+        <div className="max-w-[1400px] mx-auto bg-gradient-to-r from-brand-dark-deep via-brand-dark to-brand-dark-deep rounded-[32px] p-8 sm:p-12 text-white text-center space-y-6 relative overflow-hidden shadow-2xl border border-brand-dark-border">
           <div className="max-w-2xl mx-auto space-y-3 relative z-10">
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-display font-black tracking-tight">
               {t("home.cta.title")}

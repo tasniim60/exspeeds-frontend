@@ -162,10 +162,15 @@ function AdminPageContent() {
       {mobileSidebarOpen && (
         <div className="fixed inset-0 z-50 lg:hidden">
           <div
-            className="fixed inset-0 bg-black/60 backdrop-blur-xs"
+            className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
             onClick={() => setMobileSidebarOpen(false)}
+            aria-hidden="true"
           />
-          <div className="relative w-72 max-w-[85vw] h-full">
+          <div
+            className={`fixed top-0 bottom-0 z-50 w-72 max-w-[85vw] h-full shadow-2xl bg-brand-dark transition-transform duration-300 ease-out ${
+              isRTL ? "right-0" : "left-0"
+            }`}
+          >
             <AdminSidebar
               activeTab={activeTab}
               setActiveTab={(tab) => {
@@ -177,6 +182,8 @@ function AdminPageContent() {
               selectedHub={selectedHub}
               setSelectedHub={setSelectedHub}
               badgeCounts={badgeCounts}
+              isMobileDrawer={true}
+              onCloseMobile={() => setMobileSidebarOpen(false)}
             />
           </div>
         </div>
@@ -227,7 +234,7 @@ function AdminPageContent() {
         />
 
         {/* View Workspace */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 w-full animate-fade-up">
+        <main className="flex-1 min-w-0 max-w-full overflow-x-hidden p-3 sm:p-6 lg:p-8 w-full animate-fade-up">
           {activeTab === "statistics" && (
             <StatisticsView
               shipments={shipments}

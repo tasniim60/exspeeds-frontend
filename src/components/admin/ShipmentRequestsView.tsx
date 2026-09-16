@@ -1544,7 +1544,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     type="button"
                     variant="default"
                     onClick={() => openConvertModal(selectedRequest)}
-                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold h-10 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm cursor-pointer order-1 sm:order-2"
+                    className="w-full sm:w-auto bg-brand-orange hover:bg-brand-orange-deep text-white font-bold h-10 px-4 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-sm cursor-pointer order-1 sm:order-2"
                   >
                     <Truck className="w-4 h-4 shrink-0" />
                     <span className="truncate">{t("admin.requests.modal.convertToLiveShipment")}</span>

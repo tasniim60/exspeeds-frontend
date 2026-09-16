@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAuth } from "@/context/AuthContext";
+import { SectionEyebrow } from "@/components/ui/SectionEyebrow";
 
 interface RequestCodeInputs {
   email: string;
@@ -157,7 +158,7 @@ function ForgotPasswordForm() {
   };
 
   return (
-    <div className="min-h-[calc(100vh-68px)] flex flex-col justify-between relative overflow-hidden font-sans bg-[#FAFBFC]">
+    <div className="min-h-[calc(100vh-68px)] flex flex-col justify-between relative overflow-hidden font-sans bg-[#FAF8F5]">
       {/* Background Image - Mirrors horizontally in Arabic (RTL) for perfect visual harmony */}
       <div
         className={`absolute inset-0 z-0 bg-cover bg-center bg-no-repeat pointer-events-none transition-transform duration-700 ease-in-out ${
@@ -165,30 +166,34 @@ function ForgotPasswordForm() {
         }`}
         style={{ backgroundImage: "url('/assets/xspeed_login_bg.jpg')" }}
       />
-      {/* Subtle warm overlay for optimal readability and depth */}
-      <div className="absolute inset-0 z-0 bg-[#FAFBFC]/45 backdrop-blur-[0.5px] pointer-events-none" />
+      {/* Directional warm overlay for optimal readability, text protection, and depth */}
+      <div
+        className="absolute inset-0 z-0 pointer-events-none backdrop-blur-[0.5px]"
+        style={{
+          background: isRTL
+            ? "linear-gradient(to left, rgba(250, 248, 245, 0.96) 0%, rgba(250, 248, 245, 0.88) 45%, rgba(250, 248, 245, 0.45) 100%)"
+            : "linear-gradient(to right, rgba(250, 248, 245, 0.96) 0%, rgba(250, 248, 245, 0.88) 45%, rgba(250, 248, 245, 0.45) 100%)",
+        }}
+      />
 
       {/* Main Content Grid */}
       <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 flex-grow grid grid-cols-1 md:grid-cols-12 gap-8 md:gap-10 lg:gap-12 items-center relative z-10 w-full">
         {/* Left Column: Explanatory Content */}
-        <div className="md:col-span-7 lg:col-span-6 flex flex-col space-y-6 text-start">
-          {/* Badge */}
-          <div className="inline-flex items-center gap-2 self-start bg-white/90 backdrop-blur-md border border-orange-200/80 px-3.5 py-1.5 rounded-full shadow-2xs">
-            <Sparkles className="w-3.5 h-3.5 text-[#C45B2A]" />
-            <span className="text-xs font-bold text-gray-800">
-              {isRTL ? "استعادة الوصول الآمن للحساب" : "Secure Account Recovery"}
-            </span>
-          </div>
+        <div className="hidden md:col-span-7 lg:col-span-6 md:flex flex-col space-y-6 text-start">
+          {/* Natural Editorial Eyebrow */}
+          <SectionEyebrow>
+            {isRTL ? "استعادة الوصول الآمن للحساب" : "Secure Account Recovery"}
+          </SectionEyebrow>
 
           {/* Main Headline */}
           <div className="space-y-3">
-            <h1 className="text-3xl sm:text-4xl lg:text-[46px] font-black text-gray-950 leading-[1.18] tracking-tight">
-              {isRTL ? "استعادة حسابك بسهولة وأمان" : "Recover Your Account Safely"}
-              <span className="text-[#C45B2A] block mt-1">
-                {isRTL ? "مع منصة XSPEED اللوجستية" : "With XSPEED Logistics"}
+            <h1 className="text-4xl sm:text-5xl lg:text-[56px] font-black text-brand-dark leading-[1.08] tracking-[-0.03em]">
+              {isRTL ? "استعادة حسابك" : "Recover Your"}
+              <span className="text-brand-orange block mt-1">
+                {isRTL ? "بسهولة وأمان تام" : "Account Safely & Easily"}
               </span>
             </h1>
-            <p className="text-gray-600 text-sm sm:text-base leading-relaxed font-medium max-w-lg">
+            <p className="text-slate-700 text-sm sm:text-base leading-relaxed font-medium max-w-lg">
               {isRTL
                 ? "نحن نحمي بياناتك وحسابك اللوجستي بأعلى معايير التشفير والأمان. اتبع الخطوات السريعة لتعيين كلمة مرور جديدة ومتابعة شحناتك."
                 : "We safeguard your freight and logistics account with enterprise-grade encryption. Follow the quick steps to set a new password."}
@@ -196,45 +201,45 @@ function ForgotPasswordForm() {
           </div>
 
           {/* Highlights */}
-          <div className="space-y-3.5 pt-2 max-w-md">
-            <div className="flex items-start gap-3.5 group">
-              <div className="w-10 h-10 rounded-2xl bg-white/95 border border-orange-200/80 flex items-center justify-center text-[#C45B2A] shrink-0 shadow-2xs group-hover:scale-105 transition-transform duration-200">
-                <ShieldCheck className="w-5 h-5" />
+          <div className="grid gap-3 pt-2 max-w-xl sm:grid-cols-3">
+            <div className="bg-white/95 backdrop-blur-xs p-4 rounded-2xl border border-[#E2E8F0] shadow-xs flex flex-col items-start gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-orange-50 text-brand-orange flex items-center justify-center shrink-0">
+                <ShieldCheck className="w-4 h-4" />
               </div>
               <div className="text-start">
-                <h4 className="text-sm font-bold text-gray-950">
-                  {isRTL ? "تشفير وحماية ديناميكية (OTP)" : "Secure Dynamic OTP Verification"}
+                <h4 className="text-sm font-bold text-brand-dark">
+                  {isRTL ? "تشفير وحماية (OTP)" : "Dynamic OTP Security"}
                 </h4>
-                <p className="text-xs text-gray-500 font-medium">
-                  {isRTL ? "رموز أمان ديناميكية ومؤقتة لكل عملية استعادة لحماية حسابك" : "Dynamic, one-time verification codes sent securely to your email"}
+                <p className="text-xs text-slate-600 font-medium mt-0.5">
+                  {isRTL ? "رموز أمان ديناميكية مشفرة عبر البريد" : "One-time secure verification codes"}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3.5 group">
-              <div className="w-10 h-10 rounded-2xl bg-white/95 border border-orange-200/80 flex items-center justify-center text-[#C45B2A] shrink-0 shadow-2xs group-hover:scale-105 transition-transform duration-200">
-                <Clock className="w-5 h-5" />
+            <div className="bg-white/95 backdrop-blur-xs p-4 rounded-2xl border border-[#E2E8F0] shadow-xs flex flex-col items-start gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-orange-50 text-brand-orange flex items-center justify-center shrink-0">
+                <Clock className="w-4 h-4" />
               </div>
               <div className="text-start">
-                <h4 className="text-sm font-bold text-gray-950">
-                  {isRTL ? "سرعة وسهولة في الاستعادة" : "Fast & Effortless Recovery"}
+                <h4 className="text-sm font-bold text-brand-dark">
+                  {isRTL ? "سرعة وسهولة" : "Fast Recovery"}
                 </h4>
-                <p className="text-xs text-gray-500 font-medium">
-                  {isRTL ? "خطوتين فقط لإعادة تعيين كلمة المرور واستئناف إدارة الشحنات" : "Only 2 quick steps to regain access and manage your consignments"}
+                <p className="text-xs text-slate-600 font-medium mt-0.5">
+                  {isRTL ? "خطوتين فقط لإعادة تعيين كلمة المرور" : "Only 2 quick steps to reset password"}
                 </p>
               </div>
             </div>
 
-            <div className="flex items-start gap-3.5 group">
-              <div className="w-10 h-10 rounded-2xl bg-white/95 border border-orange-200/80 flex items-center justify-center text-[#C45B2A] shrink-0 shadow-2xs group-hover:scale-105 transition-transform duration-200">
-                <Headphones className="w-5 h-5" />
+            <div className="bg-white/95 backdrop-blur-xs p-4 rounded-2xl border border-[#E2E8F0] shadow-xs flex flex-col items-start gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-orange-50 text-brand-orange flex items-center justify-center shrink-0">
+                <Headphones className="w-4 h-4" />
               </div>
               <div className="text-start">
-                <h4 className="text-sm font-bold text-gray-950">
-                  {isRTL ? "دعم ومساعدة فورية 24/7" : "24/7 Support Assistance"}
+                <h4 className="text-sm font-bold text-brand-dark">
+                  {isRTL ? "دعم ومساعدة 24/7" : "24/7 Support Desk"}
                 </h4>
-                <p className="text-xs text-gray-500 font-medium">
-                  {isRTL ? "فريق خدمة العملاء جاهز لمساعدتك في حال واجهت أي صعوبة" : "Our dedicated support team is available to assist you anytime"}
+                <p className="text-xs text-slate-600 font-medium mt-0.5">
+                  {isRTL ? "فريق خدمة العملاء جاهز لمساعدتك" : "Dedicated assistance at any time"}
                 </p>
               </div>
             </div>
@@ -555,7 +560,7 @@ function ForgotPasswordForm() {
 
 export default function ForgotPasswordPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#FAF5EF] flex items-center justify-center text-gray-500 text-sm font-semibold">...</div>}>
+    <Suspense fallback={<div className="min-h-screen bg-[#FAF8F5] flex items-center justify-center text-brand-dark text-sm font-bold">...</div>}>
       <ForgotPasswordForm />
     </Suspense>
   );

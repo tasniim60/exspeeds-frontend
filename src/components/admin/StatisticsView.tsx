@@ -148,7 +148,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
     });
 
     const colors: Record<string, string> = {
-      EXPRESS: "bg-[#C45B2A]",
+      EXPRESS: "bg-brand-orange",
       FEDEX: "bg-indigo-600",
       SMSA: "bg-emerald-600",
       ARAMEX: "bg-rose-500",
@@ -161,7 +161,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
         const count = map[name];
         const share = totalVolume > 0 ? Math.round((count / totalVolume) * 100) : 0;
         const upper = name.toUpperCase();
-        let color = "bg-[#0F172A]";
+        let color = "bg-brand-dark";
         for (const [key, clr] of Object.entries(colors)) {
           if (upper.includes(key)) color = clr;
         }
@@ -221,11 +221,11 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
       {/* ── Top Header Controls & Timeframe Selector ── */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 sm:p-6 rounded-2xl border border-gray-200/90 shadow-2xs">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-orange-100 text-[#C45B2A] flex items-center justify-center shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-orange-100 text-brand-orange flex items-center justify-center shrink-0">
             <BarChart2 className="w-5 h-5" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-[#0F172A]">
+            <h1 className="text-xl font-bold text-brand-dark">
               {isRTL ? "لوحة الإحصائيات والمؤشرات التشغيلية" : "Operational Analytics & KPIs"}
             </h1>
             <p className="text-xs text-gray-500 mt-0.5">
@@ -237,37 +237,39 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
         </div>
 
         {/* Timeframe Filter Buttons */}
-        <div className="inline-flex items-center rounded-xl bg-gray-100 p-1 border border-gray-200 text-xs font-bold self-start sm:self-auto">
-          {[
-            { id: "today", label: isRTL ? "أحدث شحنات" : "Recent Batch" },
-            { id: "7d", label: isRTL ? "آخر 7 أيام" : "Last 7 Days" },
-            { id: "30d", label: isRTL ? "آخر 30 يوم" : "Last 30 Days" },
-            { id: "ytd", label: isRTL ? `إجمالي الشحنات (${shipments.length})` : `All Records (${shipments.length})` },
-          ].map((tf) => (
-            <button
-              key={tf.id}
-              onClick={() => setTimeframe(tf.id as any)}
-              className={`px-3.5 py-1.5 rounded-lg transition-all cursor-pointer ${
-                timeframe === tf.id
-                  ? "bg-[#C45B2A] text-white shadow-xs font-extrabold"
-                  : "text-gray-600 hover:text-gray-900"
-              }`}
-            >
-              {tf.label}
-            </button>
-          ))}
+        <div className="w-full sm:w-auto overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+          <div className="inline-flex items-center rounded-xl bg-gray-100 p-1 border border-gray-200 text-xs font-bold shrink-0">
+            {[
+              { id: "today", label: isRTL ? "أحدث شحنات" : "Recent Batch" },
+              { id: "7d", label: isRTL ? "آخر 7 أيام" : "Last 7 Days" },
+              { id: "30d", label: isRTL ? "آخر 30 يوم" : "Last 30 Days" },
+              { id: "ytd", label: isRTL ? `إجمالي الشحنات (${shipments.length})` : `All Records (${shipments.length})` },
+            ].map((tf) => (
+              <button
+                key={tf.id}
+                onClick={() => setTimeframe(tf.id as any)}
+                className={`whitespace-nowrap px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+                  timeframe === tf.id
+                    ? "bg-brand-orange text-white shadow-xs font-extrabold"
+                    : "text-gray-600 hover:text-gray-900"
+                }`}
+              >
+                {tf.label}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
       {/* ── 4 Real KPI Metric Cards ── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-3.5">
         {/* Card 1: Total Freight Volume */}
         <Card className="p-4 bg-white border border-gray-200/90 shadow-2xs hover:shadow-xs transition-shadow space-y-1.5">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
               {isRTL ? "إجمالي عدد الشحنات" : "Total Shipments"}
             </span>
-            <div className="w-8 h-8 rounded-xl bg-orange-50 text-[#C45B2A] flex items-center justify-center shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-orange-50 text-brand-orange flex items-center justify-center shrink-0">
               <Package className="w-4 h-4" />
             </div>
           </div>
@@ -359,7 +361,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
           <CardHeader className="p-5 pb-3 border-b border-gray-100 flex flex-row items-center justify-between">
             <div>
               <CardTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
-                <Globe className="h-4 w-4 text-[#C45B2A]" />
+                <Globe className="h-4 w-4 text-brand-orange" />
                 <span>{isRTL ? "توزيع الشحنات حسب الدول المستقبِلة" : "Consignment Distribution by Destination Country"}</span>
               </CardTitle>
               <CardDescription className="text-xs text-gray-500">
@@ -376,15 +378,15 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 <div key={item.country} className="p-3 rounded-xl border border-gray-200/80 bg-gray-50/50 hover:bg-gray-50 transition-colors space-y-2">
                   <div className="flex items-center justify-between text-xs font-bold text-gray-900">
                     <span className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-[#C45B2A] shrink-0" />
+                      <span className="w-2 h-2 rounded-full bg-brand-orange shrink-0" />
                       {item.country}
                     </span>
-                    <span className="font-mono text-[#C45B2A] font-bold" dir="ltr">
+                    <span className="font-mono text-brand-orange font-bold" dir="ltr">
                       {item.count} {isRTL ? "بوليصة" : "AWBs"} ({item.share}%)
                     </span>
                   </div>
                   <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div style={{ width: `${item.share}%` }} className="h-full bg-[#C45B2A] rounded-full" />
+                    <div style={{ width: `${item.share}%` }} className="h-full bg-brand-orange rounded-full" />
                   </div>
                   <div className="flex items-center justify-between text-[11px] text-gray-500 font-medium">
                     <span dir="ltr">
@@ -426,7 +428,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
         <Card className="shadow-2xs bg-white border border-gray-200/90 flex flex-col justify-between">
           <CardHeader className="p-5 pb-3 border-b border-gray-100">
             <CardTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <Truck className="h-4 w-4 text-[#C45B2A]" />
+              <Truck className="h-4 w-4 text-brand-orange" />
               <span>{isRTL ? "حصة الشركات الناقلة الفعلية" : "Carrier Freight Share"}</span>
             </CardTitle>
             <CardDescription className="text-xs text-gray-500">
@@ -465,7 +467,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
 
             {/* Smart Optimization Note */}
             <div className="p-3.5 rounded-xl bg-orange-50/70 border border-orange-200/80 text-xs text-orange-950 space-y-1 mt-4">
-              <div className="font-bold flex items-center gap-1.5 text-[#C45B2A]">
+              <div className="font-bold flex items-center gap-1.5 text-brand-orange">
                 <Sparkles className="h-4 w-4 shrink-0" />
                 <span>{isRTL ? "تحليل الكفاءة التشغيلية:" : "Operational Efficiency Analysis:"}</span>
               </div>
@@ -485,7 +487,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
         <Card className="shadow-2xs bg-white border border-gray-200/90">
           <CardHeader className="p-5 pb-3 border-b border-gray-100">
             <CardTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <Users className="h-4 w-4 text-[#C45B2A]" />
+              <Users className="h-4 w-4 text-brand-orange" />
               <span>{isRTL ? "أكبر العملاء حسب حجم الشحنات" : "Top Accounts by Volume"}</span>
             </CardTitle>
             <CardDescription className="text-xs text-gray-500">
@@ -499,7 +501,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
               <div key={acc.name} className="p-3 rounded-xl border border-gray-200/80 bg-gray-50/50 flex items-center justify-between gap-3 text-xs">
                 <div className="flex items-center gap-2.5 min-w-0">
                   <span
-                    className="w-6 h-6 min-w-6 min-h-6 rounded-full bg-[#C45B2A] text-white flex items-center justify-center text-center text-xs font-bold shrink-0 leading-none select-none"
+                    className="w-6 h-6 min-w-6 min-h-6 rounded-full bg-brand-orange text-white flex items-center justify-center text-center text-xs font-bold shrink-0 leading-none select-none"
                     dir="ltr"
                   >
                     {idx + 1}

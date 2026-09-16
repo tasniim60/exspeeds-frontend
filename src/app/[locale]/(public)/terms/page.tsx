@@ -41,7 +41,7 @@ export default function TermsPage({
       <div className="max-w-4xl mx-auto space-y-8 text-start" dir={isAr ? "rtl" : "ltr"}>
         {/* Header Breadcrumb & Tag */}
         <div className="space-y-3">
-          <div className="inline-flex items-center gap-2 bg-blue-100/70 border border-blue-200 text-blue-800 text-xs font-bold px-3.5 py-1.5 rounded-full shadow-2xs">
+          <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 text-brand-orange text-xs font-bold px-3.5 py-1.5 rounded-full shadow-2xs">
             <Scale className="w-3.5 h-3.5" />
             <span>{isAr ? "الاتفاقية التعاقدية والشروط القانونية" : "Contractual Agreement & Terms"}</span>
           </div>
@@ -63,7 +63,7 @@ export default function TermsPage({
             <>
               <section className="space-y-3">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#C45B2A]"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-brand-orange"></span>
                   1. تمهيد والتعريفات الأساسية
                 </h2>
                 <p>
@@ -78,7 +78,7 @@ export default function TermsPage({
 
               <section className="space-y-3">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#C45B2A]"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-brand-orange"></span>
                   2. مسؤوليات العميل وتجهيز الشحنات
                 </h2>
                 <ul className="list-disc list-inside space-y-2 pr-2 text-gray-600">
@@ -122,7 +122,7 @@ export default function TermsPage({
 
               <section className="space-y-3">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#C45B2A]"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-brand-orange"></span>
                   4. حدود المسؤولية والتعويضات
                 </h2>
                 <p>
@@ -145,7 +145,7 @@ export default function TermsPage({
 
               <section className="space-y-3">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#C45B2A]"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-brand-orange"></span>
                   5. الرسوم، الضرائب، والتخليص الجمركي
                 </h2>
                 <p>
@@ -160,7 +160,7 @@ export default function TermsPage({
 
               <section className="space-y-3">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#C45B2A]"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-brand-orange"></span>
                   6. القانون الواجب التطبيق والاختصاص القضائي
                 </h2>
                 <p>
@@ -172,7 +172,7 @@ export default function TermsPage({
             <>
               <section className="space-y-3">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#C45B2A]"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-brand-orange"></span>
                   1. Preamble & Definitions
                 </h2>
                 <p>
@@ -187,7 +187,7 @@ export default function TermsPage({
 
               <section className="space-y-3">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#C45B2A]"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-brand-orange"></span>
                   2. Shipper Obligations & Consignment Preparation
                 </h2>
                 <ul className="list-disc list-inside space-y-2 pl-2 text-gray-600">
@@ -231,7 +231,7 @@ export default function TermsPage({
 
               <section className="space-y-3">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#C45B2A]"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-brand-orange"></span>
                   4. Limitation of Liability & Cargo Claims
                 </h2>
                 <p>
@@ -248,7 +248,7 @@ export default function TermsPage({
 
               <section className="space-y-3">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#C45B2A]"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-brand-orange"></span>
                   5. Rates, Customs Duties & 14% VAT
                 </h2>
                 <p>
@@ -260,7 +260,7 @@ export default function TermsPage({
 
               <section className="space-y-3">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full bg-[#C45B2A]"></span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-brand-orange"></span>
                   6. Governing Law & Jurisdiction
                 </h2>
                 <p>

@@ -9,26 +9,11 @@ import {
   Building2,
   Mail,
   Phone,
-  CreditCard,
-  FileText,
-  DollarSign,
-  Package,
-  CheckCircle2,
-  Calendar,
-  ExternalLink,
-  ShieldCheck,
   UserCheck,
-  Edit2,
   MapPin,
-  Sparkles,
   Receipt,
-  ArrowDownLeft,
-  ArrowUpRight,
-  TrendingDown,
-  Clock,
   Trash2,
   AlertCircle,
-  HelpCircle,
   Wallet,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -323,7 +308,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
             className="text-xs font-semibold cursor-pointer flex items-center gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
           >
             <Receipt className="h-4 w-4 text-emerald-600" />
-            <span>{isRTL ? "تسجيل سند تحصيل" : "Record Collection"}</span>
+            <span>{isRTL ? "تسجيل تحصيل" : "Record Collection"}</span>
           </Button>
 
           <Button

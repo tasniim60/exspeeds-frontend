@@ -8,6 +8,22 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        brand: {
+          orange: "var(--brand-orange, #C45B2A)",
+          "orange-light": "var(--brand-orange-light, #D4723F)",
+          "orange-deep": "var(--brand-orange-deep, #A94A1F)",
+          "orange-ink": "var(--brand-orange-ink, #7A3416)",
+          "orange-soft": "var(--brand-orange-soft, rgba(196, 91, 42, 0.1))",
+          dark: "var(--brand-dark, #251516)",
+          "dark-surface": "var(--brand-dark-surface, #251516)",
+          "dark-deep": "var(--brand-dark-deep, #180D0E)",
+          "dark-border": "var(--brand-dark-border, #3D2426)",
+          "dark-hover": "var(--brand-dark-hover, #351D1F)",
+          text: "var(--brand-text-primary, #251516)",
+          "text-secondary": "var(--brand-text-secondary, #64748B)",
+          border: "var(--brand-border, #E8E2D9)",
+          canvas: "var(--brand-canvas, #FAFBFC)",
+        },
         xspeed: {
           900: "#FFFFFF",
           800: "#FAFBFC",
@@ -15,12 +31,12 @@ module.exports = {
           600: "#E2E8F0",
           500: "#94A3B8",
           400: "#64748B",
-          dark: "#0F172A",
-          ink: "#1E293B",
-          orange: "#C45B2A",
-          "orange-light": "#D4723F",
-          "orange-deep": "#A34920",
-          "orange-ink": "#7A3416",
+          dark: "var(--brand-dark, #251516)",
+          ink: "var(--brand-dark, #251516)",
+          orange: "var(--brand-orange, #C45B2A)",
+          "orange-light": "var(--brand-orange-light, #D4723F)",
+          "orange-deep": "var(--brand-orange-deep, #A94A1F)",
+          "orange-ink": "var(--brand-orange-ink, #7A3416)",
           cream: "#FAFBFC",
           "cream-dim": "#64748B",
         },
@@ -38,8 +54,8 @@ module.exports = {
         pill: "9999px",
       },
       boxShadow: {
-        deck: "0 4px 20px -2px rgba(15, 23, 42, 0.05), 0 2px 6px -1px rgba(15, 23, 42, 0.03)",
-        "deck-sm": "0 1px 3px 0 rgba(15, 23, 42, 0.05), 0 1px 2px -1px rgba(15, 23, 42, 0.03)",
+        deck: "0 4px 20px -2px rgba(37, 21, 22, 0.05), 0 2px 6px -1px rgba(37, 21, 22, 0.03)",
+        "deck-sm": "0 1px 3px 0 rgba(37, 21, 22, 0.05), 0 1px 2px -1px rgba(37, 21, 22, 0.03)",
         "deck-glow": "0 0 0 3px rgba(196,91,42,0.15), 0 10px 25px -5px rgba(196,91,42,0.2)",
       },
       fontFamily: {

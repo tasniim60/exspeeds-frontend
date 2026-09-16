@@ -77,8 +77,8 @@ export function TabsTrigger({
       onClick={() => context.onValueChange(value)}
       className={`inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg px-3.5 py-1.5 text-xs md:text-sm font-semibold transition-all focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50 cursor-pointer ${
         isActive
-          ? "bg-white text-[#0F172A] shadow-xs font-bold"
-          : "text-[#64748B] hover:text-[#0F172A] hover:bg-white/50"
+          ? "bg-white text-brand-dark shadow-xs font-bold"
+          : "text-[#64748B] hover:text-brand-dark hover:bg-white/50"
       } ${className}`}
       {...props}
     >

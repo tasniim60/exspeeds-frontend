@@ -119,7 +119,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
             onClick={() => setActiveTab("write")}
             className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
               activeTab === "write"
-                ? "bg-white text-[#C45B2A] shadow-xs border border-gray-200"
+                ? "bg-white text-brand-orange shadow-xs border border-gray-200"
                 : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
             }`}
           >
@@ -157,7 +157,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
             type="button"
             onClick={() => insertText("<h2>", "</h2>", isRTL ? "عنوان رئيسي H2" : "Heading 2")}
             title="Heading 2 (H2)"
-            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-[#C45B2A] transition-colors cursor-pointer text-xs font-black"
+            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-brand-orange transition-colors cursor-pointer text-xs font-black"
           >
             H2
           </button>
@@ -165,7 +165,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
             type="button"
             onClick={() => insertText("<h3>", "</h3>", isRTL ? "عنوان فرعي H3" : "Heading 3")}
             title="Heading 3 (H3)"
-            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-[#C45B2A] transition-colors cursor-pointer text-xs font-bold"
+            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-brand-orange transition-colors cursor-pointer text-xs font-bold"
           >
             H3
           </button>
@@ -173,7 +173,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
             type="button"
             onClick={() => insertText("<h4>", "</h4>", isRTL ? "عنوان قسم H4" : "Heading 4")}
             title="Heading 4 (H4)"
-            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-[#C45B2A] transition-colors cursor-pointer text-xs font-semibold"
+            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-brand-orange transition-colors cursor-pointer text-xs font-semibold"
           >
             H4
           </button>
@@ -185,7 +185,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
             type="button"
             onClick={() => insertText("<strong>", "</strong>", isRTL ? "نص عريض" : "bold text")}
             title="Bold"
-            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-[#C45B2A] transition-colors cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-brand-orange transition-colors cursor-pointer"
           >
             <Bold className="w-3.5 h-3.5" />
           </button>
@@ -193,7 +193,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
             type="button"
             onClick={() => insertText("<em>", "</em>", isRTL ? "نص مائل" : "italic text")}
             title="Italic"
-            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-[#C45B2A] transition-colors cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-brand-orange transition-colors cursor-pointer"
           >
             <Italic className="w-3.5 h-3.5" />
           </button>
@@ -201,7 +201,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
             type="button"
             onClick={() => insertText("<del>", "</del>", isRTL ? "نص مشطوب" : "strikethrough")}
             title="Strikethrough"
-            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-[#C45B2A] transition-colors cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-brand-orange transition-colors cursor-pointer"
           >
             <Strikethrough className="w-3.5 h-3.5" />
           </button>
@@ -219,7 +219,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
               )
             }
             title="Bullet List"
-            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-[#C45B2A] transition-colors cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-brand-orange transition-colors cursor-pointer"
           >
             <List className="w-3.5 h-3.5" />
           </button>
@@ -233,7 +233,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
               )
             }
             title="Numbered List"
-            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-[#C45B2A] transition-colors cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-brand-orange transition-colors cursor-pointer"
           >
             <ListOrdered className="w-3.5 h-3.5" />
           </button>
@@ -251,7 +251,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
               )
             }
             title="Blockquote"
-            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-[#C45B2A] transition-colors cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-brand-orange transition-colors cursor-pointer"
           >
             <Quote className="w-3.5 h-3.5" />
           </button>
@@ -259,7 +259,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
             type="button"
             onClick={insertCallout}
             title="Highlight Callout Box"
-            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-[#C45B2A] transition-colors cursor-pointer text-xs font-bold text-amber-700 bg-amber-50"
+            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-brand-orange transition-colors cursor-pointer text-xs font-bold text-amber-700 bg-amber-50"
           >
             💡 {isRTL ? "مربع تمييز" : "Callout"}
           </button>
@@ -271,7 +271,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
             type="button"
             onClick={() => setShowLinkModal(true)}
             title="Insert Link"
-            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-[#C45B2A] transition-colors cursor-pointer flex items-center gap-1 text-xs"
+            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-brand-orange transition-colors cursor-pointer flex items-center gap-1 text-xs"
           >
             <LinkIcon className="w-3.5 h-3.5" />
             <span className="hidden sm:inline text-[11px]">{isRTL ? "رابط" : "Link"}</span>
@@ -280,7 +280,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
             type="button"
             onClick={() => setShowImageModal(true)}
             title="Insert Image"
-            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-[#C45B2A] transition-colors cursor-pointer flex items-center gap-1 text-xs"
+            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-brand-orange transition-colors cursor-pointer flex items-center gap-1 text-xs"
           >
             <ImageIcon className="w-3.5 h-3.5" />
             <span className="hidden sm:inline text-[11px]">{isRTL ? "صورة" : "Image"}</span>
@@ -289,7 +289,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
             type="button"
             onClick={insertTable}
             title="Insert Table"
-            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-[#C45B2A] transition-colors cursor-pointer flex items-center gap-1 text-xs"
+            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-brand-orange transition-colors cursor-pointer flex items-center gap-1 text-xs"
           >
             <TableIcon className="w-3.5 h-3.5" />
             <span className="hidden sm:inline text-[11px]">{isRTL ? "جدول" : "Table"}</span>
@@ -298,7 +298,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
             type="button"
             onClick={() => insertText("<hr />\n", "")}
             title="Horizontal Divider"
-            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-[#C45B2A] transition-colors cursor-pointer"
+            className="p-1.5 rounded-md hover:bg-gray-100 hover:text-brand-orange transition-colors cursor-pointer"
           >
             <Minus className="w-3.5 h-3.5" />
           </button>
@@ -327,7 +327,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
             <button
               type="button"
               onClick={handleInsertLink}
-              className="bg-[#C45B2A] text-white font-bold px-3 py-1.5 rounded-lg hover:bg-[#A34920] transition-colors text-xs"
+              className="bg-brand-orange text-white font-bold px-3 py-1.5 rounded-lg hover:bg-brand-orange-deep transition-colors text-xs"
             >
               {isRTL ? "إدراج" : "Insert"}
             </button>
@@ -344,7 +344,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
 
       {/* Image Insertion Sub-Modal */}
       {showImageModal && (
-        <div className="p-3 bg-blue-50/70 border-b border-blue-200 flex flex-col sm:flex-row items-center gap-2 text-xs">
+        <div className="p-3 bg-brand-orange/5 border-b border-brand-orange/20 flex flex-col sm:flex-row items-center gap-2 text-xs">
           <input
             type="text"
             placeholder={isRTL ? "وصف الصورة (Alt Text)..." : "Image caption / alt..."}
@@ -364,7 +364,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
             <button
               type="button"
               onClick={handleInsertImage}
-              className="bg-blue-600 text-white font-bold px-3 py-1.5 rounded-lg hover:bg-blue-700 transition-colors text-xs"
+              className="bg-brand-orange text-white font-bold px-3 py-1.5 rounded-lg hover:bg-brand-orange-deep transition-colors text-xs"
             >
               {isRTL ? "إدراج الصورة" : "Insert Image"}
             </button>

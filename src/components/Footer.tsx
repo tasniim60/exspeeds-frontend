@@ -7,11 +7,11 @@ export default function Footer() {
   const { t, getLocalizedPath } = useLanguage();
 
   return (
-    <footer className="bg-[#0F172A] text-white border-t border-slate-800">
+    <footer className="bg-brand-dark text-white border-t border-brand-dark-border">
       <div className="max-w-[1400px] mx-auto px-6 py-16 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
         {/* Brand */}
         <div className="space-y-5">
-          <div className="flex flex-col items-center gap-1.5">
+          <div className="flex flex-col items-start gap-1.5">
             <Link href={getLocalizedPath("/")} className="inline-block py-1 shrink-0">
               <img
                 src="/assets/xspeed_logo_earth_dark.jpg"
@@ -146,7 +146,7 @@ export default function Footer() {
       </div>
 
       {/* Bottom Bar */}
-      <div className="border-t border-gray-800">
+      <div className="border-t border-brand-dark-border bg-brand-dark-deep/40">
         <div className="max-w-[1400px] mx-auto px-6 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-gray-400">
           <p>&copy; {new Date().getFullYear()} XSPEED Express Logistics & Technology (exspeeds.com). {t("footer.allRightsReserved")}</p>
           <div className="flex gap-6">

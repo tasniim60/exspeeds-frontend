@@ -7,20 +7,8 @@ import {
   ArrowRightLeft,
   ArrowDownLeft,
   ArrowUpRight,
-  DollarSign,
-  Calendar,
-  CreditCard,
-  Building2,
-  Users,
-  Plus,
   Search,
-  Filter,
   Trash2,
-  TrendingUp,
-  TrendingDown,
-  AlertCircle,
-  FileSpreadsheet,
-  CheckCircle2,
   UserCheck,
   Briefcase,
 } from "lucide-react";
@@ -321,7 +309,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
           <Button
             type="button"
             onClick={() => setInternalTransferModalOpen(true)}
-            className="bg-[#C45B2A] hover:bg-[#A3481D] text-white font-semibold flex items-center gap-2 shadow-xs cursor-pointer text-xs"
+            className="bg-brand-orange hover:bg-brand-orange-deep text-white font-semibold flex items-center gap-2 shadow-xs cursor-pointer text-xs"
           >
             <ArrowRightLeft className="h-4 w-4" />
             <span>{isRTL ? "مناقلة بين الخزائن" : "Vault Transfer"}</span>
@@ -339,20 +327,20 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
       </div>
 
       {/* Main Liquidity Banner */}
-      <Card className="border border-slate-200/80 shadow-xs bg-gradient-to-br from-[#0F172A] via-[#1E293B] to-[#0F172A] text-white overflow-hidden relative">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-[#C45B2A]/10 rounded-full blur-3xl pointer-events-none" />
+      <Card className="border border-slate-200/80 shadow-xs bg-gradient-to-br from-brand-dark via-brand-dark-border to-brand-dark-deep text-white overflow-hidden relative">
+        <div className="absolute top-0 right-0 w-96 h-96 bg-brand-orange/10 rounded-full blur-3xl pointer-events-none" />
         <CardContent className="p-6 sm:p-8 relative z-10">
           <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
             <div>
-              <div className="flex items-center gap-2">
-                <Badge className="bg-[#C45B2A] text-white font-bold text-xs border-0">
+              <div className="flex flex-col lg:flex-row pt-2 items-start gap-2">
+                <Badge className="bg-brand-orange text-white font-bold text-xs border-0">
                   {isRTL ? "إجمالي السيولة الفعلية" : "Company Liquid Cash"}
                 </Badge>
                 <span className="text-xs text-slate-400">
                   {isRTL ? "مجموع أرصدة الخزائن الخمسة" : "Combined 5 official vaults"}
                 </span>
               </div>
-              <h2 className="text-3xl sm:text-4xl lg:text-5xl font-black font-mono tracking-tight text-white mt-2">
+              <h2 className="text-start lg:text-center text-3xl sm:text-4xl lg:text-5xl font-black font-mono tracking-tight text-white mt-2">
                 {formatCurrency(treasuryState.totalCompanyCash, "EGP")}
               </h2>
               <p className="text-xs sm:text-sm text-slate-300 mt-2 max-w-xl">
@@ -362,16 +350,20 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-4 w-full lg:w-auto shrink-0">
-              <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs">
+            <div className="grid grid-cols-1 lg:grid-cols-2 text-start gap-4 w-full lg:w-auto shrink-0">
+              <div className="p-4  rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs">
                 <div className="flex items-center gap-2 text-emerald-400">
-                  <ArrowDownLeft className="h-4 w-4" />
+                  <ArrowUpRight className="h-4 w-4" />
                   <span className="text-xs font-bold uppercase tracking-wider">
                     {isRTL ? "إجمالي التدفقات الواردة" : "Total Cash Inflow"}
                   </span>
                 </div>
                 <p className="text-xl font-black font-mono text-emerald-400 mt-1">
-                  +{formatCurrency(treasuryState.totalInflows, "EGP")}
+                  {isRTL ?
+                  `${formatCurrency(treasuryState.totalInflows, "EGP")}+`
+                  :
+                  `+${ formatCurrency(treasuryState.totalInflows, "EGP")}`
+                   }
                 </p>
                 <p className="text-[10px] text-slate-400 mt-0.5">
                   {isRTL ? "تحصيلات العملاء والمناقلات" : "Collections & transfers in"}
@@ -380,13 +372,17 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
 
               <div className="p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-xs">
                 <div className="flex items-center gap-2 text-rose-400">
-                  <ArrowUpRight className="h-4 w-4" />
+                  <ArrowDownLeft className="h-4 w-4" />
                   <span className="text-xs font-bold uppercase tracking-wider">
                     {isRTL ? "إجمالي التدفقات الصادرة" : "Total Cash Outflow"}
                   </span>
                 </div>
                 <p className="text-xl font-black font-mono text-rose-400 mt-1">
-                  -{formatCurrency(treasuryState.totalOutflows, "EGP")}
+                  {isRTL ?
+                  `${formatCurrency(treasuryState.totalOutflows, "EGP")}-`
+                  :
+                  `-${ formatCurrency(treasuryState.totalOutflows, "EGP")}`
+                   }
                 </p>
                 <p className="text-[10px] text-slate-400 mt-0.5">
                   {isRTL ? "مصروفات، ناقلين، ومرتبات" : "Expenses, carriers, salaries"}
@@ -399,7 +395,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
 
       {/* The 5 Official Vault Cards */}
       <div>
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex  items-center justify-between mb-3">
           <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider">
             {isRTL ? "أرصدة الخزائن والحسابات (العهد الخمسة)" : "Active Vault Accounts (5 Official Vaults)"}
           </h2>
@@ -408,7 +404,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
           </span>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
+        <div className="grid text-start grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5">
           {treasuryState.vaults.map((vault) => {
             const isNegative = vault.currentBalance < 0;
 
@@ -422,7 +418,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
                 }}
                 className={`border transition-all cursor-pointer shadow-2xs hover:shadow-sm ${
                   selectedVaultFilter === vault.accountName
-                    ? "border-[#C45B2A] ring-2 ring-[#C45B2A]/20 bg-orange-50/20"
+                    ? "border-brand-orange ring-2 ring-brand-orange/20 bg-orange-50/20"
                     : "border-slate-200 bg-white hover:border-slate-300"
                 }`}
               >
@@ -454,13 +450,13 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
                     <div>
                       <span className="text-slate-400 block">{isRTL ? "وارد (+):" : "In (+):"}</span>
                       <span className="font-mono font-bold text-emerald-600 truncate block">
-                        +{formatCurrency(vault.totalInflows, "EGP")}
+                        {formatCurrency(vault.totalInflows, "EGP")}
                       </span>
                     </div>
                     <div>
                       <span className="text-slate-400 block">{isRTL ? "صادر (-):" : "Out (-):"}</span>
                       <span className="font-mono font-bold text-rose-600 truncate block">
-                        -{formatCurrency(vault.totalOutflows, "EGP")}
+                        {formatCurrency(vault.totalOutflows, "EGP")}
                       </span>
                     </div>
                   </div>
@@ -489,13 +485,13 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
             {/* Quick Filters */}
             <div className="flex items-center gap-2 flex-wrap">
               <div className="relative">
-                <Search className="absolute top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 right-2.5" />
+                <Search className={`absolute top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 ${isRTL ? "right-2.5" : "left-2.5"}`} />
                 <Input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={isRTL ? "بحث في الحركات..." : "Search transactions..."}
-                  className="pr-8 h-8 text-xs bg-[#FAF8F5] border-slate-300 w-44"
+                  className={`${isRTL ? "pr-8 text-right" : "pl-8 text-left"} h-8 text-xs bg-[#FAF8F5] border-slate-300 w-44`}
                 />
               </div>
 
@@ -534,12 +530,12 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
           <Table>
             <TableHeader className="bg-[#FAF8F5]">
               <TableRow>
-                <TableHead className="text-right text-xs font-extrabold text-slate-700">{isRTL ? "التاريخ" : "Date"}</TableHead>
+                <TableHead className="text-start text-xs font-extrabold text-slate-700">{isRTL ? "التاريخ" : "Date"}</TableHead>
                 <TableHead className="text-center text-xs font-extrabold text-slate-700">{isRTL ? "النوع" : "Type"}</TableHead>
-                <TableHead className="text-right text-xs font-extrabold text-slate-700">{isRTL ? "الخزينة" : "Vault"}</TableHead>
-                <TableHead className="text-right text-xs font-extrabold text-slate-700">{isRTL ? "البيان والتفاصيل" : "Description"}</TableHead>
-                <TableHead className="text-right text-xs font-extrabold text-slate-700">{isRTL ? "المسؤول" : "Recorder"}</TableHead>
-                <TableHead className="text-right text-xs font-extrabold text-slate-700">{isRTL ? "المبلغ (EGP)" : "Amount"}</TableHead>
+                <TableHead className="text-start text-xs font-extrabold text-slate-700">{isRTL ? "الخزينة" : "Vault"}</TableHead>
+                <TableHead className="text-start text-xs font-extrabold text-slate-700">{isRTL ? "البيان والتفاصيل" : "Description"}</TableHead>
+                <TableHead className="text-start text-xs font-extrabold text-slate-700">{isRTL ? "المسؤول" : "Recorder"}</TableHead>
+                <TableHead className="text-start text-xs font-extrabold text-slate-700">{isRTL ? "المبلغ (EGP)" : "Amount"}</TableHead>
                 <TableHead className="text-center text-xs font-extrabold text-slate-700">{isRTL ? "إجراء" : "Action"}</TableHead>
               </TableRow>
             </TableHeader>
@@ -596,7 +592,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
                         {tx.account}
                       </TableCell>
 
-                      <TableCell className="text-xs text-slate-700 max-w-xs truncate">
+                      <TableCell className="text-xs text-slate-700 max-w-fit truncate">
                         <div className="font-semibold">{tx.description}</div>
                         {tx.reference && (
                           <div className="text-[10px] text-slate-400 font-mono">
@@ -609,7 +605,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
                         {tx.recorder || "-"}
                       </TableCell>
 
-                      <TableCell className="text-right font-mono font-bold text-xs">
+                      <TableCell className="text-center font-mono font-bold text-xs">
                         <span className={isInflow ? "text-emerald-600" : "text-rose-600"}>
                           {isInflow ? "+" : "-"}
                           {formatCurrency(tx.amount, "EGP")}
@@ -628,11 +624,11 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
                                   onDeleteInternalTransfer(tx.rawId!);
                                 }
                               }}
-                              className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                              className="h-10 w-10 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                               title={isRTL ? "حذف المناقلة" : "Delete transfer"}
                               aria-label={isRTL ? "حذف المناقلة" : "Delete transfer"}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-6 w-6" />
                             </Button>
                           )}
                           {tx.type === "Salary" && (
@@ -645,11 +641,11 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
                                   onDeleteSalary(tx.id);
                                 }
                               }}
-                              className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                              className="h-10 w-10 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
                               title={isRTL ? "حذف السجل" : "Delete record"}
                               aria-label={isRTL ? "حذف السجل" : "Delete record"}
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-6 w-6" />
                             </Button>
                           )}
                         </div>
@@ -668,7 +664,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
         <DialogContent className="sm:max-w-md bg-white">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-orange-100 text-[#C45B2A]">
+              <div className="p-1.5 rounded-lg bg-orange-100 text-brand-orange">
                 <ArrowRightLeft className="h-4 w-4" />
               </div>
               <span>{isRTL ? "مناقلة نقدية بين الخزائن" : "Internal Vault Transfer"}</span>
@@ -689,7 +685,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
                 <select
                   value={fromAccount}
                   onChange={(e) => setFromAccount(e.target.value)}
-                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C45B2A]"
+                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-brand-orange"
                 >
                   {MASTER_FINANCIAL_ACCOUNTS.map((acc) => (
                     <option key={acc} value={acc}>
@@ -706,7 +702,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
                 <select
                   value={toAccount}
                   onChange={(e) => setToAccount(e.target.value)}
-                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C45B2A]"
+                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-brand-orange"
                 >
                   {MASTER_FINANCIAL_ACCOUNTS.map((acc) => (
                     <option key={acc} value={acc}>
@@ -753,7 +749,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
               <select
                 value={transferRecorder}
                 onChange={(e) => setTransferRecorder(e.target.value)}
-                className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C45B2A]"
+                className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-brand-orange"
               >
                 {MASTER_AGENTS.map((ag) => (
                   <option key={ag} value={ag}>
@@ -787,7 +783,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
               </Button>
               <Button
                 type="submit"
-                className="bg-[#C45B2A] hover:bg-[#A3481D] text-white text-xs font-bold cursor-pointer"
+                className="bg-brand-orange hover:bg-brand-orange-deep text-white text-xs font-bold cursor-pointer"
               >
                 {isRTL ? "تنفيذ المناقلة" : "Execute Transfer"}
               </Button>
@@ -836,7 +832,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
                 <select
                   value={salaryType}
                   onChange={(e) => setSalaryType(e.target.value as "salary" | "advance")}
-                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C45B2A]"
+                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-brand-orange"
                 >
                   <option value="salary">{isRTL ? "مرتب شهري (Salary)" : "Monthly Salary"}</option>
                   <option value="advance">{isRTL ? "سلفة على المرتب (Advance)" : "Staff Advance"}</option>
@@ -882,7 +878,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
                 <select
                   value={salaryPayingAccount}
                   onChange={(e) => setSalaryPayingAccount(e.target.value)}
-                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C45B2A]"
+                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-brand-orange"
                 >
                   {MASTER_FINANCIAL_ACCOUNTS.map((acc) => (
                     <option key={acc} value={acc}>
@@ -899,7 +895,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
                 <select
                   value={salaryRecorder}
                   onChange={(e) => setSalaryRecorder(e.target.value)}
-                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C45B2A]"
+                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-brand-orange"
                 >
                   {MASTER_AGENTS.map((ag) => (
                     <option key={ag} value={ag}>

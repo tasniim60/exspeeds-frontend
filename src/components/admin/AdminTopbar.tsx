@@ -52,7 +52,7 @@ export const AdminTopbar: React.FC<AdminTopbarProps> = ({
         <button
           type="button"
           onClick={onOpenMobileMenu}
-          className="lg:hidden p-1.5 sm:p-2 rounded-lg text-[#64748B] hover:bg-[#EFEBE2] hover:text-[#0F172A] cursor-pointer shrink-0"
+          className="lg:hidden p-1.5 sm:p-2 rounded-lg text-[#64748B] hover:bg-[#EFEBE2] hover:text-brand-dark cursor-pointer shrink-0"
           aria-label="Open navigation menu"
         >
           <Menu className="h-5 w-5" />
@@ -60,7 +60,7 @@ export const AdminTopbar: React.FC<AdminTopbarProps> = ({
 
         <div className={`flex flex-col min-w-0 ${isRTL ? "text-right" : "text-left"}`}>
           <div className="flex items-center gap-2 min-w-0">
-            <h1 className="text-xs sm:text-base md:text-lg font-bold text-[#0F172A] tracking-tight leading-tight truncate max-w-[120px] xs:max-w-[170px] sm:max-w-xs md:max-w-md">
+            <h1 className="text-xs sm:text-base md:text-lg font-bold text-brand-dark tracking-tight leading-tight truncate max-w-[120px] xs:max-w-[170px] sm:max-w-xs md:max-w-md">
               {currentTitle}
             </h1>
             
@@ -83,7 +83,7 @@ export const AdminTopbar: React.FC<AdminTopbarProps> = ({
           className="flex items-center justify-center sm:justify-start gap-2 h-9 px-2.5 sm:px-3.5 rounded-xl bg-[#EFEBE2] hover:bg-[#E7E2D7] border border-[#E2DDD1] text-[#475569] text-xs font-semibold transition-colors shadow-2xs group cursor-pointer shrink-0"
           aria-label={t("admin.topbar.searchPlaceholder")}
         >
-          <Search className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-[#8C8275] group-hover:text-[#C45B2A]" />
+          <Search className="h-4 w-4 sm:h-3.5 sm:w-3.5 text-[#8C8275] group-hover:text-brand-orange" />
           <span className="hidden sm:inline-block">{t("admin.topbar.searchPlaceholder")}</span>
           <kbd className="hidden md:inline-block font-mono text-[10px] bg-[#E2DDD1] text-[#5C5549] px-1.5 py-0.5 rounded border border-[#D5CFBF]">
             ⌘K
@@ -114,7 +114,7 @@ export const AdminTopbar: React.FC<AdminTopbarProps> = ({
                 className="fixed inset-0 z-40"
                 onClick={() => setNotifDropdownOpen(false)}
               />
-              <div className={`absolute ${isRTL ? "left-0 text-right" : "right-0 text-left"} mt-2 w-80 sm:w-96 rounded-2xl bg-[#FAF8F5] shadow-2xl border border-[#E2DDD1] z-50 overflow-hidden animate-fade-up`}>
+              <div className={`absolute ${isRTL ? "left-0 text-right" : "right-0 text-left"} mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-96 rounded-2xl bg-[#FAF8F5] shadow-2xl border border-[#E2DDD1] z-50 overflow-hidden animate-fade-up`}>
                 <div className="p-3.5 border-b border-[#EAE5DA] flex items-center justify-between bg-[#EFEBE2]/70">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-gray-900">{t("admin.topbar.notifications")}</span>
@@ -128,7 +128,7 @@ export const AdminTopbar: React.FC<AdminTopbarProps> = ({
                     <button
                       type="button"
                       onClick={onMarkAllNotificationsRead}
-                      className="text-[11px] font-semibold text-[#C45B2A] hover:underline cursor-pointer"
+                      className="text-[11px] font-semibold text-brand-orange hover:underline cursor-pointer"
                     >
                       {t("admin.topbar.markAllRead")}
                     </button>
@@ -184,7 +184,7 @@ export const AdminTopbar: React.FC<AdminTopbarProps> = ({
                       }
                       setNotifDropdownOpen(false);
                     }}
-                    className="text-xs font-semibold text-gray-600 hover:text-[#C45B2A] transition-colors cursor-pointer inline-flex items-center gap-1.5"
+                    className="text-xs font-semibold text-gray-600 hover:text-brand-orange transition-colors cursor-pointer inline-flex items-center gap-1.5"
                   >
                     <span>{t("admin.topbar.viewAllAlerts")}</span>
                     <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />

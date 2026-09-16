@@ -571,9 +571,9 @@ export default function SingleServicePage({
           {/* Right Sidebar (4 Cols) */}
           <div className="lg:col-span-4 space-y-6">
             {/* Quick Action Widget */}
-            <div className="bg-gradient-to-b from-slate-950 to-[#0F172A] rounded-3xl p-7 text-white space-y-6 shadow-2xl border border-slate-800 text-start">
+            <div className="bg-gradient-to-b from-brand-dark-deep to-brand-dark rounded-3xl p-7 text-white space-y-6 shadow-2xl border border-brand-dark-border text-start">
               <div className="space-y-2">
-                <span className="text-[11px] font-bold text-orange-400 uppercase tracking-wider block">
+                <span className="text-[11px] font-bold text-brand-orange uppercase tracking-wider block">
                   {isAr ? "تواصل مع مدير العمليات" : "Connect with Operations Desk"}
                 </span>
                 <h3 className="text-xl font-bold tracking-tight">
@@ -599,7 +599,7 @@ export default function SingleServicePage({
 
                 <Link
                   href={isAr ? "/ar/ship" : "/en/ship"}
-                  className="w-full py-3.5 px-4 rounded-xl bg-[#C45B2A] hover:bg-[#A34920] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md shadow-orange-500/20"
+                  className="w-full py-3.5 px-4 rounded-xl bg-brand-orange hover:bg-brand-orange-deep text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-md shadow-orange-500/20"
                 >
                   <Package className="w-4 h-4" />
                   <span>{isAr ? "طلب شحن عبر النموذج الموحد" : "Online Shipment Request"}</span>

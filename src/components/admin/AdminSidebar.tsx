@@ -19,6 +19,7 @@ import {
   Truck,
   Landmark,
   WalletCards,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -52,6 +53,8 @@ export interface AdminSidebarProps {
   };
   selectedHub?: string;
   setSelectedHub?: (hub: string) => void;
+  isMobileDrawer?: boolean;
+  onCloseMobile?: () => void;
 }
 
 interface NavItemConfig {
@@ -70,6 +73,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   collapsed,
   setCollapsed,
   badgeCounts,
+  isMobileDrawer = false,
+  onCloseMobile,
 }) => {
   const { t, isRTL, getLocalizedPath } = useLanguage();
   const { logout } = useAuth();
@@ -176,7 +181,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         key={item.id}
         type="button"
         variant={isActive ? "sidebarActive" : "sidebar"}
-        onClick={() => setActiveTab(item.id)}
+        onClick={() => {
+          setActiveTab(item.id);
+          if (isMobileDrawer && onCloseMobile) {
+            onCloseMobile();
+          }
+        }}
         title={collapsed ? itemLabel : undefined}
         className={`w-full group relative transition-all duration-150 ${
           collapsed
@@ -184,7 +194,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             : `h-10 px-3.5 rounded-xl justify-start ${isRTL ? "text-right" : "text-left"}`
         } ${
           isActive
-            ? "bg-[#C45B2A] text-white font-bold shadow-md shadow-[#C45B2A]/20 hover:bg-[#B34F22]"
+            ? "bg-brand-orange text-white font-bold shadow-md shadow-brand-orange/20 hover:bg-brand-orange-deep"
             : "text-slate-300 hover:text-white hover:bg-slate-800/80 active:bg-slate-800"
         }`}
       >
@@ -207,7 +217,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             size="sm"
             className={`${isRTL ? "mr-auto" : "ml-auto"} font-mono text-[10px] ${
               isActive
-                ? "bg-white text-[#e66123] font-extrabold shadow-xs"
+                ? "bg-white text-brand-orange font-extrabold shadow-xs"
                 : "bg-slate-800 text-slate-200 border border-slate-700/80 font-bold"
             }`}
           >
@@ -220,7 +230,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           <span
             className={`absolute top-1.5 ${
               isRTL ? "left-1.5" : "right-1.5"
-            } w-2 h-2 rounded-full bg-[#C45B2A] ring-2 ring-[#0F172A] animate-pulse`}
+            } w-2 h-2 rounded-full bg-brand-orange ring-2 ring-brand-dark animate-pulse`}
           />
         )}
       </Button>
@@ -229,22 +239,27 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
   return (
     <aside
-      className={`fixed top-0 z-40 h-screen bg-[#0F172A] text-slate-200 border-slate-800 ${
-        isRTL ? "right-0 border-l" : "left-0 border-r"
-      } transition-all duration-300 flex flex-col justify-between select-none shadow-xl shadow-black/25 ${
-        collapsed ? "w-20" : "w-64"
-      }`}
+      className={`${
+        isMobileDrawer
+          ? "relative h-full w-full"
+          : `fixed top-0 z-40 h-screen ${isRTL ? "right-0 border-l" : "left-0 border-r"} ${collapsed ? "w-20" : "w-64"}`
+      } bg-brand-dark text-slate-200 border-brand-dark-border transition-all duration-300 flex flex-col justify-between select-none shadow-xl shadow-black/25`}
     >
       {/* Top Section: Header + Scrollable Navigation */}
       <div className="flex-1 min-h-0 flex flex-col">
         {/* Brand Header */}
-        <div className="relative h-16 px-3.5 border-b border-slate-800 flex items-center justify-center shrink-0">
+        <div className="relative h-16 px-3.5 border-b border-brand-dark-border flex items-center justify-between shrink-0">
           <div
-            onClick={() => setCollapsed(!collapsed)}
-            className={`py-0.5 overflow-hidden group cursor-pointer flex items-center justify-center w-full
-            `}
+            onClick={() => {
+              if (!isMobileDrawer) setCollapsed(!collapsed);
+            }}
+            className={`py-0.5 overflow-hidden group cursor-pointer flex items-center ${
+              isMobileDrawer ? "justify-start gap-2.5" : "justify-center w-full"
+            }`}
             title={
-              collapsed
+              isMobileDrawer
+                ? undefined
+                : collapsed
                 ? t("admin.sidebar.expand") || (isRTL ? "توسيع القائمة" : "Expand Sidebar")
                 : t("admin.sidebar.collapse") || (isRTL ? "طي القائمة" : "Collapse Sidebar")
             }
@@ -252,18 +267,28 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             <img
               src="/assets/xspeed_logo_earth_dark.jpg"
               alt="XSPEED Express"
-              className={`$${
-                collapsed ? "h-10 max-w-[56px]" : "h-10 max-w-[150px]"
+              className={`${
+                !isMobileDrawer && collapsed ? "h-10 max-w-[56px]" : "h-10 max-w-[150px]"
               } shrink-0 w-auto object-contain rounded-md transition-all duration-200 group-hover:scale-105 drop-shadow-[0_2px_8px_rgba(0,0,0,0.4)]`}
             />
           </div>
 
-          {/* Explicit collapse/expand button */}
-          {!collapsed ? (
+          {/* Action button: Close for mobile drawer, Collapse/Expand for desktop */}
+          {isMobileDrawer ? (
+            <button
+              type="button"
+              onClick={onCloseMobile}
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-brand-dark-border transition-colors shrink-0 cursor-pointer"
+              title={isRTL ? "إغلاق القائمة" : "Close Sidebar"}
+              aria-label="Close Sidebar"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          ) : !collapsed ? (
             <button
               type="button"
               onClick={() => setCollapsed(true)}
-              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors shrink-0 cursor-pointer"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-brand-dark-border transition-colors shrink-0 cursor-pointer"
               title={t("admin.sidebar.collapse") || (isRTL ? "طي القائمة" : "Collapse Sidebar")}
               aria-label="Collapse Sidebar"
             >
@@ -279,7 +304,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               onClick={() => setCollapsed(false)}
               className={`absolute ${
                 isRTL ? "-left-3" : "-right-3"
-              } top-5 z-50 p-1 rounded-full bg-slate-800 text-slate-300 hover:text-white hover:bg-slate-700 border border-slate-700 transition-all shadow-md cursor-pointer`}
+              } top-5 z-50 p-1 rounded-full bg-brand-dark-border text-slate-300 hover:text-white hover:bg-slate-700 border border-brand-dark-border transition-all shadow-md cursor-pointer`}
               title={t("admin.sidebar.expand") || (isRTL ? "توسيع القائمة" : "Expand Sidebar")}
               aria-label="Expand Sidebar"
             >
@@ -293,12 +318,12 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         </div>
 
         {/* Scrollable Navigation Sections */}
-        <div className="flex-1 min-h-0 p-2 space-y-4 overflow-y-auto scrollbar-thin scrollbar-thumb-slate-800">
+        <div className="flex-1 min-h-0 p-2 space-y-2 overflow-y-auto scrollbar-thin scrollbar-thumb-brand-dark-border">
           {/* Group 1: Logistics Operations */}
           <div className="space-y-1">
             {!collapsed && (
               <div
-                className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${
+                className={`px-3  text-[10px] font-bold uppercase tracking-wider text-slate-400 ${
                   isRTL ? "text-right" : "text-left"
                 }`}
               >
@@ -310,7 +335,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
           {/* Group 2: Analytics & Content */}
           {/* Group 2: Financial & Ledgers */}
-          <div className="space-y-1 pt-1 border-t border-slate-800/80">
+          <div className="space-y-1 pt-1 border-t border-brand-dark-border/80">
             {!collapsed && (
               <div
                 className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${
@@ -324,7 +349,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           </div>
 
           {/* Group 3: Analytics & Content */}
-          <div className="space-y-1 pt-1 border-t border-slate-800/80">
+          <div className="space-y-1 pt-1 border-t border-brand-dark-border/80">
             {!collapsed && (
               <div
                 className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${
@@ -338,7 +363,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           </div>
 
           {/* Smart Tools / Google Apps Script */}
-          <div className="pt-2 border-t border-slate-800/80">
+          <div className="pt-2 border-t border-brand-dark-border/80">
             {!collapsed && (
               <div
                 className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${
@@ -359,7 +384,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                   ? "فتح حاسبة الشحنات والتسعير عبر Google Apps Script"
                   : "Open Rates Calculator via Google Apps Script")
               }
-              className={`w-full flex items-center transition-all duration-150 group rounded-xl border border-slate-800 bg-slate-800/40 hover:bg-slate-800/90 hover:border-amber-500/40 text-slate-300 hover:text-white ${
+              className={`w-full flex items-center transition-all duration-150 group rounded-xl border border-brand-dark-border bg-brand-dark-deep/40 hover:bg-brand-dark-border/60 hover:border-amber-500/40 text-slate-300 hover:text-white ${
                 collapsed
                   ? "h-11 w-11 mx-auto justify-center relative p-0"
                   : "p-2.5 gap-3"
@@ -391,7 +416,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
                 <span
                   className={`absolute top-1.5 ${
                     isRTL ? "left-1.5" : "right-1.5"
-                  } w-2 h-2 rounded-full bg-amber-400 ring-2 ring-[#0F172A]`}
+                  } w-2 h-2 rounded-full bg-amber-400 ring-2 ring-brand-dark`}
                 />
               )}
             </a>
@@ -400,10 +425,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       </div>
 
       {/* Lower Navigation Items & System Status */}
-      <div className="border-t border-slate-800 bg-[#0B1120] p-2.5 space-y-1 shrink-0">
+      <div className="border-t border-brand-dark-border bg-brand-dark-deep p-2 space-y-1 shrink-0">
         {/* Profile & Settings */}
         <Link
           href={getLocalizedPath("/profile")}
+          onClick={() => {
+            if (isMobileDrawer && onCloseMobile) onCloseMobile();
+          }}
           title={
             collapsed
               ? t("admin.topbar.myProfile") ||
@@ -416,7 +444,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               : `h-9 px-3 gap-3 ${isRTL ? "text-right" : "text-left"}`
           }`}
         >
-          <User className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-[#C45B2A] transition-colors" />
+          <User className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-brand-orange transition-colors" />
           {!collapsed && (
             <span className="truncate text-xs font-medium">
               {t("admin.topbar.myProfile") ||
@@ -430,6 +458,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           href={getLocalizedPath("/")}
           target="_blank"
           rel="noopener noreferrer"
+          onClick={() => {
+            if (isMobileDrawer && onCloseMobile) onCloseMobile();
+          }}
           title={collapsed ? t("admin.topbar.viewPublicSite") || "View Public Site" : undefined}
           className={`w-full flex items-center transition-colors group rounded-xl text-slate-300 hover:bg-slate-800/80 hover:text-white ${
             collapsed
@@ -437,7 +468,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               : `h-9 px-3 gap-3 ${isRTL ? "text-right" : "text-left"}`
           }`}
         >
-          <ExternalLink className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-[#C45B2A] transition-colors" />
+          <ExternalLink className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-brand-orange transition-colors" />
           {!collapsed && (
             <span className="truncate text-xs font-medium">
               {t("admin.topbar.viewPublicSite") ||

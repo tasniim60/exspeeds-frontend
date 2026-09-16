@@ -88,7 +88,7 @@ export default function LanguageSwitcher({
           onClick={() => setLocale("en")}
           className={`relative flex items-center justify-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer active:scale-95 ${
             locale === "en"
-              ? "bg-white text-[#0F172A] font-extrabold shadow-sm"
+              ? "bg-white text-brand-dark font-extrabold shadow-sm"
               : "text-white/60 hover:text-white"
           }`}
           aria-pressed={locale === "en"}

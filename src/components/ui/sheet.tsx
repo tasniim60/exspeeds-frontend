@@ -106,7 +106,7 @@ export function SheetTitle({
 }: React.HTMLAttributes<HTMLHeadingElement>) {
   return (
     <h2
-      className={`text-base sm:text-lg font-bold tracking-tight text-[#0F172A] flex items-center gap-2 ${className}`}
+      className={`text-base sm:text-lg font-bold tracking-tight text-brand-dark flex items-center gap-2 ${className}`}
       {...props}
     />
   );

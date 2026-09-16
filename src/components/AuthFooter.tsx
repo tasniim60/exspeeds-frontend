@@ -9,7 +9,7 @@ export default function AuthFooter() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-[#0F172A] text-white py-4 px-4 sm:px-6 text-xs font-medium border-t border-slate-800 relative z-20">
+    <footer className="bg-brand-dark text-white py-4 px-4 sm:px-6 text-xs font-medium border-t border-brand-dark-border relative z-20">
       <div className="max-w-[1400px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-3.5">
         {/* Copyright */}
         <p className="text-gray-400 font-medium text-center sm:text-start">
@@ -24,9 +24,9 @@ export default function AuthFooter() {
 
           <Link
             href={getLocalizedPath("/privacy")}
-            className="hover:text-[#C45B2A] transition-colors duration-200 inline-flex items-center gap-1.5 py-1"
+            className="hover:text-brand-orange transition-colors duration-200 inline-flex items-center gap-1.5 py-1"
           >
-            <ShieldCheck className="w-3.5 h-3.5 text-[#C45B2A]" />
+            <ShieldCheck className="w-3.5 h-3.5 text-brand-orange" />
             <span>{isRTL ? "سياسة الخصوصية" : "Privacy Policy"}</span>
           </Link>
 
@@ -34,9 +34,9 @@ export default function AuthFooter() {
 
           <Link
             href={getLocalizedPath("/terms")}
-            className="hover:text-[#C45B2A] transition-colors duration-200 inline-flex items-center gap-1.5 py-1"
+            className="hover:text-brand-orange transition-colors duration-200 inline-flex items-center gap-1.5 py-1"
           >
-            <Scale className="w-3.5 h-3.5 text-[#C45B2A]" />
+            <Scale className="w-3.5 h-3.5 text-brand-orange" />
             <span>{isRTL ? "الشروط والأحكام" : "Terms & Conditions"}</span>
           </Link>
         </nav>
