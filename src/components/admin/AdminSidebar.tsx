@@ -195,34 +195,32 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         } ${
           isActive
             ? "bg-brand-orange text-white font-bold shadow-md shadow-brand-orange/20 hover:bg-brand-orange-deep"
-            : "text-slate-300 hover:text-white hover:bg-slate-800/80 active:bg-slate-800"
+            : "text-slate-100 hover:text-white hover:bg-white/[0.08] active:bg-white/[0.12] font-semibold"
         }`}
       >
         <Icon
           className={`h-4 w-4 shrink-0 transition-transform group-hover:scale-110 ${
-            isActive ? "text-white" : "text-slate-400 group-hover:text-white"
+            isActive ? "text-white" : "text-orange-200/80 group-hover:text-white"
           }`}
         />
 
         {!collapsed && (
-          <span className="truncate flex-1 text-xs tracking-tight">
+          <span className={`truncate flex-1 text-xs tracking-tight ${isActive ? "text-white font-extrabold" : "text-slate-100 group-hover:text-white font-semibold"}`}>
             {itemLabel}
           </span>
         )}
 
         {/* Unread / Counter Badge */}
         {!collapsed && item.badge !== undefined && item.badge > 0 && (
-          <Badge
-            variant="default"
-            size="sm"
-            className={`${isRTL ? "mr-auto" : "ml-auto"} font-mono text-[10px] ${
+          <span
+            className={`${isRTL ? "mr-auto" : "ml-auto"} font-mono text-[11px] font-black px-2 py-0.5 rounded-full inline-flex items-center justify-center min-w-[20px] transition-all ${
               isActive
-                ? "bg-white text-brand-orange font-extrabold shadow-xs"
-                : "bg-slate-800 text-slate-200 border border-slate-700/80 font-bold"
+                ? "bg-white text-brand-orange-deep shadow-sm ring-1 ring-black/10"
+                : "bg-white/15 text-slate-100 border border-white/20 font-bold"
             }`}
           >
             {item.badge}
-          </Badge>
+          </span>
         )}
 
         {/* Collapsed notification dot */}
@@ -323,7 +321,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           <div className="space-y-1">
             {!collapsed && (
               <div
-                className={`px-3  text-[10px] font-bold uppercase tracking-wider text-slate-400 ${
+                className={`px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-orange-200/90 ${
                   isRTL ? "text-right" : "text-left"
                 }`}
               >
@@ -338,7 +336,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           <div className="space-y-1 pt-1 border-t border-brand-dark-border/80">
             {!collapsed && (
               <div
-                className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${
+                className={`px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-orange-200/90 ${
                   isRTL ? "text-right" : "text-left"
                 }`}
               >
@@ -352,7 +350,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           <div className="space-y-1 pt-1 border-t border-brand-dark-border/80">
             {!collapsed && (
               <div
-                className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${
+                className={`px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-orange-200/90 ${
                   isRTL ? "text-right" : "text-left"
                 }`}
               >
@@ -366,7 +364,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           <div className="pt-2 border-t border-brand-dark-border/80">
             {!collapsed && (
               <div
-                className={`px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-slate-400 ${
+                className={`px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-orange-200/90 ${
                   isRTL ? "text-right" : "text-left"
                 }`}
               >

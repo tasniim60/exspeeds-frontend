@@ -33,11 +33,22 @@ export function Badge({
   ...props
 }: BadgeProps) {
   const sizeClass = size === "sm" ? "px-2 py-0.5 text-[11px]" : "px-2.5 py-0.5 text-xs";
+  let baseVariant = badgeVariants[variant] || badgeVariants.default;
+
+  // Filter out default text/bg colors if user provided custom ones
+  if (/(?:^|\s)text-(?!(?:xs|sm|base|lg|xl|2xl|3xl|4xl|left|right|center|justify|start|end)\b)[^\s]+/.test(className)) {
+    baseVariant = baseVariant.replace(/(?:^|\s)text-[^\s]+/g, "");
+  }
+  if (/(?:^|\s)bg-[^\s]+/.test(className)) {
+    baseVariant = baseVariant.replace(/(?:^|\s)bg-[^\s]+/g, "");
+  }
+  if (/(?:^|\s)border-[^\s]+/.test(className)) {
+    baseVariant = baseVariant.replace(/(?:^|\s)border-[^\s]+/g, "");
+  }
+
   return (
     <div
-      className={`inline-flex items-center gap-1.5 rounded-full font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-[#C45B2A]/30 focus:ring-offset-2 focus:ring-offset-white ${
-        badgeVariants[variant] || badgeVariants.default
-      } ${sizeClass} ${className}`}
+      className={`inline-flex items-center gap-1.5 rounded-full font-semibold transition-colors focus:outline-none focus:ring-2 focus:ring-[#C45B2A]/30 focus:ring-offset-2 focus:ring-offset-white ${baseVariant} ${sizeClass} ${className}`}
       {...props}
     />
   );

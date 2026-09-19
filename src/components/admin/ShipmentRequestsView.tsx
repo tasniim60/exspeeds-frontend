@@ -962,26 +962,28 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
           {/* Action: Pickup Request Button (Matching Legacy Google Apps Script "بيك أب") */}
           <Button
             type="button"
+            variant="outline"
             onClick={() => setPickupModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-emerald-950 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 shadow-2xs transition-all cursor-pointer group"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black text-emerald-950 bg-emerald-50 hover:bg-emerald-100 border-2 border-emerald-500 shadow-xs transition-all cursor-pointer group"
           >
-            <Truck className="w-4 h-4 text-emerald-700 group-hover:scale-110 transition-transform" />
-            <span>{isRTL ? "تسجيل طلب بيك أب" : "Book Pickup"}</span>
+            <Truck className="w-4 h-4 text-emerald-800 group-hover:scale-110 transition-transform shrink-0" />
+            <span className="text-emerald-950 font-black">{isRTL ? "تسجيل طلب بيك أب" : "Book Pickup"}</span>
           </Button>
 
           {/* Primary Action: New Shipment Request Button */}
           <Button
             type="button"
+            variant="brand"
             onClick={() => {
               setCreateForm(initialCreateFormData);
               setCreateError(null);
               setCreateTab("client");
               setCreateModalOpen(true);
             }}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#C45B2A] hover:bg-[#A8481B] shadow-sm transition-all cursor-pointer group"
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white shadow-sm transition-all cursor-pointer group"
           >
             <Plus className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
-            <span>{isRTL ? "إضافة طلب شحن جديد" : "New Shipment Request"}</span>
+            <span className="text-white font-bold">{isRTL ? "إضافة طلب شحن جديد" : "New Shipment Request"}</span>
           </Button>
 
           {/* Action button: Google Apps Script Rate Calculator */}
