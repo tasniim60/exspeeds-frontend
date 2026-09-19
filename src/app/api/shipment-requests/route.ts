@@ -66,7 +66,7 @@ export async function POST(request: Request) {
     const authUser = getAuthenticatedUser();
     const body: ShipmentRequest = await request.json();
 
-    if (authUser) {
+    if (authUser && authUser.role !== "admin") {
       body.customerId = authUser.email;
       body.customerName = body.customerName || authUser.name;
       body.email = body.email || authUser.email;

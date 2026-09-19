@@ -511,6 +511,8 @@ export interface InternalTransfer {
   date: string;
   fee?: number; // Wire / processing fee deducted from source
   referenceNumber?: string;
+  transferOfficer?: string; // اسم المحول (المسؤول) from legacy form
+  paymentMethod?: string; // طريقة التحويل from legacy form
   recordedBy: string;
   notes?: string;
 }

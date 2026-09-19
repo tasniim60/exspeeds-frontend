@@ -95,6 +95,8 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
   const [toAccount, setToAccount] = useState<string>(MASTER_FINANCIAL_ACCOUNTS[1] || "speedex wallet");
   const [transferAmount, setTransferAmount] = useState("");
   const [transferDate, setTransferDate] = useState<string>(new Date().toISOString().split("T")[0]);
+  const [transferOfficer, setTransferOfficer] = useState<string>(MASTER_AGENTS[0] || "مصطفي");
+  const [transferMethod, setTransferMethod] = useState<string>("تحويل بنكي");
   const [transferRecorder, setTransferRecorder] = useState<string>(MASTER_AGENTS[0] || "مصطفي");
   const [transferNotes, setTransferNotes] = useState("");
 
@@ -247,6 +249,8 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
       amount: amountNum,
       currency: "EGP",
       date: transferDate,
+      transferOfficer,
+      paymentMethod: transferMethod,
       recordedBy: transferRecorder,
       notes: transferNotes.trim() || undefined,
     };
@@ -746,34 +750,72 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">
-                {isRTL ? "المسؤول عن المناقلة *" : "Recorded By *"}
-              </label>
-              <select
-                value={transferRecorder}
-                onChange={(e) => setTransferRecorder(e.target.value)}
-                className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C45B2A]"
-              >
-                {MASTER_AGENTS.map((ag) => (
-                  <option key={ag} value={ag}>
-                    {ag}
-                  </option>
-                ))}
-              </select>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700">
+                  {isRTL ? "اسم المحول (المسؤول) *" : "Transfer Officer *"}
+                </label>
+                <select
+                  value={transferOfficer}
+                  onChange={(e) => setTransferOfficer(e.target.value)}
+                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C45B2A]"
+                >
+                  {MASTER_AGENTS.map((ag) => (
+                    <option key={ag} value={ag}>
+                      {ag}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700">
+                  {isRTL ? "طريقة التحويل *" : "Transfer Method *"}
+                </label>
+                <select
+                  value={transferMethod}
+                  onChange={(e) => setTransferMethod(e.target.value)}
+                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C45B2A]"
+                >
+                  <option value="تحويل بنكي">{isRTL ? "تحويل بنكي" : "Bank Transfer"}</option>
+                  <option value="فودافون كاش">{isRTL ? "فودافون كاش / محفظة" : "Vodafone Cash / Wallet"}</option>
+                  <option value="إنستاباي">{isRTL ? "إنستاباي (InstaPay)" : "InstaPay"}</option>
+                  <option value="نقدي">{isRTL ? "تسليم نقدي (كاش)" : "Cash Handover"}</option>
+                  <option value="شيك">{isRTL ? "شيك مصرفي" : "Bank Check"}</option>
+                </select>
+              </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">
-                {isRTL ? "ملاحظات المناقلة" : "Notes"}
-              </label>
-              <Input
-                type="text"
-                value={transferNotes}
-                onChange={(e) => setTransferNotes(e.target.value)}
-                placeholder={isRTL ? "تغذية عهدة نقدية..." : "Transfer notes..."}
-                className="h-9 text-xs"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700">
+                  {isRTL ? "اسم المسجل *" : "Recorded By *"}
+                </label>
+                <select
+                  value={transferRecorder}
+                  onChange={(e) => setTransferRecorder(e.target.value)}
+                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C45B2A]"
+                >
+                  {MASTER_AGENTS.map((ag) => (
+                    <option key={ag} value={ag}>
+                      {ag}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-700">
+                  {isRTL ? "ملاحظات / رقم العملية" : "Notes / Reference"}
+                </label>
+                <Input
+                  type="text"
+                  value={transferNotes}
+                  onChange={(e) => setTransferNotes(e.target.value)}
+                  placeholder={isRTL ? "رقم التحويل أو تفاصيل..." : "Transfer ref or notes..."}
+                  className="h-9 text-xs"
+                />
+              </div>
             </div>
 
             <DialogFooter className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
