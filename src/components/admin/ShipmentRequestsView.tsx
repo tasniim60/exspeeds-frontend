@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { AdminStorage, ShipmentRequest, Shipment } from "@/lib/adminData";
+"use client";
+import React, { useState, useEffect, useMemo } from "react";
+import { AdminStorage, ShipmentRequest, Shipment, MASTER_AGENTS } from "@/lib/adminData";
 import { ShipmentRequestService, ShipmentService } from "@/lib/backendApi";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAdminStore } from "@/stores/useAdminStore";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import {
   Package,
   Search,
@@ -31,6 +34,7 @@ import {
   Calendar,
   Hourglass,
   ChevronDown,
+  ChevronUp,
   RotateCcw,
   X,
   Sparkles,
@@ -38,6 +42,15 @@ import {
   Calculator,
   Layers,
   Activity,
+  Building,
+  Building2,
+  Phone,
+  Mail,
+  Scale,
+  ThermometerSnowflake,
+  ShieldCheck,
+  Loader2,
+  Copy,
 } from "lucide-react";
 
 interface ShipmentRequestsViewProps {
@@ -88,6 +101,141 @@ export const SUPPORTED_CURRENCIES = [
   { code: "KWD", labelAr: "د.ك", labelEn: "KWD", nameAr: "دينار كويتي", nameEn: "Kuwaiti Dinar" },
   { code: "QAR", labelAr: "ر.ق", labelEn: "QAR", nameAr: "ريال قطري", nameEn: "Qatari Riyal" },
 ];
+
+export const POPULAR_COUNTRIES = [
+  { nameEn: "Saudi Arabia", nameAr: "المملكة العربية السعودية", code: "SA" },
+  { nameEn: "United Arab Emirates", nameAr: "الإمارات العربية المتحدة", code: "AE" },
+  { nameEn: "Kuwait", nameAr: "الكويت", code: "KW" },
+  { nameEn: "Qatar", nameAr: "قطر", code: "QA" },
+  { nameEn: "Bahrain", nameAr: "البحرين", code: "BH" },
+  { nameEn: "Oman", nameAr: "سلطنة عُمان", code: "OM" },
+  { nameEn: "Egypt", nameAr: "جمهورية مصر العربية", code: "EG" },
+  { nameEn: "Jordan", nameAr: "المملكة الأردنية الهاشمية", code: "JO" },
+  { nameEn: "United Kingdom", nameAr: "المملكة المتحدة (بريطانيا)", code: "GB" },
+  { nameEn: "United States", nameAr: "الولايات المتحدة الأمريكية", code: "US" },
+  { nameEn: "Germany", nameAr: "ألمانيا", code: "DE" },
+  { nameEn: "France", nameAr: "فرنسا", code: "FR" },
+  { nameEn: "Italy", nameAr: "إيطاليا", code: "IT" },
+  { nameEn: "Turkey", nameAr: "تركيا", code: "TR" },
+  { nameEn: "China", nameAr: "الصين", code: "CN" },
+  { nameEn: "Canada", nameAr: "كندا", code: "CA" },
+];
+
+export const POPULAR_EGYPT_CITIES = [
+  { nameEn: "Cairo", nameAr: "القاهرة" },
+  { nameEn: "Giza", nameAr: "الجيزة" },
+  { nameEn: "Alexandria", nameAr: "الإسكندرية" },
+  { nameEn: "6th of October", nameAr: "مدينة 6 أكتوبر" },
+  { nameEn: "10th of Ramadan", nameAr: "مدينة العاشر من رمضان" },
+  { nameEn: "New Cairo", nameAr: "القاهرة الجديدة / التجمع" },
+  { nameEn: "Obour City", nameAr: "مدينة العبور" },
+  { nameEn: "Badr City", nameAr: "مدينة بدر" },
+  { nameEn: "Port Said", nameAr: "بورسعيد" },
+  { nameEn: "Suez", nameAr: "السويس" },
+  { nameEn: "Mansoura", nameAr: "المنصورة" },
+  { nameEn: "Tanta", nameAr: "طنطا" },
+  { nameEn: "Ismailia", nameAr: "الإسماعيلية" },
+];
+
+export const BROKER_SERVICES = [
+  { id: "express-air", titleAr: "شحن جوي سريع دولي (Express Air Courier)", titleEn: "Express Air Courier" },
+  { id: "economy-freight", titleAr: "شحن جوي اقتصادي (Economy Air Freight)", titleEn: "Economy Air Freight" },
+  { id: "ocean-freight", titleAr: "شحن بحري حاويات ومجموعات (Ocean LCL/FCL)", titleEn: "Ocean Freight" },
+  { id: "land-freight", titleAr: "شحن بري للخليج العربي (GCC Land Linehaul)", titleEn: "Land Freight" },
+  { id: "customs-clearance", titleAr: "تخليص جمركي وخدمات نافذة (Customs Clearance)", titleEn: "Customs Clearance" },
+];
+
+export interface CreateShipmentRequestFormData {
+  selectedCustomerId: string;
+  customerName: string;
+  companyName: string;
+  phone: string;
+  whatsapp: string;
+  email: string;
+
+  pickupCountry: string;
+  pickupCity: string;
+  pickupAddress: string;
+  pickupContactName: string;
+  pickupContactPhone: string;
+  preferredPickupDate: string;
+  pickupNotes: string;
+
+  deliveryCountry: string;
+  deliveryCity: string;
+  deliveryShortAddress: string;
+  deliveryAddress: string;
+  consigneeName: string;
+  consigneePhone: string;
+  deliveryNotes: string;
+
+  shipmentType: "Commercial Goods" | "Parcel" | "Documents" | "Other";
+  customShipmentType: string;
+  contents: string;
+  packageCount: number | string;
+  weight: number | string;
+  length: number | string;
+  width: number | string;
+  height: number | string;
+  declaredValue: number | string;
+  declaredCurrency: string;
+  isFragile: boolean;
+  isTemperatureControlled: boolean;
+  specialInstructions: string;
+
+  serviceId: string;
+  serviceTitle: string;
+  status: ShipmentRequest["status"];
+  agreedPrice: string;
+  agreedCurrency: string;
+  internalNotes: string;
+}
+
+export const initialCreateFormData: CreateShipmentRequestFormData = {
+  selectedCustomerId: "",
+  customerName: "",
+  companyName: "",
+  phone: "",
+  whatsapp: "",
+  email: "",
+
+  pickupCountry: "Egypt",
+  pickupCity: "Cairo",
+  pickupAddress: "",
+  pickupContactName: "",
+  pickupContactPhone: "",
+  preferredPickupDate: new Date().toISOString().split("T")[0],
+  pickupNotes: "",
+
+  deliveryCountry: "Saudi Arabia",
+  deliveryCity: "",
+  deliveryShortAddress: "",
+  deliveryAddress: "",
+  consigneeName: "",
+  consigneePhone: "",
+  deliveryNotes: "",
+
+  shipmentType: "Commercial Goods",
+  customShipmentType: "",
+  contents: "",
+  packageCount: 1,
+  weight: 5.0,
+  length: 30,
+  width: 25,
+  height: 15,
+  declaredValue: 500,
+  declaredCurrency: "USD",
+  isFragile: false,
+  isTemperatureControlled: false,
+  specialInstructions: "",
+
+  serviceId: "express-air",
+  serviceTitle: "شحن جوي سريع دولي (Express Air Courier)",
+  status: "New",
+  agreedPrice: "",
+  agreedCurrency: "EGP",
+  internalNotes: "",
+};
 
 const getLocalizedStatus = (status: ShipmentRequest["status"] | string, isRTL: boolean) => {
   if (!isRTL) {
@@ -163,6 +311,294 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
   const [convertCostInput, setConvertCostInput] = useState("");
   const [convertNotesInput, setConvertNotesInput] = useState("");
   const [convertError, setConvertError] = useState<string | null>(null);
+
+  // Customers list from admin store for quick autocomplete
+  const customers = useAdminStore((s) => s.customers);
+
+  // Create Shipment Request State (Admin-Initiated)
+  const [createModalOpen, setCreateModalOpen] = useState(false);
+  const [createTab, setCreateTab] = useState<"client" | "route" | "cargo" | "broker">("client");
+  const [createForm, setCreateForm] = useState<CreateShipmentRequestFormData>(initialCreateFormData);
+  const [createIsSubmitting, setCreateIsSubmitting] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+  const [phoneCopiedNotice, setPhoneCopiedNotice] = useState(false);
+
+  // Dedicated Pickup Modal State (Matching legacy Google Apps Script "بيك أب")
+  const [pickupModalOpen, setPickupModalOpen] = useState(false);
+  const [pickupDate, setPickupDate] = useState<string>(new Date().toISOString().split("T")[0]);
+  const [pickupCustomerId, setPickupCustomerId] = useState<string>("");
+  const [pickupCustomerName, setPickupCustomerName] = useState<string>("");
+  const [pickupCustomerPhone, setPickupCustomerPhone] = useState<string>("");
+  const [pickupShipmentType, setPickupShipmentType] = useState<string>("طرد بضائع");
+  const [pickupAddress, setPickupAddress] = useState<string>("");
+  const [pickupDestination, setPickupDestination] = useState<string>("");
+  const [pickupCourierName, setPickupCourierName] = useState<string>("");
+  const [pickupAgentName, setPickupAgentName] = useState<string>(MASTER_AGENTS[0] || "مصطفي");
+  const [pickupSubmitting, setPickupSubmitting] = useState(false);
+
+  // Auto-calculate Volumetric & Chargeable weights
+  const formLength = parseFloat(String(createForm.length)) || 0;
+  const formWidth = parseFloat(String(createForm.width)) || 0;
+  const formHeight = parseFloat(String(createForm.height)) || 0;
+  const formActualWeight = parseFloat(String(createForm.weight)) || 0;
+  const formVolumetricWeight = useMemo(() => {
+    if (formLength > 0 && formWidth > 0 && formHeight > 0) {
+      return Math.round(((formLength * formWidth * formHeight) / 5000) * 10) / 10;
+    }
+    return 0;
+  }, [formLength, formWidth, formHeight]);
+  const formChargeableWeight = useMemo(() => {
+    return Math.max(formActualWeight, formVolumetricWeight);
+  }, [formActualWeight, formVolumetricWeight]);
+
+  // Handler: Select registered customer
+  const handleSelectCustomer = (customerId: string) => {
+    if (!customerId) {
+      setCreateForm((prev) => ({
+        ...prev,
+        selectedCustomerId: "",
+      }));
+      return;
+    }
+    const found = customers.find((c) => c.id === customerId);
+    if (found) {
+      setCreateForm((prev) => ({
+        ...prev,
+        selectedCustomerId: found.id,
+        customerName: found.name || prev.customerName,
+        companyName: found.company || prev.companyName,
+        phone: found.phone || prev.phone,
+        whatsapp: found.phone || prev.whatsapp,
+        email: found.email || prev.email,
+        pickupAddress: (found as any).address || prev.pickupAddress,
+        pickupCity: found.city || prev.pickupCity,
+        pickupCountry: found.country || prev.pickupCountry,
+        pickupContactName: found.name || prev.pickupContactName,
+        pickupContactPhone: found.phone || prev.pickupContactPhone,
+      }));
+    }
+  };
+
+  // Handler: Copy phone to WhatsApp
+  const handleCopyPhoneToWhatsapp = () => {
+    if (createForm.phone) {
+      setCreateForm((prev) => ({ ...prev, whatsapp: prev.phone }));
+      setPhoneCopiedNotice(true);
+      setTimeout(() => setPhoneCopiedNotice(false), 2000);
+    }
+  };
+
+  // Handler: Select registered customer for Pickup
+  const handleSelectPickupCustomer = (customerId: string) => {
+    setPickupCustomerId(customerId);
+    if (!customerId) return;
+    const found = customers.find((c) => c.id === customerId);
+    if (found) {
+      setPickupCustomerName(found.company || found.name);
+      setPickupCustomerPhone(found.phone || "");
+      if (found.city) {
+        setPickupAddress(found.city);
+      }
+    }
+  };
+
+  // Handler: Submit Direct Pickup Request (Matching Legacy Google Apps Script)
+  const handleSubmitPickup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!pickupCustomerName.trim() || !pickupCustomerPhone.trim()) {
+      alert(isRTL ? "يرجى ملء اسم العميل ورقم هاتفه" : "Please fill customer name and phone");
+      return;
+    }
+
+    setPickupSubmitting(true);
+    try {
+      const newReq: ShipmentRequest = {
+        id: `req-pkp-${Date.now()}`,
+        requestNumber: `PKP-${Date.now().toString().slice(-6)}`,
+        customerName: pickupCustomerName.trim(),
+        companyName: pickupCustomerName.trim(),
+        phone: pickupCustomerPhone.trim(),
+        whatsapp: pickupCustomerPhone.trim(),
+        email: `${pickupCustomerPhone.trim()}@client.exspeeds.com`,
+        country: "Egypt",
+        city: "Cairo",
+        address: pickupAddress.trim() || "موقع العميل",
+        pickupCountry: "Egypt",
+        pickupCity: "Cairo",
+        pickupAddress: pickupAddress.trim() || "موقع العميل",
+        pickupContactName: pickupCustomerName.trim(),
+        pickupContactPhone: pickupCustomerPhone.trim(),
+        preferredPickupDate: pickupDate,
+        deliveryCountry: pickupDestination.trim() || "Egypt",
+        deliveryCity: pickupDestination.trim() || "Cairo",
+        deliveryAddress: pickupDestination.trim() || "Cairo, Egypt",
+        consigneeName: "Consignee",
+        consigneePhone: pickupCustomerPhone.trim(),
+        shipmentType: "Parcel",
+        contents: pickupShipmentType.trim() || "طرد بضائع",
+        packageCount: 1,
+        weight: 1.5,
+        status: "New",
+        internalNotes: `طلب بيك أب فوري | المسؤول عن البيك أب: ${pickupCourierName.trim() || "لم يحدد"} | مسجل الحركة: ${pickupAgentName}`,
+        createdAt: `${pickupDate}T10:00:00.000Z`,
+        updatedAt: new Date().toISOString(),
+      };
+
+      await ShipmentRequestService.createRequest(newReq);
+
+      if (onTriggerNotification) {
+        onTriggerNotification(
+          isRTL ? "تم حفظ طلب البيك أب بنجاح" : "Pickup Saved",
+          isRTL
+            ? `تم تسجيل طلب استلام جديد برقم ${newReq.requestNumber} للعميل ${newReq.customerName}`
+            : `Pickup request recorded for ${newReq.customerName}`,
+          "success"
+        );
+      }
+
+      await loadRequests();
+      setPickupModalOpen(false);
+
+      // Reset
+      setPickupCustomerId("");
+      setPickupCustomerName("");
+      setPickupCustomerPhone("");
+      setPickupShipmentType("طرد بضائع");
+      setPickupAddress("");
+      setPickupDestination("");
+      setPickupCourierName("");
+    } catch (err) {
+      console.error("Failed to save pickup:", err);
+    } finally {
+      setPickupSubmitting(false);
+    }
+  };
+
+  // Handler: Submit Create Request
+  const handleCreateRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCreateError(null);
+
+    // Validation
+    if (!createForm.customerName.trim()) {
+      setCreateError(isRTL ? "يرجى كتابة اسم العميل / الراسل" : "Please enter shipper / customer name");
+      setCreateTab("client");
+      return;
+    }
+    if (!createForm.phone.trim()) {
+      setCreateError(isRTL ? "يرجى إدخال رقم هاتف العميل للتواصل" : "Please enter customer phone number");
+      setCreateTab("client");
+      return;
+    }
+    if (!createForm.pickupCity.trim()) {
+      setCreateError(isRTL ? "يرجى تحديد مدينة الاستلام" : "Please specify pickup city");
+      setCreateTab("route");
+      return;
+    }
+    if (!createForm.deliveryCountry.trim() || !createForm.deliveryCity.trim()) {
+      setCreateError(isRTL ? "يرجى إدخال دولة ومدينة الوصول" : "Please specify destination country and city");
+      setCreateTab("route");
+      return;
+    }
+    if (!createForm.consigneeName.trim() || !createForm.consigneePhone.trim()) {
+      setCreateError(isRTL ? "يرجى إدخال اسم وهاتف المستلم في بلد الوصول" : "Please enter consignee name and phone");
+      setCreateTab("route");
+      return;
+    }
+    if (!createForm.contents.trim()) {
+      setCreateError(isRTL ? "يرجى كتابة وصف محتويات وطبيعة الشحنة" : "Please enter cargo contents description");
+      setCreateTab("cargo");
+      return;
+    }
+    if (!createForm.weight || parseFloat(String(createForm.weight)) <= 0) {
+      setCreateError(isRTL ? "يرجى إدخال وزن الشحنة الفعلي بالكيلوغرام" : "Please enter gross weight in KG");
+      setCreateTab("cargo");
+      return;
+    }
+
+    setCreateIsSubmitting(true);
+
+    try {
+      const generatedReqNumber = `REQ-${Math.floor(10000 + Math.random() * 90000)}`;
+      const nowIso = new Date().toISOString();
+
+      const newReq: ShipmentRequest = {
+        id: `req-${Date.now()}`,
+        requestNumber: generatedReqNumber,
+        customerId: createForm.selectedCustomerId || undefined,
+        customerName: createForm.customerName.trim(),
+        companyName: createForm.companyName.trim(),
+        phone: createForm.phone.trim(),
+        whatsapp: (createForm.whatsapp || createForm.phone).trim(),
+        email: createForm.email.trim(),
+        country: createForm.pickupCountry,
+        city: createForm.pickupCity,
+        address: createForm.pickupAddress.trim() || `${createForm.pickupCity}, ${createForm.pickupCountry}`,
+
+        pickupCountry: createForm.pickupCountry,
+        pickupCity: createForm.pickupCity,
+        pickupAddress: createForm.pickupAddress.trim() || `${createForm.pickupCity}, ${createForm.pickupCountry}`,
+        pickupContactName: createForm.pickupContactName.trim() || createForm.customerName.trim(),
+        pickupContactPhone: createForm.pickupContactPhone.trim() || createForm.phone.trim(),
+        preferredPickupDate: createForm.preferredPickupDate || nowIso.split("T")[0],
+        pickupNotes: createForm.pickupNotes.trim() || undefined,
+
+        deliveryCountry: createForm.deliveryCountry,
+        deliveryCity: createForm.deliveryCity,
+        deliveryShortAddress: createForm.deliveryShortAddress.trim() || undefined,
+        deliveryAddress: createForm.deliveryAddress.trim() || `${createForm.deliveryCity}, ${createForm.deliveryCountry}`,
+        consigneeName: createForm.consigneeName.trim(),
+        consigneePhone: createForm.consigneePhone.trim(),
+        deliveryNotes: createForm.deliveryNotes.trim() || undefined,
+
+        serviceId: createForm.serviceId,
+        serviceTitle: createForm.serviceTitle,
+
+        shipmentType: createForm.shipmentType,
+        contents: createForm.contents.trim(),
+        packageCount: parseInt(String(createForm.packageCount), 10) || 1,
+        weight: parseFloat(String(createForm.weight)) || 1.0,
+        length: parseFloat(String(createForm.length)) || undefined,
+        width: parseFloat(String(createForm.width)) || undefined,
+        height: parseFloat(String(createForm.height)) || undefined,
+        declaredValue: parseFloat(String(createForm.declaredValue)) || undefined,
+        currency: createForm.declaredCurrency,
+        isFragile: Boolean(createForm.isFragile),
+        isTemperatureControlled: Boolean(createForm.isTemperatureControlled),
+        specialInstructions: createForm.specialInstructions.trim() || undefined,
+
+        status: createForm.status || "New",
+        agreedPrice: createForm.agreedPrice.trim() || undefined,
+        quotedPrice: createForm.agreedPrice.trim() || undefined,
+        internalNotes: createForm.internalNotes.trim() || undefined,
+        approvedAt: createForm.status === "Approved" ? nowIso : undefined,
+        createdAt: nowIso,
+        updatedAt: nowIso,
+      };
+
+      const saved = await ShipmentRequestService.createRequest(newReq);
+
+      if (onTriggerNotification) {
+        onTriggerNotification(
+          isRTL ? "تم تسجيل طلب الشحن بنجاح" : "Shipment Request Created",
+          isRTL
+            ? `تم إنشاء الطلب ${saved.requestNumber} للعميل ${saved.customerName} (${saved.packageCount} طرد إلى ${saved.deliveryCountry})`
+            : `Request ${saved.requestNumber} created for ${saved.customerName} (${saved.packageCount} pkgs to ${saved.deliveryCountry})`,
+          "success"
+        );
+      }
+
+      await loadRequests();
+      setCreateModalOpen(false);
+      setCreateForm(initialCreateFormData);
+      setCreateTab("client");
+    } catch (err: any) {
+      console.error("Error creating shipment request:", err);
+      setCreateError(isRTL ? "حدث خطأ أثناء حفظ الطلب. يرجى إعادة المحاولة." : "Failed to save request. Please try again.");
+    } finally {
+      setCreateIsSubmitting(false);
+    }
+  };
 
   // WhatsApp Deal Helper (Logistics Broker Model)
   const getWhatsAppUrlForRequest = (r: ShipmentRequest) => {
@@ -521,7 +957,34 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
         </div>
 
         {/* Action button: Google Apps Script Rate Calculator */}
+        {/* Action buttons */}
         <div className="flex items-center gap-2.5 flex-wrap w-full lg:w-auto">
+          {/* Action: Pickup Request Button (Matching Legacy Google Apps Script "بيك أب") */}
+          <Button
+            type="button"
+            onClick={() => setPickupModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-emerald-950 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300 shadow-2xs transition-all cursor-pointer group"
+          >
+            <Truck className="w-4 h-4 text-emerald-700 group-hover:scale-110 transition-transform" />
+            <span>{isRTL ? "تسجيل طلب بيك أب" : "Book Pickup"}</span>
+          </Button>
+
+          {/* Primary Action: New Shipment Request Button */}
+          <Button
+            type="button"
+            onClick={() => {
+              setCreateForm(initialCreateFormData);
+              setCreateError(null);
+              setCreateTab("client");
+              setCreateModalOpen(true);
+            }}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#C45B2A] hover:bg-[#A8481B] shadow-sm transition-all cursor-pointer group"
+          >
+            <Plus className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+            <span>{isRTL ? "إضافة طلب شحن جديد" : "New Shipment Request"}</span>
+          </Button>
+
+          {/* Action button: Google Apps Script Rate Calculator */}
           <a
             href="https://script.google.com/macros/s/AKfycbzLxqTg5aNeqvep_ExG-EuxL-gVOVdELZb9sa5KpvmhrbwOt9OJ_XuwC2_s8N0qQvLX/exec"
             target="_blank"
@@ -1774,7 +2237,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                 <Button
                   type="submit"
                   variant="brand"
-                  className="w-full sm:w-auto h-10 rounded-xl text-xs font-bold bg-[#C45B2A] hover:bg-[#A8481B] text-white flex items-center justify-center gap-1.5 shadow-md"
+                  className="w-full sm:w-auto h-10 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
                 >
                   <CheckCircle2 className="w-4 h-4 shrink-0" />
                   <span className="truncate">{isRTL ? "تأكيد وإصدار البوليصة" : "Confirm & Issue AWB"}</span>
@@ -1783,6 +2246,1043 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
             </form>
           </DialogContent>
         )}
+      </Dialog>
+
+      {/* ─── 6. CREATE SHIPMENT REQUEST MODAL (ADMIN INITIATED) ─── */}
+      <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
+        <DialogContent
+          className="max-w-4xl w-[95vw] sm:w-full space-y-4 sm:space-y-5 text-start p-4 sm:p-6 md:p-7 max-h-[90vh] overflow-y-auto bg-white"
+          onClose={() => setCreateModalOpen(false)}
+        >
+          {/* Header */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 pb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-2xl bg-orange-50 text-[#C45B2A] flex items-center justify-center shrink-0 shadow-2xs">
+                <Plus className="w-6 h-6" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg sm:text-xl font-black text-[#251516] tracking-tight">
+                  {isRTL ? "تسجيل طلب شحن جديد" : "Record New Shipment Request"}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-gray-500 mt-0.5">
+                  {isRTL
+                    ? "تسجيل بيانات الراسل، مسار الشحنة، مواصفات الطرود والأبعاد، والقيمة الجمركية وخيارات التسعير"
+                    : "Record shipper info, route, cargo specs, dimensions, volumetric weight, and agreed pricing"}
+                </DialogDescription>
+              </div>
+            </div>
+
+            {/* Quick Customer Autocomplete Picker */}
+            <div className="flex items-center gap-2">
+              <label className="text-[11px] font-bold text-gray-600 whitespace-nowrap">
+                {isRTL ? "عميل مسجل:" : "Client:"}
+              </label>
+              <select
+                value={createForm.selectedCustomerId}
+                onChange={(e) => handleSelectCustomer(e.target.value)}
+                className="h-9 text-xs rounded-xl border border-gray-200 bg-gray-50 px-2.5 font-semibold text-gray-800 outline-none focus:border-[#C45B2A] cursor-pointer max-w-[180px] sm:max-w-[220px]"
+              >
+                <option value="">{isRTL ? "-- عميل جديد / حر --" : "-- New / Manual Client --"}</option>
+                {customers.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.company ? `${c.company} (${c.name})` : c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Error Banner */}
+          {createError && (
+            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold rounded-xl flex items-center gap-2 animate-in fade-in">
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
+              <span>{createError}</span>
+            </div>
+          )}
+
+          {/* Navigation Tabs Bar */}
+          <div className="flex rounded-xl bg-gray-100 p-1 gap-1 overflow-x-auto text-xs font-bold">
+            <button
+              type="button"
+              onClick={() => setCreateTab("client")}
+              className={`flex-1 min-w-[110px] py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                createTab === "client"
+                  ? "bg-white text-[#C45B2A] shadow-xs font-extrabold"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              <User className="w-3.5 h-3.5" />
+              <span>{isRTL ? "1. العميل والراسل" : "1. Shipper"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCreateTab("route")}
+              className={`flex-1 min-w-[110px] py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                createTab === "route"
+                  ? "bg-white text-[#C45B2A] shadow-xs font-extrabold"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              <MapPin className="w-3.5 h-3.5" />
+              <span>{isRTL ? "2. مسار الشحنة" : "2. Route"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCreateTab("cargo")}
+              className={`flex-1 min-w-[110px] py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                createTab === "cargo"
+                  ? "bg-white text-[#C45B2A] shadow-xs font-extrabold"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              <Package className="w-3.5 h-3.5" />
+              <span>{isRTL ? "3. مواصفات الطرود" : "3. Cargo & Pkgs"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setCreateTab("broker")}
+              className={`flex-1 min-w-[110px] py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                createTab === "broker"
+                  ? "bg-white text-[#C45B2A] shadow-xs font-extrabold"
+                  : "text-gray-600 hover:text-gray-900"
+              }`}
+            >
+              <DollarSign className="w-3.5 h-3.5" />
+              <span>{isRTL ? "4. التسعير والوسيط" : "4. Pricing & Broker"}</span>
+            </button>
+          </div>
+
+          <form onSubmit={handleCreateRequest} className="space-y-4 pt-1">
+            {/* ─── TAB 1: SHIPPER & CLIENT INFO ─── */}
+            {createTab === "client" && (
+              <div className="space-y-4 animate-in fade-in duration-150">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      {isRTL ? "اسم العميل / الراسل" : "Customer / Shipper Name"} <span className="text-rose-500">*</span>
+                    </label>
+                    <Input
+                      required
+                      value={createForm.customerName}
+                      onChange={(e) => setCreateForm({ ...createForm, customerName: e.target.value })}
+                      placeholder={isRTL ? "مثال: تسنيم أحمد" : "e.g. Tasneem Ahmed"}
+                      className="text-xs"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      {isRTL ? "اسم الشركة / المؤسسة" : "Company / Organization"}
+                    </label>
+                    <Input
+                      value={createForm.companyName}
+                      onChange={(e) => setCreateForm({ ...createForm, companyName: e.target.value })}
+                      placeholder={isRTL ? "مثال: شركة تبارك للصادرات" : "e.g. Tabarak Exports Co."}
+                      className="text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      {isRTL ? "رقم الهاتف الأساسي" : "Primary Phone"} <span className="text-rose-500">*</span>
+                    </label>
+                    <Input
+                      required
+                      type="tel"
+                      value={createForm.phone}
+                      onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
+                      placeholder="01012345678"
+                      className="text-xs font-mono"
+                      dir="ltr"
+                    />
+                  </div>
+
+                  <div>
+                    <div className="flex items-center justify-between mb-1">
+                      <label className="text-xs font-bold text-gray-700">
+                        {isRTL ? "رقم الواتساب" : "WhatsApp Number"}
+                      </label>
+                      {createForm.phone && (
+                        <button
+                          type="button"
+                          onClick={handleCopyPhoneToWhatsapp}
+                          className="text-[10px] font-bold text-[#C45B2A] hover:underline cursor-pointer flex items-center gap-1"
+                        >
+                          <Copy className="w-2.5 h-2.5" />
+                          <span>{phoneCopiedNotice ? (isRTL ? "تم النسخ!" : "Copied!") : (isRTL ? "نسخ الهاتف" : "Copy Phone")}</span>
+                        </button>
+                      )}
+                    </div>
+                    <Input
+                      type="tel"
+                      value={createForm.whatsapp}
+                      onChange={(e) => setCreateForm({ ...createForm, whatsapp: e.target.value })}
+                      placeholder="201012345678"
+                      className="text-xs font-mono"
+                      dir="ltr"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      {isRTL ? "البريد الإلكتروني" : "Email Address"}
+                    </label>
+                    <Input
+                      type="email"
+                      value={createForm.email}
+                      onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                      placeholder="client@company.com"
+                      className="text-xs"
+                      dir="ltr"
+                    />
+                  </div>
+                </div>
+
+                <div className="p-3 rounded-xl bg-orange-50/60 border border-orange-100 flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2 text-orange-900 font-medium">
+                    <User className="w-4 h-4 text-[#C45B2A] shrink-0" />
+                    <span>{isRTL ? "يمكنك اختيار عميل مسجل من الأعلى لملء كامل البيانات فورياً." : "You can select an existing customer from the top dropdown."}</span>
+                  </div>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setCreateTab("route")}
+                    className="text-xs font-bold text-[#C45B2A] hover:bg-orange-100/50"
+                  >
+                    <span>{isRTL ? "التالي: مسار الشحنة" : "Next: Route"}</span>
+                    <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* ─── TAB 2: ROUTE (ORIGIN & DESTINATION) ─── */}
+            {createTab === "route" && (
+              <div className="space-y-4 animate-in fade-in duration-150">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {/* Origin / Pickup Card */}
+                  <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200 space-y-3">
+                    <div className="flex items-center gap-2 pb-2 border-b border-slate-200">
+                      <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
+                        A
+                      </div>
+                      <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wide">
+                        {isRTL ? "مكان الاستلام والانطلاق (Origin)" : "Origin / Pickup Details"}
+                      </h4>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          {isRTL ? "دولة الاستلام" : "Pickup Country"} <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          value={createForm.pickupCountry}
+                          onChange={(e) => setCreateForm({ ...createForm, pickupCountry: e.target.value })}
+                          className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-lg px-2 cursor-pointer"
+                        >
+                          <option value="Egypt">{isRTL ? "مصر (Egypt)" : "Egypt"}</option>
+                          {POPULAR_COUNTRIES.filter((c) => c.nameEn !== "Egypt").map((c) => (
+                            <option key={c.code} value={c.nameEn}>
+                              {isRTL ? c.nameAr : c.nameEn}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          {isRTL ? "مدينة الاستلام" : "Pickup City"} <span className="text-rose-500">*</span>
+                        </label>
+                        {createForm.pickupCountry === "Egypt" ? (
+                          <select
+                            value={createForm.pickupCity}
+                            onChange={(e) => setCreateForm({ ...createForm, pickupCity: e.target.value })}
+                            className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-lg px-2 cursor-pointer"
+                          >
+                            {POPULAR_EGYPT_CITIES.map((city) => (
+                              <option key={city.nameEn} value={city.nameEn}>
+                                {isRTL ? city.nameAr : city.nameEn}
+                              </option>
+                            ))}
+                          </select>
+                        ) : (
+                          <Input
+                            required
+                            value={createForm.pickupCity}
+                            onChange={(e) => setCreateForm({ ...createForm, pickupCity: e.target.value })}
+                            placeholder={isRTL ? "المدينة" : "City"}
+                            className="text-xs h-9"
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        {isRTL ? "العنوان التفصيلي للاستلام" : "Full Pickup Address"}
+                      </label>
+                      <Input
+                        value={createForm.pickupAddress}
+                        onChange={(e) => setCreateForm({ ...createForm, pickupAddress: e.target.value })}
+                        placeholder={isRTL ? "اسم الشارع، رقم المبنى، المعلم المميز..." : "Street name, building number, landmark..."}
+                        className="text-xs h-9"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          {isRTL ? "مسؤول الاستلام بالموقع" : "Pickup Contact"}
+                        </label>
+                        <Input
+                          value={createForm.pickupContactName}
+                          onChange={(e) => setCreateForm({ ...createForm, pickupContactName: e.target.value })}
+                          placeholder={isRTL ? "اسم الشخص بالفرع" : "Contact name"}
+                          className="text-xs h-9"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          {isRTL ? "هاتف مسؤول الاستلام" : "Contact Phone"}
+                        </label>
+                        <Input
+                          type="tel"
+                          value={createForm.pickupContactPhone}
+                          onChange={(e) => setCreateForm({ ...createForm, pickupContactPhone: e.target.value })}
+                          placeholder="010xxxxxxxx"
+                          className="text-xs h-9 font-mono"
+                          dir="ltr"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          {isRTL ? "تاريخ الاستلام المفضل" : "Pickup Date"}
+                        </label>
+                        <Input
+                          type="date"
+                          value={createForm.preferredPickupDate}
+                          onChange={(e) => setCreateForm({ ...createForm, preferredPickupDate: e.target.value })}
+                          className="text-xs h-9 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          {isRTL ? "ملاحظات الاستلام" : "Pickup Notes"}
+                        </label>
+                        <Input
+                          value={createForm.pickupNotes}
+                          onChange={(e) => setCreateForm({ ...createForm, pickupNotes: e.target.value })}
+                          placeholder={isRTL ? "مواعيد العمل..." : "Working hours..."}
+                          className="text-xs h-9"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Destination / Consignee Card */}
+                  <div className="p-4 rounded-2xl bg-orange-50/40 border border-orange-200 space-y-3">
+                    <div className="flex items-center gap-2 pb-2 border-b border-orange-200/80">
+                      <div className="w-6 h-6 rounded-lg bg-[#C45B2A] text-white flex items-center justify-center font-bold text-xs">
+                        B
+                      </div>
+                      <h4 className="text-xs font-extrabold text-[#251516] uppercase tracking-wide">
+                        {isRTL ? "مكان التسليم والمرسل إليه (Destination)" : "Destination / Consignee"}
+                      </h4>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          {isRTL ? "دولة الوصول" : "Destination Country"} <span className="text-rose-500">*</span>
+                        </label>
+                        <select
+                          value={createForm.deliveryCountry}
+                          onChange={(e) => setCreateForm({ ...createForm, deliveryCountry: e.target.value })}
+                          className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-lg px-2 cursor-pointer"
+                        >
+                          {POPULAR_COUNTRIES.map((c) => (
+                            <option key={c.code} value={c.nameEn}>
+                              {isRTL ? c.nameAr : c.nameEn}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          {isRTL ? "مدينة الوصول" : "Destination City"} <span className="text-rose-500">*</span>
+                        </label>
+                        <Input
+                          required
+                          value={createForm.deliveryCity}
+                          onChange={(e) => setCreateForm({ ...createForm, deliveryCity: e.target.value })}
+                          placeholder={isRTL ? "مثال: الرياض / دبي" : "e.g. Riyadh / Dubai"}
+                          className="text-xs h-9"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          {isRTL ? "اسم المستلم" : "Consignee Name"} <span className="text-rose-500">*</span>
+                        </label>
+                        <Input
+                          required
+                          value={createForm.consigneeName}
+                          onChange={(e) => setCreateForm({ ...createForm, consigneeName: e.target.value })}
+                          placeholder={isRTL ? "اسم المستلم بالوجهة" : "Receiver name"}
+                          className="text-xs h-9"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          {isRTL ? "هاتف المستلم" : "Consignee Phone"} <span className="text-rose-500">*</span>
+                        </label>
+                        <Input
+                          required
+                          type="tel"
+                          value={createForm.consigneePhone}
+                          onChange={(e) => setCreateForm({ ...createForm, consigneePhone: e.target.value })}
+                          placeholder="+966xxxxxxxxx"
+                          className="text-xs h-9 font-mono"
+                          dir="ltr"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        {isRTL ? "العنوان التفصيلي في بلد الوصول" : "Full Delivery Address"}
+                      </label>
+                      <Input
+                        value={createForm.deliveryAddress}
+                        onChange={(e) => setCreateForm({ ...createForm, deliveryAddress: e.target.value })}
+                        placeholder={isRTL ? "الشارع، الحي، المعلم..." : "Street, district, building..."}
+                        className="text-xs h-9"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2.5">
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          {isRTL ? "الرمز البريدي / الحي" : "Postal Code / District"}
+                        </label>
+                        <Input
+                          value={createForm.deliveryShortAddress}
+                          onChange={(e) => setCreateForm({ ...createForm, deliveryShortAddress: e.target.value })}
+                          placeholder="e.g. 12271"
+                          className="text-xs h-9 font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          {isRTL ? "ملاحظات التسليم" : "Delivery Notes"}
+                        </label>
+                        <Input
+                          value={createForm.deliveryNotes}
+                          onChange={(e) => setCreateForm({ ...createForm, deliveryNotes: e.target.value })}
+                          placeholder={isRTL ? "ملاحظات للمندوب..." : "Special instructions..."}
+                          className="text-xs h-9"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center pt-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCreateTab("client")}
+                    className="text-xs"
+                  >
+                    <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "" : "rotate-180"}`} />
+                    <span>{isRTL ? "السابق" : "Back"}</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="brand"
+                    onClick={() => setCreateTab("cargo")}
+                    className="text-xs font-bold bg-[#C45B2A] text-white"
+                  >
+                    <span>{isRTL ? "التالي: مواصفات الطرود" : "Next: Cargo Specs"}</span>
+                    <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* ─── TAB 3: CARGO & PACKAGES SPECS ─── */}
+            {createTab === "cargo" && (
+              <div className="space-y-4 animate-in fade-in duration-150">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      {isRTL ? "نوع الشحنة" : "Shipment Type"}
+                    </label>
+                    <select
+                      value={createForm.shipmentType}
+                      onChange={(e) => setCreateForm({ ...createForm, shipmentType: e.target.value as any })}
+                      className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-lg px-2 cursor-pointer"
+                    >
+                      <option value="Commercial Goods">{isRTL ? "بضائع تجارية (Commercial Goods)" : "Commercial Goods"}</option>
+                      <option value="Parcel">{isRTL ? "طرد / شحنة عادية (Parcel)" : "Parcel"}</option>
+                      <option value="Documents">{isRTL ? "مستندات وأوراق (Documents)" : "Documents"}</option>
+                      <option value="Other">{isRTL ? "أخرى (Other)" : "Other"}</option>
+                    </select>
+                  </div>
+
+                  <div className="sm:col-span-2">
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      {isRTL ? "وصف المحتويات وطبيعة المواد" : "Contents Description"} <span className="text-rose-500">*</span>
+                    </label>
+                    <Input
+                      required
+                      value={createForm.contents}
+                      onChange={(e) => setCreateForm({ ...createForm, contents: e.target.value })}
+                      placeholder={isRTL ? "مثال: ملابس قطنية جاهزة، إلكترونيات، عينات تجارية..." : "e.g. Cotton apparel, spare parts..."}
+                      className="text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Dimensions & Weights Grid */}
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-gray-50 to-orange-50/30 border border-gray-200 space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-gray-200">
+                    <span className="text-xs font-extrabold text-gray-900 flex items-center gap-1.5">
+                      <Scale className="w-4 h-4 text-[#C45B2A]" />
+                      <span>{isRTL ? "الأوزان والأبعاد (الحساب التلقائي للوزن الحجمي)" : "Weights & Volumetric Dimensions"}</span>
+                    </span>
+                    <span className="text-[10px] font-bold text-gray-500">
+                      معادلة الشحن الجوي الدولي: (L × W × H) / 5000
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        {isRTL ? "عدد الطرود" : "Pieces"}
+                      </label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={createForm.packageCount}
+                        onChange={(e) => setCreateForm({ ...createForm, packageCount: e.target.value })}
+                        className="text-xs font-mono font-bold h-9"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        {isRTL ? "الوزن الفعلي (كجم)" : "Actual Wt (KG)"} <span className="text-rose-500">*</span>
+                      </label>
+                      <Input
+                        required
+                        type="number"
+                        step="0.1"
+                        min="0.1"
+                        value={createForm.weight}
+                        onChange={(e) => setCreateForm({ ...createForm, weight: e.target.value })}
+                        className="text-xs font-mono font-bold h-9 text-rose-700"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        {isRTL ? "الطول L (سم)" : "Length (cm)"}
+                      </label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={createForm.length}
+                        onChange={(e) => setCreateForm({ ...createForm, length: e.target.value })}
+                        className="text-xs font-mono h-9"
+                        placeholder="30"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        {isRTL ? "العرض W (سم)" : "Width (cm)"}
+                      </label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={createForm.width}
+                        onChange={(e) => setCreateForm({ ...createForm, width: e.target.value })}
+                        className="text-xs font-mono h-9"
+                        placeholder="25"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                        {isRTL ? "الارتفاع H (سم)" : "Height (cm)"}
+                      </label>
+                      <Input
+                        type="number"
+                        min="1"
+                        value={createForm.height}
+                        onChange={(e) => setCreateForm({ ...createForm, height: e.target.value })}
+                        className="text-xs font-mono h-9"
+                        placeholder="15"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Live Volumetric Calculation Result Card */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
+                    <div className="p-2.5 rounded-xl bg-white border border-gray-200 text-center shadow-2xs">
+                      <span className="text-[10px] font-bold text-gray-500 block uppercase">
+                        {isRTL ? "الوزن الفعلي" : "Actual Weight"}
+                      </span>
+                      <span className="text-base font-black font-mono text-gray-800" dir="ltr">
+                        {formActualWeight} {isRTL ? "كجم" : "KG"}
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-white border border-gray-200 text-center shadow-2xs">
+                      <span className="text-[10px] font-bold text-gray-500 block uppercase">
+                        {isRTL ? "الوزن الحجمي التقديري" : "Volumetric Weight"}
+                      </span>
+                      <span className="text-base font-black font-mono text-amber-600" dir="ltr">
+                        {formVolumetricWeight} {isRTL ? "كجم" : "KG"}
+                      </span>
+                    </div>
+
+                    <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/60 border border-emerald-200 text-center shadow-2xs">
+                      <span className="text-[10px] font-bold text-emerald-800 block uppercase">
+                        {isRTL ? "الوزن المعتمد للفوترة" : "Chargeable Weight"}
+                      </span>
+                      <span className="text-base font-black font-mono text-emerald-700" dir="ltr">
+                        {formChargeableWeight} {isRTL ? "كجم" : "KG"}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Customs & Special handling */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      {isRTL ? "القيمة الجمركية المعلنة والعملة" : "Declared Customs Value"}
+                    </label>
+                    <div className="flex gap-1.5">
+                      <Input
+                        type="number"
+                        value={createForm.declaredValue}
+                        onChange={(e) => setCreateForm({ ...createForm, declaredValue: e.target.value })}
+                        placeholder="500"
+                        className="text-xs font-mono font-bold"
+                      />
+                      <select
+                        value={createForm.declaredCurrency}
+                        onChange={(e) => setCreateForm({ ...createForm, declaredCurrency: e.target.value })}
+                        className="w-24 h-10 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-xl px-2 cursor-pointer"
+                      >
+                        <option value="USD">USD ($)</option>
+                        <option value="EUR">EUR (€)</option>
+                        <option value="EGP">EGP (ج.م)</option>
+                        <option value="SAR">SAR (ر.س)</option>
+                        <option value="AED">AED (د.إ)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      {isRTL ? "تعليمات خاصة وملاحظات مناولة" : "Special Handling Instructions"}
+                    </label>
+                    <Input
+                      value={createForm.specialInstructions}
+                      onChange={(e) => setCreateForm({ ...createForm, specialInstructions: e.target.value })}
+                      placeholder={isRTL ? "يحفظ جافاً، عدم التكديس..." : "Keep dry, do not stack..."}
+                      className="text-xs"
+                    />
+                  </div>
+                </div>
+
+                {/* Checkboxes: Fragile & Temperature */}
+                <div className="flex flex-wrap gap-4 p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs">
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={createForm.isFragile}
+                      onChange={(e) => setCreateForm({ ...createForm, isFragile: e.target.checked })}
+                      className="rounded text-[#C45B2A] focus:ring-[#C45B2A] h-4 w-4 cursor-pointer"
+                    />
+                    <span className="font-bold text-gray-800 flex items-center gap-1">
+                      <ShieldCheck className="w-3.5 h-3.5 text-amber-600" />
+                      <span>{isRTL ? "شحنة قابلة للكسر (Fragile)" : "Fragile Cargo"}</span>
+                    </span>
+                  </label>
+
+                  <label className="flex items-center gap-2 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={createForm.isTemperatureControlled}
+                      onChange={(e) => setCreateForm({ ...createForm, isTemperatureControlled: e.target.checked })}
+                      className="rounded text-[#C45B2A] focus:ring-[#C45B2A] h-4 w-4 cursor-pointer"
+                    />
+                    <span className="font-bold text-gray-800 flex items-center gap-1">
+                      <ThermometerSnowflake className="w-3.5 h-3.5 text-blue-600" />
+                      <span>{isRTL ? "شحن مبرد / تحكم بدرجة الحرارة" : "Temperature Controlled (Cold Chain)"}</span>
+                    </span>
+                  </label>
+                </div>
+
+                <div className="flex justify-between items-center pt-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCreateTab("route")}
+                    className="text-xs"
+                  >
+                    <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "" : "rotate-180"}`} />
+                    <span>{isRTL ? "السابق" : "Back"}</span>
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="brand"
+                    onClick={() => setCreateTab("broker")}
+                    className="text-xs font-bold bg-[#C45B2A] text-white"
+                  >
+                    <span>{isRTL ? "التالي: التسعير والوسيط" : "Next: Pricing & Broker"}</span>
+                    <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* ─── TAB 4: BROKER OPTIONS & AGREED PRICING ─── */}
+            {createTab === "broker" && (
+              <div className="space-y-4 animate-in fade-in duration-150">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      {isRTL ? "خدمة الشحن المحددة" : "Logistics Service"}
+                    </label>
+                    <select
+                      value={createForm.serviceId}
+                      onChange={(e) => {
+                        const sId = e.target.value;
+                        const sObj = BROKER_SERVICES.find((s) => s.id === sId);
+                        setCreateForm({
+                          ...createForm,
+                          serviceId: sId,
+                          serviceTitle: sObj ? (isRTL ? sObj.titleAr : sObj.titleEn) : sId,
+                        });
+                      }}
+                      className="w-full h-10 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-xl px-2 cursor-pointer"
+                    >
+                      {BROKER_SERVICES.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {isRTL ? s.titleAr : s.titleEn}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      {isRTL ? "الحالة المبدئية للطلب" : "Initial Request Status"}
+                    </label>
+                    <select
+                      value={createForm.status}
+                      onChange={(e) => setCreateForm({ ...createForm, status: e.target.value as any })}
+                      className="w-full h-10 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-xl px-2 cursor-pointer"
+                    >
+                      <option value="New">{isRTL ? "طلب جديد (New)" : "New"}</option>
+                      <option value="Approved">{isRTL ? "معتمد ومسعر (Approved)" : "Approved"}</option>
+                      <option value="Contacted">{isRTL ? "تم التواصل مع العميل (Contacted)" : "Contacted"}</option>
+                      <option value="Awaiting Customer Response">{isRTL ? "بانتظار رد العميل (Awaiting Response)" : "Awaiting Response"}</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      {isRTL ? "السعر المتفق عليه / المعروض للعميل" : "Agreed / Quoted Price"}
+                    </label>
+                    <div className="flex gap-1.5">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        value={createForm.agreedPrice}
+                        onChange={(e) => setCreateForm({ ...createForm, agreedPrice: e.target.value })}
+                        placeholder="2500"
+                        className="text-xs font-mono font-bold"
+                      />
+                      <select
+                        value={createForm.agreedCurrency}
+                        onChange={(e) => setCreateForm({ ...createForm, agreedCurrency: e.target.value })}
+                        className="w-28 h-10 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-xl px-2 cursor-pointer"
+                      >
+                        {SUPPORTED_CURRENCIES.map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {c.code} ({isRTL ? c.labelAr : c.labelEn})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <span className="text-[10px] text-gray-500 mt-1 block">
+                      {isRTL ? "إذا كان السعر متفقاً عليه بالفعل، سيتم اعتماده كمرجع لإصدار البوليصة لاحقاً." : "Rate will be locked for conversion."}
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 mb-1">
+                      {isRTL ? "ملاحظات تشغيلية داخلية (Internal Notes)" : "Internal Operations Notes"}
+                    </label>
+                    <Input
+                      value={createForm.internalNotes}
+                      onChange={(e) => setCreateForm({ ...createForm, internalNotes: e.target.value })}
+                      placeholder={isRTL ? "ملاحظات خاصة بفريق العمليات والتنسيق..." : "Internal notes for dispatch..."}
+                      className="text-xs"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center pt-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setCreateTab("cargo")}
+                    className="text-xs"
+                  >
+                    <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "" : "rotate-180"}`} />
+                    <span>{isRTL ? "السابق" : "Back"}</span>
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="brand"
+                    disabled={createIsSubmitting}
+                    className="h-10 px-5 text-xs font-bold flex items-center gap-2 rounded-xl cursor-pointer"
+                  >
+                    {createIsSubmitting ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        <span>{isRTL ? "جارٍ تسجيل الطلب..." : "Recording..."}</span>
+                      </>
+                    ) : (
+                      <>
+                        <CheckCircle2 className="w-4 h-4" />
+                        <span>{isRTL ? "حفظ وتسجيل طلب الشحن" : "Save Shipment Request"}</span>
+                      </>
+                    )}
+                  </Button>
+                </div>
+              </div>
+            )}
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* ─── 7. DIRECT CLIENT PICKUP REQUEST MODAL (MATCHING LEGACY GOOGLE APPS SCRIPT) ─── */}
+      <Dialog open={pickupModalOpen} onOpenChange={setPickupModalOpen}>
+        <DialogContent
+          className="max-w-xl w-[95vw] sm:w-full space-y-4 text-start p-4 sm:p-6 bg-white max-h-[90vh] overflow-y-auto"
+          onClose={() => setPickupModalOpen(false)}
+        >
+          {/* Header */}
+          <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-3">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 shadow-2xs">
+                <Truck className="w-5 h-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg font-black text-gray-900 tracking-tight flex items-center gap-2">
+                  <span>{isRTL ? "تسجيل طلب بيك أب" : "Client Pickup Request"}</span>
+                  <Badge variant="success" size="sm" className="font-mono text-[10px]">
+                    {isRTL ? "استلام شحنة" : "Pickup"}
+                  </Badge>
+                </DialogTitle>
+                <DialogDescription className="text-xs text-gray-500 mt-0.5">
+                  {isRTL
+                    ? "تسجيل بيانات استلام الشحنة من مقر العميل وتعيين المندوب المسؤول"
+                    : "Consignment pickup registration form matching operational dispatch"}
+                </DialogDescription>
+              </div>
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmitPickup} className="space-y-3.5 pt-1 text-xs">
+            {/* 1. Operation Date */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1">
+                {isRTL ? "تاريخ العملية" : "Operation Date"} <span className="text-rose-500">*</span>
+              </label>
+              <Input
+                type="date"
+                required
+                value={pickupDate}
+                onChange={(e) => setPickupDate(e.target.value)}
+                className="h-10 text-xs font-mono"
+              />
+            </div>
+
+            {/* 2. Customer Name (Dropdown + manual) */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  {isRTL ? "اسم العميل" : "Customer Name"} <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <select
+                    value={pickupCustomerId}
+                    onChange={(e) => handleSelectPickupCustomer(e.target.value)}
+                    className="w-full h-10 rounded-xl border border-gray-300 bg-white text-xs font-bold text-gray-800 cursor-pointer appearance-none px-3"
+                  >
+                    <option value="">{isRTL ? "-- اختر عميل البيك أب --" : "-- Select Pickup Client --"}</option>
+                    {customers.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.company ? `${c.company} (${c.name})` : c.name}
+                      </option>
+                    ))}
+                    <option value="__other__">{isRTL ? "✍️ + كتابة اسم يدوي..." : "✍️ + Custom Name..."}</option>
+                  </select>
+                  <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+                </div>
+                {pickupCustomerId === "__other__" && (
+                  <Input
+                    required
+                    value={pickupCustomerName}
+                    onChange={(e) => setPickupCustomerName(e.target.value)}
+                    placeholder={isRTL ? "اكتب اسم العميل يدوياً..." : "Enter customer name..."}
+                    className="h-9 text-xs mt-1.5"
+                  />
+                )}
+              </div>
+
+              {/* 3. Customer Phone */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  {isRTL ? "رقم تليفون العميل" : "Customer Phone"} <span className="text-rose-500">*</span>
+                </label>
+                <Input
+                  type="tel"
+                  required
+                  value={pickupCustomerPhone}
+                  onChange={(e) => setPickupCustomerPhone(e.target.value)}
+                  placeholder="010xxxxxxxx"
+                  className="h-10 text-xs font-mono"
+                  dir="ltr"
+                />
+              </div>
+            </div>
+
+            {/* 4. Shipment Type */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1">
+                {isRTL ? "نوع الشحنة" : "Shipment Type / Cargo"} <span className="text-rose-500">*</span>
+              </label>
+              <Input
+                required
+                value={pickupShipmentType}
+                onChange={(e) => setPickupShipmentType(e.target.value)}
+                placeholder={isRTL ? "مثال: طرد ملابس، أجهزة إلكترونية، مستندات..." : "e.g. Garments, Electronics, Documents..."}
+                className="h-10 text-xs"
+              />
+            </div>
+
+            {/* 5. Pickup Address (منين) */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1">
+                {isRTL ? "عنوان الاستلام (منين)" : "Pickup Address (Origin)"} <span className="text-rose-500">*</span>
+              </label>
+              <textarea
+                required
+                rows={2}
+                value={pickupAddress}
+                onChange={(e) => setPickupAddress(e.target.value)}
+                placeholder={isRTL ? "الشارع، المنطقة، رقم العقار، المعلم المميز..." : "Street, area, building, landmarks..."}
+                className="w-full p-2.5 rounded-xl border border-gray-300 bg-white text-xs text-gray-800 outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-500"
+              />
+            </div>
+
+            {/* 6. Destination (رايحة فين) */}
+            <div>
+              <label className="block text-xs font-bold text-gray-700 mb-1">
+                {isRTL ? "الوجهة (رايحة فين)" : "Delivery Destination"} <span className="text-rose-500">*</span>
+              </label>
+              <Input
+                required
+                value={pickupDestination}
+                onChange={(e) => setPickupDestination(e.target.value)}
+                placeholder={isRTL ? "مثال: الرياض - السعودية، دبي، الإسكندرية، القاهرة..." : "e.g. Riyadh, Dubai, Alexandria..."}
+                className="h-10 text-xs"
+              />
+            </div>
+
+            {/* 7. Courier & 8. Agent Name */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  {isRTL ? "المسؤول عن البيك أب (المندوب)" : "Pickup Courier / Responsible"}
+                </label>
+                <Input
+                  value={pickupCourierName}
+                  onChange={(e) => setPickupCourierName(e.target.value)}
+                  placeholder={isRTL ? "اسم المندوب أو السائق..." : "Courier or driver name..."}
+                  className="h-10 text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-700 mb-1">
+                  {isRTL ? "اسم المسجل" : "Recorded By (Agent)"} <span className="text-rose-500">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <select
+                    value={pickupAgentName}
+                    onChange={(e) => setPickupAgentName(e.target.value)}
+                    className="w-full h-10 rounded-xl border border-gray-300 bg-white text-xs font-bold text-gray-800 cursor-pointer appearance-none px-3"
+                  >
+                    {MASTER_AGENTS.map((ag) => (
+                      <option key={ag} value={ag}>{ag}</option>
+                    ))}
+                  </select>
+                  <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+                </div>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="pt-3 border-t border-gray-100 flex flex-col gap-2">
+              <Button
+                type="submit"
+                disabled={pickupSubmitting}
+                className="w-full h-12 rounded-xl text-sm font-black bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all active:scale-[0.99]"
+              >
+                {pickupSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>{isRTL ? "جارٍ حفظ طلب البيك أب..." : "Saving..."}</span>
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 className="w-4 h-4" />
+                    <span>{isRTL ? "حفظ طلب البيك أب" : "Save Pickup Request"}</span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </form>
+        </DialogContent>
       </Dialog>
     </div>
   );

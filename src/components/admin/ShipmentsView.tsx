@@ -120,6 +120,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
   const [formCostPrice, setFormCostPrice] = useState("1500");
   const [formSellingPrice, setFormSellingPrice] = useState("2100");
   const [formTransExpense, setFormTransExpense] = useState("0");
+  const [formExchangeRate, setFormExchangeRate] = useState("50");
   const [formAgentName, setFormAgentName] = useState(MASTER_AGENTS[0]);
   const [formOpNote, setFormOpNote] = useState("");
 
@@ -219,7 +220,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
       volumetricWeight: volumetricWtNum,
       dim: `${lengthNum}x${widthNum}x${heightNum} cm`,
       priceEgp: sellingPriceNum,
-      priceUsd: Math.round(sellingPriceNum / 31),
+      priceUsd: Math.round(sellingPriceNum / (parseFloat(formExchangeRate) || 50)),
       costPrice: costPriceNum,
       sellingPrice: sellingPriceNum,
       transExpense: transExpenseNum,
@@ -2048,7 +2049,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
               <span className="font-bold text-emerald-950 text-xs block">
                 {t("admin.shipments.modal.financialSection")}
               </span>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                 <div>
                   <label className="text-[10px] text-gray-700 font-bold block mb-1">{t("admin.shipments.modal.costPriceLabel")}</label>
                   <Input
@@ -2075,6 +2076,19 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                     value={formTransExpense}
                     onChange={(e) => setFormTransExpense(e.target.value)}
                     type="number"
+                    dir="ltr"
+                    className="h-9 text-xs rounded-xl font-mono font-bold"
+                  />
+                </div>
+                <div>
+                  <label className="text-[10px] text-gray-700 font-bold block mb-1">
+                    {isRTL ? "سعر صرف $ (USD)" : "USD Rate"}
+                  </label>
+                  <Input
+                    value={formExchangeRate}
+                    onChange={(e) => setFormExchangeRate(e.target.value)}
+                    type="number"
+                    step="0.1"
                     dir="ltr"
                     className="h-9 text-xs rounded-xl font-mono font-bold"
                   />
@@ -2113,7 +2127,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
               <Button type="button" variant="outline" onClick={() => setNewModalOpen(false)} className="rounded-xl font-bold h-10 w-full sm:w-auto justify-center text-xs sm:text-sm">
                 {t("admin.shipments.modal.cancelBtn")}
               </Button>
-              <Button type="submit" variant="brand" className="rounded-xl font-extrabold bg-[#C45B2A] hover:bg-[#A8481B] text-white h-10 w-full sm:w-auto justify-center text-xs sm:text-sm">
+              <Button type="submit" variant="brand" className="rounded-xl font-extrabold h-10 w-full sm:w-auto justify-center text-xs sm:text-sm">
                 {t("admin.shipments.modal.registerBtn")}
               </Button>
             </DialogFooter>
