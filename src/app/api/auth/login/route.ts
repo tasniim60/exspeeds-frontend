@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export const dynamic = "force-dynamic";
 
-const LARAVEL_API_URL = process.env.NEXT_PUBLIC_LARAVEL_API_URL || "http://localhost:8000/api";
+const LARAVEL_API_URL = process.env.NEXT_PUBLIC_LARAVEL_API_URL || process.env.BACKEND_API_URL || "http://localhost:8000/api";
 
 
 export async function POST(request: Request) {

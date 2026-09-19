@@ -42,6 +42,8 @@ export async function POST(req: Request) {
       date: body.date || new Date().toISOString().split("T")[0],
       fee: Number(body.fee || 0),
       referenceNumber: body.referenceNumber ? body.referenceNumber.trim() : undefined,
+      transferOfficer: body.transferOfficer ? body.transferOfficer.trim() : undefined,
+      paymentMethod: body.paymentMethod ? body.paymentMethod.trim() : undefined,
       recordedBy: body.recordedBy || "ضبش",
       notes: body.notes ? body.notes.trim() : undefined,
     };
