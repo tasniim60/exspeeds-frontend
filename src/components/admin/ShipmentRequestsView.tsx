@@ -189,6 +189,12 @@ export interface CreateShipmentRequestFormData {
   agreedPrice: string;
   agreedCurrency: string;
   internalNotes: string;
+
+  // Direct AWB & Ledger Integration ("سجل الشحنات والقيد")
+  issueAwbNow: boolean;
+  carrier: string;
+  carrierAwb: string;
+  costPrice: string;
 }
 
 export const initialCreateFormData: CreateShipmentRequestFormData = {
@@ -235,6 +241,11 @@ export const initialCreateFormData: CreateShipmentRequestFormData = {
   agreedPrice: "",
   agreedCurrency: "EGP",
   internalNotes: "",
+
+  issueAwbNow: true,
+  carrier: "Express",
+  carrierAwb: "",
+  costPrice: "",
 };
 
 const getLocalizedStatus = (status: ShipmentRequest["status"] | string, isRTL: boolean) => {
@@ -522,6 +533,29 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
       const generatedReqNumber = `REQ-${Math.floor(10000 + Math.random() * 90000)}`;
       const nowIso = new Date().toISOString();
 
+      let generatedAwb = (createForm.carrierAwb || "").trim().toUpperCase();
+      if (!generatedAwb) {
+        generatedAwb = `EXP-${Math.floor(10000000 + Math.random() * 90000000)}`;
+      }
+
+      const len = parseFloat(String(createForm.length)) || 30;
+      const wid = parseFloat(String(createForm.width)) || 25;
+      const hei = parseFloat(String(createForm.height)) || 15;
+      const volWt = Number(((len * wid * hei) / 5000).toFixed(1));
+      const actWt = parseFloat(String(createForm.weight)) || 1.0;
+      const finalWt = Math.max(actWt, volWt);
+
+      const rawSelling = parseFloat(String(createForm.agreedPrice)) || 0;
+      const currency = createForm.agreedCurrency || "EGP";
+      const sellingVal = rawSelling > 0 ? rawSelling : (currency === "USD" ? 50 : 2500);
+      const costVal = createForm.costPrice ? parseFloat(createForm.costPrice) || Math.round(sellingVal * 0.65) : Math.round(sellingVal * 0.65);
+      const profitVal = sellingVal - costVal;
+
+      const priceInEgp = currency === "USD" ? Math.round(sellingVal * 48) : sellingVal;
+      const priceInUsd = currency === "USD" ? sellingVal : Math.round(sellingVal / 48);
+
+      const isConvertedToShipment = Boolean(createForm.issueAwbNow);
+
       const newReq: ShipmentRequest = {
         id: `req-${Date.now()}`,
         requestNumber: generatedReqNumber,
@@ -557,33 +591,118 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
         shipmentType: createForm.shipmentType,
         contents: createForm.contents.trim(),
         packageCount: parseInt(String(createForm.packageCount), 10) || 1,
-        weight: parseFloat(String(createForm.weight)) || 1.0,
-        length: parseFloat(String(createForm.length)) || undefined,
-        width: parseFloat(String(createForm.width)) || undefined,
-        height: parseFloat(String(createForm.height)) || undefined,
+        weight: actWt,
+        length: len,
+        width: wid,
+        height: hei,
         declaredValue: parseFloat(String(createForm.declaredValue)) || undefined,
         currency: createForm.declaredCurrency,
         isFragile: Boolean(createForm.isFragile),
         isTemperatureControlled: Boolean(createForm.isTemperatureControlled),
         specialInstructions: createForm.specialInstructions.trim() || undefined,
 
-        status: createForm.status || "New",
-        agreedPrice: createForm.agreedPrice.trim() || undefined,
-        quotedPrice: createForm.agreedPrice.trim() || undefined,
+        status: isConvertedToShipment ? "Converted to Shipment" : (createForm.status || "New"),
+        agreedPrice: sellingVal.toString(),
+        quotedPrice: sellingVal.toString(),
         internalNotes: createForm.internalNotes.trim() || undefined,
-        approvedAt: createForm.status === "Approved" ? nowIso : undefined,
+        approvedAt: isConvertedToShipment || createForm.status === "Approved" ? nowIso : undefined,
+        linkedAwb: isConvertedToShipment ? generatedAwb : undefined,
+        convertedAt: isConvertedToShipment ? nowIso : undefined,
         createdAt: nowIso,
         updatedAt: nowIso,
       };
+
+      if (isConvertedToShipment) {
+        const newShipment: Shipment = {
+          id: `shp-${Date.now()}`,
+          awb: generatedAwb,
+          date: nowIso.replace("T", " ").substring(0, 16),
+          account: createForm.companyName || createForm.customerName.trim(),
+          company: createForm.companyName || createForm.customerName.trim(),
+          senderName: createForm.pickupContactName.trim() || createForm.customerName.trim(),
+          senderCity: `${createForm.pickupCity.trim()}, ${createForm.pickupCountry.trim()}`,
+          receiverName: createForm.consigneeName.trim(),
+          receiverCity: `${createForm.deliveryCity.trim()}, ${createForm.deliveryCountry.trim()}`,
+          country: createForm.deliveryCountry.trim(),
+          carrier: (createForm.carrier as any) || "Express",
+          broker: "XSPEED",
+          weight: finalWt,
+          actualWeight: actWt,
+          length: len,
+          width: wid,
+          height: hei,
+          volumetricWeight: volWt,
+          dim: `${len}x${wid}x${hei} cm`,
+          priceEgp: priceInEgp,
+          priceUsd: priceInUsd,
+          costPrice: costVal,
+          sellingPrice: sellingVal,
+          transExpense: 0,
+          netProfit: profitVal,
+          agentName: "Operations Broker",
+          opNote: createForm.internalNotes.trim() || "Registered via New Shipment Request",
+          contents: createForm.contents.trim() || createForm.shipmentType || "Parcel",
+          status: "Information recived",
+          originHub: `${createForm.pickupCity.trim()} Gateway`,
+          destinationHub: `${createForm.deliveryCity.trim()} Central Hub`,
+          currentLocation: `${createForm.pickupCity.trim()} Gateway`,
+          serviceType: "Next-Day Air",
+          timeline: [
+            {
+              status: "Shipment Created & Carrier AWB Assigned",
+              location: `${createForm.pickupCity.trim()} Dispatch Gateway`,
+              timestamp: nowIso.replace("T", " ").substring(0, 16),
+              completed: true,
+            },
+            {
+              status: "Dispatched via " + (createForm.carrier || "Express"),
+              location: createForm.pickupAddress.trim() || `${createForm.pickupCity.trim()}, ${createForm.pickupCountry.trim()}`,
+              timestamp: "In Progress",
+              completed: true,
+              current: true,
+            },
+            {
+              status: "In Transit",
+              location: "En Route",
+              timestamp: "Pending",
+              completed: false,
+            },
+            {
+              status: "Delivered",
+              location: createForm.deliveryAddress.trim() || `${createForm.deliveryCity.trim()}, ${createForm.deliveryCountry.trim()}`,
+              timestamp: "Pending",
+              completed: false,
+            },
+          ],
+        };
+
+        const currentShipments = AdminStorage.getShipments();
+        AdminStorage.saveShipments([newShipment, ...currentShipments.filter((s) => s.id !== newShipment.id && s.awb !== newShipment.awb)]);
+
+        try {
+          await useAdminStore.getState().addShipment(newShipment);
+        } catch {
+          await ShipmentService.createShipment(newShipment);
+        }
+      }
+
+      // Optimistic local state update
+      setRequests((prev) => [newReq, ...prev]);
 
       const saved = await ShipmentRequestService.createRequest(newReq);
 
       if (onTriggerNotification) {
         onTriggerNotification(
-          isRTL ? "تم تسجيل طلب الشحن بنجاح" : "Shipment Request Created",
-          isRTL
-            ? `تم إنشاء الطلب ${saved.requestNumber} للعميل ${saved.customerName} (${saved.packageCount} طرد إلى ${saved.deliveryCountry})`
-            : `Request ${saved.requestNumber} created for ${saved.customerName} (${saved.packageCount} pkgs to ${saved.deliveryCountry})`,
+          isConvertedToShipment
+            ? (isRTL ? "تم تسجيل الطلب وقيده في سجل الشحنات والقيد" : "Shipment & AWB Recorded")
+            : (isRTL ? "تم تسجيل طلب الشحن بنجاح" : "Shipment Request Created"),
+          isConvertedToShipment
+            ? (isRTL
+                ? `تم إنشاء الطلب ${saved.requestNumber} وقيده في سجل الشحنات ببوليصة (${generatedAwb}) للعميل ${saved.customerName}`
+                : `Request ${saved.requestNumber} booked & entered in Shipments Ledger with AWB ${generatedAwb} for ${saved.customerName}`)
+            : (isRTL
+                ? `تم إنشاء الطلب ${saved.requestNumber} للعميل ${saved.customerName} (${saved.packageCount} طرد إلى ${saved.deliveryCountry})`
+                : `Request ${saved.requestNumber} created for ${saved.customerName} (${saved.packageCount} pkgs to ${saved.deliveryCountry})`),
           "success"
         );
       }
@@ -3100,6 +3219,88 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                   </div>
                 </div>
 
+                {/* ─── Direct Entry & AWB in Shipments Ledger ("سجل الشحنات والقيد") ─── */}
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50/70 to-orange-50/50 border border-orange-200/80 space-y-3 shadow-2xs">
+                  <label className="flex items-start gap-2.5 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      checked={createForm.issueAwbNow}
+                      onChange={(e) => setCreateForm({ ...createForm, issueAwbNow: e.target.checked })}
+                      className="mt-0.5 rounded text-[#C45B2A] focus:ring-[#C45B2A] h-4 w-4 cursor-pointer"
+                    />
+                    <div className="flex-1">
+                      <div className="font-extrabold text-xs text-[#251516] flex items-center gap-1.5 flex-wrap">
+                        <Truck className="w-4 h-4 text-[#C45B2A]" />
+                        <span>{isRTL ? "قيد وإدراج فوري في سجل الشحنات والقيد (إصدار بوليصة AWB)" : "Direct Entry & Issue AWB in Shipments Ledger"}</span>
+                        <span className="bg-emerald-100 text-emerald-800 text-[10px] font-black px-2 py-0.5 rounded-full border border-emerald-200">
+                          {isRTL ? "موصى به" : "Recommended"}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-gray-600 mt-0.5">
+                        {isRTL
+                          ? "سيتم تسجيل الشحنة برقم بوليصة رسمي وإدراجها فورياً في تبويب 'سجل الشحنات والقيد' واحتساب الأرباح والعمليات."
+                          : "Directly creates an active AWB entry with full financials in the Shipments & Accounting Ledger."}
+                      </p>
+                    </div>
+                  </label>
+
+                  {createForm.issueAwbNow && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-orange-200/60 animate-in fade-in duration-200">
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          {isRTL ? "شركة الشحن الناقلة (Carrier)" : "Carrier Line"}
+                        </label>
+                        <select
+                          value={createForm.carrier}
+                          onChange={(e) => setCreateForm({ ...createForm, carrier: e.target.value })}
+                          className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-xl px-2 cursor-pointer shadow-2xs"
+                        >
+                          <option value="Express">Express</option>
+                          <option value="FEDEX">FedEx Priority</option>
+                          <option value="Aramex">Aramex Air</option>
+                          <option value="SMSA Express">SMSA Express</option>
+                          <option value="UPS">UPS</option>
+                          <option value="TNT Express">TNT Express</option>
+                          <option value="DB Schenker USA">DB Schenker USA</option>
+                          <option value="Other">{isRTL ? "ناقل آخر" : "Other Carrier"}</option>
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          {isRTL ? "رقم البوليصة (AWB)" : "Carrier AWB #"}
+                        </label>
+                        <Input
+                          value={createForm.carrierAwb}
+                          onChange={(e) => setCreateForm({ ...createForm, carrierAwb: e.target.value.toUpperCase() })}
+                          placeholder={isRTL ? "تلقائي (EXP-XXXXX) أو أدخل رقم البوليصة" : "Auto (EXP-XXXXX) or enter AWB"}
+                          className="text-xs h-9 font-mono font-bold uppercase shadow-2xs"
+                          dir="ltr"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                          {isRTL ? `تكلفة الشحن (${createForm.agreedCurrency})` : `Carrier Cost (${createForm.agreedCurrency})`}
+                        </label>
+                        <Input
+                          type="number"
+                          step="0.01"
+                          value={createForm.costPrice}
+                          onChange={(e) => setCreateForm({ ...createForm, costPrice: e.target.value })}
+                          placeholder={
+                            createForm.agreedPrice
+                              ? String(Math.round(parseFloat(createForm.agreedPrice) * 0.65))
+                              : "1625"
+                          }
+                          className="text-xs h-9 font-mono font-bold shadow-2xs"
+                          dir="ltr"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+
                 <div className="flex justify-between items-center pt-2">
                   <Button
                     type="button"
@@ -3120,12 +3321,16 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     {createIsSubmitting ? (
                       <>
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>{isRTL ? "جارٍ تسجيل الطلب..." : "Recording..."}</span>
+                        <span>{isRTL ? "جارٍ تسجيل وقيد الطلب..." : "Recording..."}</span>
                       </>
                     ) : (
                       <>
                         <CheckCircle2 className="w-4 h-4" />
-                        <span>{isRTL ? "حفظ وتسجيل طلب الشحن" : "Save Shipment Request"}</span>
+                        <span>
+                          {createForm.issueAwbNow
+                            ? (isRTL ? "حفظ وقيد الشحنة في السجل والبوالص" : "Save & Issue to Shipments Ledger")
+                            : (isRTL ? "حفظ وتسجيل طلب الشحن فقط" : "Save Shipment Request Only")}
+                        </span>
                       </>
                     )}
                   </Button>

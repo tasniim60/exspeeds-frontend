@@ -62,6 +62,7 @@ import {
   MASTER_EXTRA_EXPENSES,
   MASTER_COUNTRIES,
 } from "@/lib/adminData";
+import { ShipmentRequestService } from "@/lib/backendApi";
 import { useLanguage } from "@/context/LanguageContext";
 import { TrackingRedirect } from "@/components/TrackingRedirect";
 
@@ -249,6 +250,10 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
         status: "Converted to Shipment",
         linkedAwb: formAwb.trim(),
       });
+      ShipmentRequestService.updateRequest(selectedRequestId, {
+        status: "Converted to Shipment",
+        linkedAwb: formAwb.trim(),
+      }).catch(() => {});
       setSelectedRequestId("");
     }
 
