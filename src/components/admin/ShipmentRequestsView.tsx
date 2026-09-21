@@ -3320,6 +3320,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                           </select>
                         </div>
 
+
                         <div>
                           <label className="block text-[11px] font-bold text-gray-700 mb-1">
                             {isRTL ? "رقم البوليصة (AWB)" : "Carrier AWB #"}
@@ -3367,6 +3368,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                           />
                         </div>
                       </div>
+
 
                       {/* Live Profit Preview */}
                       <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-2.5 flex items-center justify-between text-xs">
