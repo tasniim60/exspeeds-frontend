@@ -47,6 +47,8 @@ export interface ShipmentRequest {
   // Pricing & Status (Broker Model: Admin sets agreed price and currency upon approval)
   agreedPrice?: string | number;
   quotedPrice?: string; // Kept for backwards compatibility
+  costPrice?: number;
+  transExpense?: number;
   currency?: "EGP" | "USD" | "EUR" | "SAR" | "AED" | "GBP" | string;
   status: "New" | "Contacted" | "Approved" | "Converted to Shipment" | "Cancelled" | "Price Sent" | "Awaiting Customer Response" | "Customer Confirmed";
   createdAt: string;

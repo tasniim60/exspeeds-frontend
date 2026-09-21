@@ -195,6 +195,7 @@ export interface CreateShipmentRequestFormData {
   carrier: string;
   carrierAwb: string;
   costPrice: string;
+  transExpense: string;
 }
 
 export const initialCreateFormData: CreateShipmentRequestFormData = {
@@ -246,6 +247,7 @@ export const initialCreateFormData: CreateShipmentRequestFormData = {
   carrier: "Express",
   carrierAwb: "",
   costPrice: "",
+  transExpense: "0",
 };
 
 const getLocalizedStatus = (status: ShipmentRequest["status"] | string, isRTL: boolean) => {
@@ -320,6 +322,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
   const [convertPriceInput, setConvertPriceInput] = useState("");
   const [convertCurrencyInput, setConvertCurrencyInput] = useState("EGP");
   const [convertCostInput, setConvertCostInput] = useState("");
+  const [convertTransExpenseInput, setConvertTransExpenseInput] = useState("0");
   const [convertNotesInput, setConvertNotesInput] = useState("");
   const [convertError, setConvertError] = useState<string | null>(null);
 
@@ -549,7 +552,8 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
       const currency = createForm.agreedCurrency || "EGP";
       const sellingVal = rawSelling > 0 ? rawSelling : (currency === "USD" ? 50 : 2500);
       const costVal = createForm.costPrice ? parseFloat(createForm.costPrice) || Math.round(sellingVal * 0.65) : Math.round(sellingVal * 0.65);
-      const profitVal = sellingVal - costVal;
+      const transVal = parseFloat(createForm.transExpense) || 0;
+      const profitVal = sellingVal - costVal - transVal;
 
       const priceInEgp = currency === "USD" ? Math.round(sellingVal * 48) : sellingVal;
       const priceInUsd = currency === "USD" ? sellingVal : Math.round(sellingVal / 48);
@@ -604,6 +608,8 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
         status: isConvertedToShipment ? "Converted to Shipment" : (createForm.status || "New"),
         agreedPrice: sellingVal.toString(),
         quotedPrice: sellingVal.toString(),
+        costPrice: costVal,
+        transExpense: transVal,
         internalNotes: createForm.internalNotes.trim() || undefined,
         approvedAt: isConvertedToShipment || createForm.status === "Approved" ? nowIso : undefined,
         linkedAwb: isConvertedToShipment ? generatedAwb : undefined,
@@ -637,7 +643,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
           priceUsd: priceInUsd,
           costPrice: costVal,
           sellingPrice: sellingVal,
-          transExpense: 0,
+          transExpense: transVal,
           netProfit: profitVal,
           agentName: "Operations Broker",
           opNote: createForm.internalNotes.trim() || "Registered via New Shipment Request",
@@ -819,7 +825,8 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
     const quoted = rawPrice ? parseFloat(String(rawPrice).replace(/[^0-9.]/g, "")) || 2500 : 2500;
     setConvertPriceInput(quoted.toString());
     setConvertCurrencyInput(req.currency || "EGP");
-    setConvertCostInput(Math.round(quoted * 0.65).toString());
+    setConvertCostInput(req.costPrice ? String(req.costPrice) : Math.round(quoted * 0.65).toString());
+    setConvertTransExpenseInput(req.transExpense ? String(req.transExpense) : "0");
     setConvertNotesInput("");
     setConvertError(null);
     setConvertModalOpen(true);
@@ -938,7 +945,8 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
 
     const sellingVal = parseFloat(convertPriceInput) || 2500;
     const costVal = parseFloat(convertCostInput) || Math.round(sellingVal * 0.65);
-    const profitVal = sellingVal - costVal;
+    const transVal = parseFloat(convertTransExpenseInput) || 0;
+    const profitVal = sellingVal - costVal - transVal;
     const currency = convertCurrencyInput || "EGP";
 
     const priceInEgp = currency === "USD" ? Math.round(sellingVal * 48) : sellingVal;
@@ -968,7 +976,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
       priceUsd: priceInUsd,
       costPrice: costVal,
       sellingPrice: sellingVal,
-      transExpense: 0,
+      transExpense: transVal,
       netProfit: profitVal,
       agentName: "Operations Broker",
       opNote: convertNotesInput || "Converted from broker request",
@@ -993,15 +1001,21 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
           current: true,
         },
         {
-          status: "In Transit",
-          location: "En Route",
-          timestamp: "Pending",
+          status: "Package Arrived at Sorting Terminal",
+          location: `${requestToConvert.pickupCity} Central Hub`,
+          timestamp: "Scheduled",
           completed: false,
         },
         {
-          status: "Delivered",
-          location: requestToConvert.deliveryAddress,
-          timestamp: "Pending",
+          status: "Customs Clearance & Route Planning",
+          location: `${requestToConvert.deliveryCountry} Inbound Gateway`,
+          timestamp: "Est. Scheduled",
+          completed: false,
+        },
+        {
+          status: "Delivered to Consignee",
+          location: `${requestToConvert.deliveryCity}, ${requestToConvert.deliveryCountry}`,
+          timestamp: "Est. In 2-3 Business Days",
           completed: false,
         },
       ],
@@ -1023,6 +1037,8 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
       linkedAwb: trimmedAwb,
       agreedPrice: sellingVal.toString(),
       quotedPrice: sellingVal.toString(),
+      costPrice: costVal,
+      transExpense: transVal,
       currency: currency,
       convertedAt: new Date().toISOString(),
     };
@@ -2305,56 +2321,89 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                 </p>
               </div>
 
-              {/* Financials: Selling Price vs Cost */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div>
-                  <label className="block text-xs font-bold uppercase text-gray-700 mb-1">
-                    {isRTL ? "سعر البيع للعميل" : "Selling Price to Client"}
-                  </label>
-                  <input
-                    type="number"
-                    value={convertPriceInput}
-                    onChange={(e) => setConvertPriceInput(e.target.value)}
-                    placeholder="2500"
-                    className="w-full h-10 px-3 bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border border-gray-300 outline-none"
-                    dir="ltr"
-                  />
-                </div>
+              {/* Financials: Selling Price vs Cost vs Trans Expenses */}
+              <div className="space-y-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-gray-700 mb-1">
+                      {isRTL ? "سعر البيع للعميل" : "Selling Price to Client"}
+                    </label>
+                    <input
+                      type="number"
+                      value={convertPriceInput}
+                      onChange={(e) => setConvertPriceInput(e.target.value)}
+                      placeholder="2500"
+                      className="w-full h-10 px-3 bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border border-gray-300 focus:border-[#C45B2A] outline-none shadow-2xs"
+                      dir="ltr"
+                    />
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-bold uppercase text-gray-700 mb-1">
-                    {isRTL ? "نوع العملة" : "Currency"}
-                  </label>
-                  <div className="relative flex items-center">
-                    <select
-                      value={convertCurrencyInput}
-                      onChange={(e) => setConvertCurrencyInput(e.target.value)}
-                      className={`w-full h-10 bg-white text-[#251516] text-xs font-bold rounded-xl border border-gray-300 focus:border-[#C45B2A] outline-none transition-all cursor-pointer shadow-2xs appearance-none ${
-                        isRTL ? "pr-3 pl-7 text-right" : "pl-3 pr-7 text-left"
-                      }`}
-                    >
-                      {SUPPORTED_CURRENCIES.map((c) => (
-                        <option key={c.code} value={c.code}>
-                          {c.code} ({isRTL ? `${c.nameAr} - ${c.labelAr}` : `${c.nameEn} - ${c.labelEn}`})
-                        </option>
-                      ))}
-                    </select>
-                    <ChevronDown className={`w-3.5 h-3.5 text-gray-500 absolute ${isRTL ? "left-2" : "right-2"} pointer-events-none`} />
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-gray-700 mb-1">
+                      {isRTL ? "نوع العملة" : "Currency"}
+                    </label>
+                    <div className="relative flex items-center">
+                      <select
+                        value={convertCurrencyInput}
+                        onChange={(e) => setConvertCurrencyInput(e.target.value)}
+                        className={`w-full h-10 bg-white text-[#251516] text-xs font-bold rounded-xl border border-gray-300 focus:border-[#C45B2A] outline-none transition-all cursor-pointer shadow-2xs appearance-none ${
+                          isRTL ? "pr-3 pl-7 text-right" : "pl-3 pr-7 text-left"
+                        }`}
+                      >
+                        {SUPPORTED_CURRENCIES.map((c) => (
+                          <option key={c.code} value={c.code}>
+                            {c.code} ({isRTL ? `${c.nameAr} - ${c.labelAr}` : `${c.nameEn} - ${c.labelEn}`})
+                          </option>
+                        ))}
+                      </select>
+                      <ChevronDown className={`w-3.5 h-3.5 text-gray-500 absolute ${isRTL ? "left-2" : "right-2"} pointer-events-none`} />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-gray-700 mb-1">
+                      {isRTL ? `تكلفة الناقل (${convertCurrencyInput})` : `Direct Cost (${convertCurrencyInput})`}
+                    </label>
+                    <input
+                      type="number"
+                      value={convertCostInput}
+                      onChange={(e) => setConvertCostInput(e.target.value)}
+                      placeholder="1625"
+                      className="w-full h-10 px-3 bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border border-gray-300 focus:border-[#C45B2A] outline-none shadow-2xs"
+                      dir="ltr"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold uppercase text-gray-700 mb-1">
+                      {isRTL ? `مصاريف نقل (Trans) (${convertCurrencyInput})` : `Trans Cost (${convertCurrencyInput})`}
+                    </label>
+                    <input
+                      type="number"
+                      value={convertTransExpenseInput}
+                      onChange={(e) => setConvertTransExpenseInput(e.target.value)}
+                      placeholder="0"
+                      className="w-full h-10 px-3 bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border border-gray-300 focus:border-[#C45B2A] outline-none shadow-2xs"
+                      dir="ltr"
+                    />
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-bold uppercase text-gray-700 mb-1">
-                    {isRTL ? `تكلفة الشحن (${convertCurrencyInput})` : `Direct Carrier Cost (${convertCurrencyInput})`}
-                  </label>
-                  <input
-                    type="number"
-                    value={convertCostInput}
-                    onChange={(e) => setConvertCostInput(e.target.value)}
-                    placeholder="1625"
-                    className="w-full h-10 px-3 bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border border-gray-300 outline-none"
-                    dir="ltr"
-                  />
+                {/* Live Profit Preview */}
+                <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-3 flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <DollarSign className="w-4 h-4 text-emerald-600" />
+                    <span className="font-bold text-emerald-950">
+                      {isRTL ? "صافي الربح التقديري (بيع - تكلفة - نقل):" : "Estimated Net Profit:"}
+                    </span>
+                  </div>
+                  <span className="font-mono font-black text-sm text-emerald-700" dir="ltr">
+                    +{(
+                      (parseFloat(convertPriceInput || "0") || 0) -
+                      (parseFloat(convertCostInput || "0") || 0) -
+                      (parseFloat(convertTransExpenseInput || "0") || 0)
+                    ).toLocaleString()} {convertCurrencyInput}
+                  </span>
                 </div>
               </div>
 
@@ -3245,61 +3294,92 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                   </label>
 
                   {createForm.issueAwbNow && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-orange-200/60 animate-in fade-in duration-200">
-                      <div>
-                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                          {isRTL ? "شركة الشحن الناقلة (Carrier)" : "Carrier Line"}
-                        </label>
-                        <select
-                          value={createForm.carrier}
-                          onChange={(e) => setCreateForm({ ...createForm, carrier: e.target.value })}
-                          className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-xl px-2 cursor-pointer shadow-2xs"
-                        >
-                          <option value="Express">Express</option>
-                          <option value="FEDEX">FedEx Priority</option>
-                          <option value="Aramex">Aramex Air</option>
-                          <option value="SMSA Express">SMSA Express</option>
-                          <option value="UPS">UPS</option>
-                          <option value="TNT Express">TNT Express</option>
-                          <option value="DB Schenker USA">DB Schenker USA</option>
-                          <option value="Container Tracking">Container Tracking</option>
-                          <option value="Bill Of Lading (B/L)">Bill Of Lading (B/L)</option>
-                          <option value="Post/EMS (with USPS)">Post/EMS (with USPS)</option>
-                          <option value="Air Cargo">Air Cargo</option>
-                          <option value="Other">{isRTL ? "شركة شحن أخرى (Other Carrier)" : "Other Carrier"}</option>
-                        </select>
+                    <div className="space-y-3 pt-2 border-t border-orange-200/60 animate-in fade-in duration-200">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                            {isRTL ? "شركة الشحن الناقلة (Carrier)" : "Carrier Line"}
+                          </label>
+                          <select
+                            value={createForm.carrier}
+                            onChange={(e) => setCreateForm({ ...createForm, carrier: e.target.value })}
+                            className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-xl px-2 cursor-pointer shadow-2xs"
+                          >
+                            <option value="Express">Express</option>
+                            <option value="FEDEX">FedEx Priority</option>
+                            <option value="Aramex">Aramex Air</option>
+                            <option value="SMSA Express">SMSA Express</option>
+                            <option value="UPS">UPS</option>
+                            <option value="TNT Express">TNT Express</option>
+                            <option value="DB Schenker USA">DB Schenker USA</option>
+                            <option value="Container Tracking">Container Tracking</option>
+                            <option value="Bill Of Lading (B/L)">Bill Of Lading (B/L)</option>
+                            <option value="Post/EMS (with USPS)">Post/EMS (with USPS)</option>
+                            <option value="Air Cargo">Air Cargo</option>
+                            <option value="Other">{isRTL ? "شركة شحن أخرى (Other Carrier)" : "Other Carrier"}</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                            {isRTL ? "رقم البوليصة (AWB)" : "Carrier AWB #"}
+                          </label>
+                          <Input
+                            value={createForm.carrierAwb}
+                            onChange={(e) => setCreateForm({ ...createForm, carrierAwb: e.target.value.toUpperCase() })}
+                            placeholder={isRTL ? "تلقائي (EXP-XXXXX) أو أدخل رقم البوليصة" : "Auto (EXP-XXXXX) or enter AWB"}
+                            className="text-xs h-9 font-mono font-bold uppercase shadow-2xs"
+                            dir="ltr"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                            {isRTL ? `تكلفة الناقل (${createForm.agreedCurrency})` : `Carrier Cost (${createForm.agreedCurrency})`}
+                          </label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={createForm.costPrice}
+                            onChange={(e) => setCreateForm({ ...createForm, costPrice: e.target.value })}
+                            placeholder={
+                              createForm.agreedPrice
+                                ? String(Math.round(parseFloat(createForm.agreedPrice) * 0.65))
+                                : "1625"
+                            }
+                            className="text-xs h-9 font-mono font-bold shadow-2xs"
+                            dir="ltr"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">
+                            {isRTL ? `مصاريف نقل (Trans) (${createForm.agreedCurrency})` : `Trans Expense (${createForm.agreedCurrency})`}
+                          </label>
+                          <Input
+                            type="number"
+                            step="0.01"
+                            value={createForm.transExpense}
+                            onChange={(e) => setCreateForm({ ...createForm, transExpense: e.target.value })}
+                            placeholder="0"
+                            className="text-xs h-9 font-mono font-bold shadow-2xs"
+                            dir="ltr"
+                          />
+                        </div>
                       </div>
 
-                      <div>
-                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                          {isRTL ? "رقم البوليصة (AWB)" : "Carrier AWB #"}
-                        </label>
-                        <Input
-                          value={createForm.carrierAwb}
-                          onChange={(e) => setCreateForm({ ...createForm, carrierAwb: e.target.value.toUpperCase() })}
-                          placeholder={isRTL ? "تلقائي (EXP-XXXXX) أو أدخل رقم البوليصة" : "Auto (EXP-XXXXX) or enter AWB"}
-                          className="text-xs h-9 font-mono font-bold uppercase shadow-2xs"
-                          dir="ltr"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-[11px] font-bold text-gray-700 mb-1">
-                          {isRTL ? `تكلفة الشحن (${createForm.agreedCurrency})` : `Carrier Cost (${createForm.agreedCurrency})`}
-                        </label>
-                        <Input
-                          type="number"
-                          step="0.01"
-                          value={createForm.costPrice}
-                          onChange={(e) => setCreateForm({ ...createForm, costPrice: e.target.value })}
-                          placeholder={
-                            createForm.agreedPrice
-                              ? String(Math.round(parseFloat(createForm.agreedPrice) * 0.65))
-                              : "1625"
-                          }
-                          className="text-xs h-9 font-mono font-bold shadow-2xs"
-                          dir="ltr"
-                        />
+                      {/* Live Profit Preview */}
+                      <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-2.5 flex items-center justify-between text-xs">
+                        <span className="font-bold text-emerald-950 text-[11px]">
+                          {isRTL ? "صافي الربح المتوقع للقيد (بيع - تكلفة - نقل):" : "Estimated Ledger Net Profit:"}
+                        </span>
+                        <span className="font-mono font-black text-xs text-emerald-700" dir="ltr">
+                          +{(
+                            (parseFloat(createForm.agreedPrice || "2500") || 2500) -
+                            (createForm.costPrice ? parseFloat(createForm.costPrice) || Math.round((parseFloat(createForm.agreedPrice || "2500") || 2500) * 0.65) : Math.round((parseFloat(createForm.agreedPrice || "2500") || 2500) * 0.65)) -
+                            (parseFloat(createForm.transExpense || "0") || 0)
+                          ).toLocaleString()} {createForm.agreedCurrency}
+                        </span>
                       </div>
                     </div>
                   )}

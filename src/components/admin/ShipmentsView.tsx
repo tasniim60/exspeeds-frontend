@@ -155,6 +155,62 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
     }
   };
 
+  // Inline Edit Trans Expense State
+  const [editingTransShipmentId, setEditingTransShipmentId] = useState<string | null>(null);
+  const [inlineTransValue, setInlineTransValue] = useState("");
+
+  const handleSaveInlineTrans = (shipment: Shipment, newTransStr: string) => {
+    const newTrans = parseFloat(newTransStr) || 0;
+    const selling = shipment.sellingPrice || shipment.priceEgp || 0;
+    const cost = shipment.costPrice || 0;
+    const newNetProfit = selling - cost - newTrans;
+
+    const updated: Shipment = {
+      ...shipment,
+      transExpense: newTrans,
+      netProfit: newNetProfit,
+    };
+
+    onUpdateShipment(updated);
+    if (inspectShipment && inspectShipment.id === shipment.id) {
+      setInspectShipment(updated);
+    }
+    setEditingTransShipmentId(null);
+  };
+
+  // Inspect Modal Financials Edit State
+  const [isEditingInspectFinancials, setIsEditingInspectFinancials] = useState(false);
+  const [inspectEditSelling, setInspectEditSelling] = useState("");
+  const [inspectEditCost, setInspectEditCost] = useState("");
+  const [inspectEditTrans, setInspectEditTrans] = useState("");
+
+  const handleStartEditInspectFinancials = (s: Shipment) => {
+    setInspectEditSelling(String(s.sellingPrice || s.priceEgp || 0));
+    setInspectEditCost(String(s.costPrice || 0));
+    setInspectEditTrans(String(s.transExpense || 0));
+    setIsEditingInspectFinancials(true);
+  };
+
+  const handleSaveInspectFinancials = (s: Shipment) => {
+    const selling = parseFloat(inspectEditSelling) || 0;
+    const cost = parseFloat(inspectEditCost) || 0;
+    const trans = parseFloat(inspectEditTrans) || 0;
+    const netProfit = selling - cost - trans;
+
+    const updated: Shipment = {
+      ...s,
+      sellingPrice: selling,
+      priceEgp: selling,
+      costPrice: cost,
+      transExpense: trans,
+      netProfit: netProfit,
+    };
+
+    onUpdateShipment(updated);
+    setInspectShipment(updated);
+    setIsEditingInspectFinancials(false);
+  };
+
   const pendingRequests = AdminStorage.getShipmentRequests().filter(
     (r) => r.status !== "Converted to Shipment" && r.status !== "Cancelled"
   );
@@ -1402,9 +1458,44 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                         {s.sellingPrice || s.priceEgp} {isRTL ? "ج.م" : "EGP"}
                       </TableCell>
 
-                      {/* 16. مصاريف نقل */}
-                      <TableCell className="py-3 px-2 text-center font-mono text-gray-500 whitespace-nowrap text-[11px]" dir="ltr">
-                        {s.transExpense || 0} {isRTL ? "ج.م" : "EGP"}
+                      {/* 16. مصاريف نقل (مع إمكانية التعديل السريع المباشر) */}
+                      <TableCell className="py-3 px-2 text-center font-mono whitespace-nowrap text-[11px]" dir="ltr">
+                        {editingTransShipmentId === s.id ? (
+                          <div className="inline-flex items-center gap-1 justify-center" onClick={(e) => e.stopPropagation()}>
+                            <input
+                              type="number"
+                              value={inlineTransValue}
+                              onChange={(e) => setInlineTransValue(e.target.value)}
+                              className="w-16 h-7 px-1.5 text-center font-mono text-xs font-bold border border-[#C45B2A] rounded-lg bg-white outline-none shadow-xs"
+                              autoFocus
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleSaveInlineTrans(s, inlineTransValue);
+                                if (e.key === "Escape") setEditingTransShipmentId(null);
+                              }}
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleSaveInlineTrans(s, inlineTransValue)}
+                              className="w-6 h-6 rounded-md bg-emerald-600 text-white flex items-center justify-center hover:bg-emerald-700 cursor-pointer shadow-2xs"
+                              title={isRTL ? "حفظ" : "Save"}
+                            >
+                              <Check className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        ) : (
+                          <span
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setInlineTransValue(String(s.transExpense || 0));
+                              setEditingTransShipmentId(s.id);
+                            }}
+                            className="cursor-pointer hover:bg-orange-50 hover:text-[#C45B2A] px-1.5 py-0.5 rounded transition-colors group inline-flex items-center gap-1 text-gray-700 font-medium"
+                            title={isRTL ? "انقر لتعديل مصاريف النقل" : "Click to edit trans expense"}
+                          >
+                            <span>{s.transExpense || 0} {isRTL ? "ج.م" : "EGP"}</span>
+                            <Edit3 className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 text-[#C45B2A]" />
+                          </span>
+                        )}
                       </TableCell>
 
                       {/* 17. صافي الربح */}
@@ -1761,37 +1852,120 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
               </div>
 
               {/* Card 4: Financial Ledger Breakdown */}
-              <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-200 space-y-2 shadow-2xs">
-                <span className="font-bold text-emerald-950 uppercase text-[10px] flex items-center gap-1.5">
-                  <DollarSign className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>{isRTL ? "البيانات المالية والأرباح" : "Financial Breakdown"}</span>
-                </span>
-                <div className="space-y-1.5 pt-1">
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">{isRTL ? "سعر البيع للعميل:" : "Selling Price:"}</span>
-                    <span className="font-mono font-bold text-gray-900" dir="ltr">
-                      {inspectShipment.sellingPrice || inspectShipment.priceEgp} {isRTL ? "ج.م" : "EGP"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">{isRTL ? "تكلفة الشحن المباشرة:" : "Carrier Cost:"}</span>
-                    <span className="font-mono font-bold text-gray-700" dir="ltr">
-                      {inspectShipment.costPrice || 0} {isRTL ? "ج.م" : "EGP"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-600">{isRTL ? "مصاريف نقل (Trans):" : "Trans Expenses:"}</span>
-                    <span className="font-mono font-bold text-gray-700" dir="ltr">
-                      {inspectShipment.transExpense || 0} {isRTL ? "ج.م" : "EGP"}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center pt-2 border-t border-emerald-200 font-extrabold text-sm">
-                    <span className="text-emerald-950">{isRTL ? "صافي الربح:" : "Net Profit:"}</span>
-                    <span className="font-mono text-emerald-700" dir="ltr">
-                      +{(inspectShipment.netProfit || (inspectShipment.sellingPrice || inspectShipment.priceEgp || 0) - (inspectShipment.costPrice || 0) - (inspectShipment.transExpense || 0)).toLocaleString()} {isRTL ? "ج.م" : "EGP"}
-                    </span>
-                  </div>
+              <div className="bg-emerald-50/50 p-4 rounded-xl border border-emerald-200 space-y-2.5 shadow-2xs">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-emerald-950 uppercase text-[10px] flex items-center gap-1.5">
+                    <DollarSign className="w-3.5 h-3.5 text-emerald-700" />
+                    <span>{isRTL ? "البيانات المالية والأرباح" : "Financial Breakdown"}</span>
+                  </span>
+                  {!isEditingInspectFinancials ? (
+                    <button
+                      type="button"
+                      onClick={() => handleStartEditInspectFinancials(inspectShipment)}
+                      className="text-[11px] font-bold text-emerald-800 hover:text-emerald-950 flex items-center gap-1 bg-white hover:bg-emerald-100/80 px-2 py-0.5 rounded-lg border border-emerald-200 transition-colors cursor-pointer shadow-2xs"
+                      title={isRTL ? "تعديل سعر البيع والتكلفة ومصاريف النقل" : "Edit Selling, Cost, Trans"}
+                    >
+                      <Edit2 className="w-3 h-3 text-emerald-700" />
+                      <span>{isRTL ? "تعديل المصاريف" : "Edit Financials"}</span>
+                    </button>
+                  ) : (
+                    <div className="flex items-center gap-1.5">
+                      <button
+                        type="button"
+                        onClick={() => handleSaveInspectFinancials(inspectShipment)}
+                        className="text-[11px] font-bold text-white flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 px-2.5 py-0.5 rounded-lg transition-colors cursor-pointer shadow-xs"
+                      >
+                        <Check className="w-3 h-3" />
+                        <span>{isRTL ? "حفظ" : "Save"}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingInspectFinancials(false)}
+                        className="text-[11px] font-bold text-gray-600 hover:text-gray-900 bg-white px-2 py-0.5 rounded-lg border border-gray-200 transition-colors cursor-pointer"
+                      >
+                        {isRTL ? "إلغاء" : "Cancel"}
+                      </button>
+                    </div>
+                  )}
                 </div>
+
+                {!isEditingInspectFinancials ? (
+                  <div className="space-y-1.5 pt-1 text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">{isRTL ? "سعر البيع للعميل:" : "Selling Price:"}</span>
+                      <span className="font-mono font-bold text-gray-900" dir="ltr">
+                        {inspectShipment.sellingPrice || inspectShipment.priceEgp} {isRTL ? "ج.م" : "EGP"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">{isRTL ? "تكلفة الشحن المباشرة:" : "Carrier Cost:"}</span>
+                      <span className="font-mono font-bold text-gray-700" dir="ltr">
+                        {inspectShipment.costPrice || 0} {isRTL ? "ج.م" : "EGP"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-600">{isRTL ? "مصاريف نقل (Trans):" : "Trans Expenses:"}</span>
+                      <span className="font-mono font-bold text-[#C45B2A] bg-orange-50 px-2 py-0.5 rounded border border-orange-200" dir="ltr">
+                        {inspectShipment.transExpense || 0} {isRTL ? "ج.م" : "EGP"}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center pt-2 border-t border-emerald-200 font-extrabold text-sm">
+                      <span className="text-emerald-950">{isRTL ? "صافي الربح:" : "Net Profit:"}</span>
+                      <span className="font-mono text-emerald-700" dir="ltr">
+                        +{(inspectShipment.netProfit ?? ((inspectShipment.sellingPrice || inspectShipment.priceEgp || 0) - (inspectShipment.costPrice || 0) - (inspectShipment.transExpense || 0))).toLocaleString()} {isRTL ? "ج.م" : "EGP"}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-2 pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-600 mb-0.5">
+                          {isRTL ? "سعر البيع (ج.م)" : "Selling Price"}
+                        </label>
+                        <input
+                          type="number"
+                          value={inspectEditSelling}
+                          onChange={(e) => setInspectEditSelling(e.target.value)}
+                          className="w-full h-8 px-2 bg-white text-gray-900 text-xs font-mono font-bold rounded-lg border border-gray-300 focus:border-[#C45B2A] outline-none"
+                          dir="ltr"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-600 mb-0.5">
+                          {isRTL ? "تكلفة الناقل (ج.م)" : "Carrier Cost"}
+                        </label>
+                        <input
+                          type="number"
+                          value={inspectEditCost}
+                          onChange={(e) => setInspectEditCost(e.target.value)}
+                          className="w-full h-8 px-2 bg-white text-gray-900 text-xs font-mono font-bold rounded-lg border border-gray-300 focus:border-[#C45B2A] outline-none"
+                          dir="ltr"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-bold text-gray-700 mb-0.5">
+                          {isRTL ? "مصاريف نقل (Trans)" : "Trans Expense"}
+                        </label>
+                        <input
+                          type="number"
+                          value={inspectEditTrans}
+                          onChange={(e) => setInspectEditTrans(e.target.value)}
+                          className="w-full h-8 px-2 bg-white text-[#C45B2A] text-xs font-mono font-bold rounded-lg border-2 border-[#C45B2A]/60 focus:border-[#C45B2A] outline-none shadow-2xs"
+                          dir="ltr"
+                          autoFocus
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between items-center pt-2 border-t border-emerald-200 font-extrabold text-xs">
+                      <span className="text-emerald-950">{isRTL ? "صافي الربح الجديد:" : "New Net Profit:"}</span>
+                      <span className="font-mono text-emerald-700 font-black text-sm" dir="ltr">
+                        +{((parseFloat(inspectEditSelling) || 0) - (parseFloat(inspectEditCost) || 0) - (parseFloat(inspectEditTrans) || 0)).toLocaleString()} {isRTL ? "ج.م" : "EGP"}
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
