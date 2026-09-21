@@ -339,20 +339,17 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
 
                 <TableCell>
                   <div className="space-y-0.5 font-mono text-xs text-start">
-                    <span className="text-gray-700">${inv.subtotal}</span>
-                    <p className="text-[10px] text-gray-400">+${inv.vatAmount} VAT</p>
-                    <span className="text-gray-700">
+                    <span className="text-gray-700 font-semibold block">
                       {inv.currency === "USD" ? `$${inv.subtotal.toLocaleString()}` : `${inv.subtotal.toLocaleString()} ${t("common.egp")}`}
                     </span>
                     <p className="text-[10px] text-gray-400">
-                      +{inv.currency === "USD" ? `$${inv.vatAmount}` : `${inv.vatAmount.toLocaleString()} ${t("common.egp")}`} VAT
+                      +{inv.currency === "USD" ? `$${inv.vatAmount.toLocaleString()}` : `${inv.vatAmount.toLocaleString()} ${t("common.egp")}`} VAT
                     </p>
                   </div>
                 </TableCell>
 
                 <TableCell>
                   <span className="font-mono font-black text-xs text-gray-900 text-start ltr-preserve">
-                    {inv.currency === "USD" ? `$${inv.totalAmount}` : `${inv.totalAmount.toLocaleString()} ${t("common.egp")}`}
                     {inv.currency === "USD" ? `$${inv.totalAmount.toLocaleString()}` : `${inv.totalAmount.toLocaleString()} ${t("common.egp")}`}
                   </span>
                 </TableCell>
@@ -411,106 +408,189 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
       {/* ── Printable Formal Tax Invoice Modal ── */}
       {printableInvoice && (
         <Dialog open={!!printableInvoice} onOpenChange={(o) => !o && setPrintableInvoice(null)}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto text-start" onClose={() => setPrintableInvoice(null)}>
-            <div className="p-4 bg-white text-gray-900 space-y-4 text-xs font-sans">
+          <DialogContent className="max-w-2xl max-h-[92vh] overflow-y-auto text-start p-0 rounded-2xl border border-gray-200/90 shadow-2xl bg-white" onClose={() => setPrintableInvoice(null)}>
+            <div className="p-5 sm:p-7 space-y-5 text-xs font-sans">
               {/* Header */}
-              <div className="flex justify-between items-start border-b border-gray-200 pb-4">
-                <div>
-                  <h3 className="font-black text-lg tracking-wider text-[#251516]">XSPEED LOGISTICS LLC</h3>
-                  <p className="text-[11px] text-gray-500">Tax Registration: EG-849-210-994</p>
-                  <p className="text-[11px] text-gray-500">Cairo Airport Cargo Village, Terminal 3</p>
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-4 border-b border-gray-200">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-xl bg-gradient-to-br from-[#C45B2A] to-[#A8481B] text-white flex items-center justify-center font-black text-sm shadow-xs">
+                      X
+                    </div>
+                    <div>
+                      <h3 className="font-black text-base tracking-wider text-[#251516]">XSPEED LOGISTICS LLC</h3>
+                      <p className="text-[11px] text-gray-400 font-medium">{isRTL ? "حلول وخدمات الشحن واللوجستيات المتكاملة" : "Integrated Freight & Logistics Solutions"}</p>
+                    </div>
+                  </div>
+                  <div className="text-[11px] text-gray-500 pt-1 space-y-0.5">
+                    <p className="font-mono text-[11px]"><span className="font-semibold text-gray-700">{isRTL ? "السجل الضريبي:" : "Tax Registration:"}</span> EG-849-210-994</p>
+                    <p>{isRTL ? "قرية البضائع، مطار القاهرة الدولي - مبنى 3" : "Cairo Airport Cargo Village, Terminal 3"}</p>
+                  </div>
                 </div>
-                <div className="text-end">
-                  <Badge variant="outline" className="font-mono text-sm font-bold text-[#C45B2A] border-[#C45B2A] ltr-preserve">
-                    {printableInvoice.invoiceNumber}
-                  </Badge>
-                  <p className="text-[11px] text-gray-500 mt-1">{printableInvoice.date}</p>
+
+                <div className={`space-y-1.5 self-stretch sm:self-auto flex flex-col ${isRTL ? "sm:items-start" : "sm:items-end"}`}>
+                  <div className="inline-flex items-center gap-2 bg-orange-50 border border-orange-200 px-3 py-1.5 rounded-xl shadow-2xs">
+                    <span className="text-[11px] font-bold text-[#C45B2A]">{isRTL ? "فاتورة ضريبية" : "Tax Invoice"}</span>
+                    <span className="font-mono text-xs font-black text-[#C45B2A] ltr-preserve">
+                      {printableInvoice.invoiceNumber}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-[11px] text-gray-500">
+                    <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                    <span>{isRTL ? "تاريخ الإصدار:" : "Date:"}</span>
+                    <span className="font-mono font-medium text-gray-700 ltr-preserve">{printableInvoice.date}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Bill To */}
-              <div className="grid grid-cols-2 gap-4 p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">{isRTL ? "بيانات العميل:" : "BILL TO:"}</span>
-                  <p className="font-bold text-gray-900 mt-0.5">{printableInvoice.companyName}</p>
-                  <p className="text-gray-600 font-mono text-[11px] ltr-preserve">CR: {printableInvoice.customerTaxNumber}</p>
+              {/* Bill To & Status Card */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 bg-gray-50/90 rounded-xl border border-gray-200/80">
+                <div className="space-y-1.5">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">
+                    {isRTL ? "بيانات العميل المستحق:" : "BILL TO CUSTOMER:"}
+                  </span>
+                  <p className="font-bold text-sm text-gray-900">{printableInvoice.companyName}</p>
+                  <p className="text-gray-600 font-mono text-[11px] ltr-preserve">
+                    <span className="text-gray-400 uppercase font-sans mr-1">{isRTL ? "سجل ضريبي:" : "CR:"}</span>
+                    <span className="font-semibold text-gray-800">{printableInvoice.customerTaxNumber || "EG-000-000-000"}</span>
+                  </p>
+                  {printableInvoice.linkedAwbs && printableInvoice.linkedAwbs.length > 0 && (
+                    <div className="flex items-center gap-1 pt-1 flex-wrap">
+                      <span className="text-[10px] text-gray-400 font-bold">{isRTL ? "البوالص:" : "AWB:"}</span>
+                      {printableInvoice.linkedAwbs.map((awb) => (
+                        <span key={awb} className="font-mono text-[10px] font-bold bg-white text-gray-800 px-2 py-0.5 rounded-md border border-gray-200 shadow-2xs ltr-preserve">
+                          {awb}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="text-end">
-                  <span className="text-[10px] font-bold text-gray-400 uppercase">{isRTL ? "حالة الدفع:" : "PAYMENT STATUS:"}</span>
-                  <p className="font-bold text-[#C45B2A] mt-0.5">{printableInvoice.status}</p>
-                  <p className="text-gray-500 text-[11px] ltr-preserve">Due: {printableInvoice.dueDate}</p>
+
+                <div className={`space-y-2 flex flex-col justify-between ${isRTL ? "sm:items-start" : "sm:items-end"}`}>
+                  <div>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">
+                      {isRTL ? "حالة السداد والاستحقاق:" : "PAYMENT STATUS:"}
+                    </span>
+                    <Badge
+                      variant={printableInvoice.status === "Paid" ? "success" : printableInvoice.status === "Overdue" ? "destructive" : "warning"}
+                      size="sm"
+                      className="text-xs font-bold"
+                    >
+                      {printableInvoice.status === "Paid"
+                        ? (isRTL ? "تم السداد (Paid)" : "Paid")
+                        : printableInvoice.status === "Overdue"
+                        ? (isRTL ? "متأخرة عن موعدها (Overdue)" : "Overdue")
+                        : (isRTL ? "معلقة بانتظار السداد (Pending)" : "Pending")}
+                    </Badge>
+                  </div>
+                  <div className="text-[11px] text-gray-600 font-mono flex items-center gap-1.5 pt-1">
+                    <span className="text-gray-400 text-[10px] uppercase font-sans">{isRTL ? "تاريخ الاستحقاق:" : "Due Date:"}</span>
+                    <span className="font-bold text-gray-800 ltr-preserve">{printableInvoice.dueDate}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Total Calculation */}
-              <div className="border-t border-gray-200 pt-3 space-y-1 font-mono text-xs">
-                <div className="flex justify-between">
-                  <span>{isRTL ? "المجموع الفرعي للشحن:" : "Freight Subtotal:"}</span>
-                  <span>${printableInvoice.subtotal}</span>
-                  <span>
-                    {printableInvoice.currency === "USD"
-                      ? `$${printableInvoice.subtotal.toLocaleString()}`
-                      : `${printableInvoice.subtotal.toLocaleString()} ${t("common.egp")}`}
-                  </span>
+              {/* Line Item Breakdown */}
+              <div className="space-y-2.5">
+                <div className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                  {isRTL ? "تفاصيل بنود الرسوم والمصاريف" : "Line Item Breakdown"}
                 </div>
-                {printableInvoice.fuelSurcharge > 0 && (
-                  <div className="flex justify-between">
-                    <span>{isRTL ? "رسوم الوقود:" : "Fuel Surcharge:"}</span>
-                    <span>
+
+                <div className="bg-white rounded-xl border border-gray-200 divide-y divide-gray-100 overflow-hidden text-xs">
+                  {/* Freight Subtotal */}
+                  <div className="flex items-center justify-between p-3 hover:bg-gray-50/50 transition-colors">
+                    <span className="text-gray-700 font-medium">{isRTL ? "المجموع الفرعي للشحن والنقل" : "Freight Subtotal"}</span>
+                    <span className="font-mono font-bold text-gray-900 ltr-preserve">
                       {printableInvoice.currency === "USD"
-                        ? `+$${printableInvoice.fuelSurcharge.toLocaleString()}`
-                        : `+${printableInvoice.fuelSurcharge.toLocaleString()} ${t("common.egp")}`}
+                        ? `$${printableInvoice.subtotal.toLocaleString()}`
+                        : `${printableInvoice.subtotal.toLocaleString()} ${t("common.egp")}`}
                     </span>
                   </div>
-                )}
-                {printableInvoice.customsDuties > 0 && (
-                  <div className="flex justify-between">
-                    <span>{isRTL ? "رسوم جمركية وتخليص:" : "Customs & Clearance:"}</span>
-                    <span>
+
+                  {/* Fuel Surcharge */}
+                  {printableInvoice.fuelSurcharge > 0 && (
+                    <div className="flex items-center justify-between p-3 hover:bg-gray-50/50 transition-colors">
+                      <span className="text-gray-600">{isRTL ? "رسوم الوقود والمحروقات" : "Fuel Surcharge"}</span>
+                      <span className="font-mono font-medium text-gray-800 ltr-preserve">
+                        {printableInvoice.currency === "USD"
+                          ? `+$${printableInvoice.fuelSurcharge.toLocaleString()}`
+                          : `+${printableInvoice.fuelSurcharge.toLocaleString()} ${t("common.egp")}`}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Customs & Clearance */}
+                  {printableInvoice.customsDuties > 0 && (
+                    <div className="flex items-center justify-between p-3 hover:bg-gray-50/50 transition-colors">
+                      <span className="text-gray-600">{isRTL ? "رسوم جمركية وتخليص مستندي" : "Customs & Clearance"}</span>
+                      <span className="font-mono font-medium text-gray-800 ltr-preserve">
+                        {printableInvoice.currency === "USD"
+                          ? `+$${printableInvoice.customsDuties.toLocaleString()}`
+                          : `+${printableInvoice.customsDuties.toLocaleString()} ${t("common.egp")}`}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Discount */}
+                  {printableInvoice.discount > 0 && (
+                    <div className="flex items-center justify-between p-3 bg-emerald-50/50 text-emerald-700">
+                      <span className="font-medium">{isRTL ? "الخصم الممنوح" : "Special Discount"}</span>
+                      <span className="font-mono font-bold ltr-preserve">
+                        {printableInvoice.currency === "USD"
+                          ? `-$${printableInvoice.discount.toLocaleString()}`
+                          : `-${printableInvoice.discount.toLocaleString()} ${t("common.egp")}`}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* VAT (14%) */}
+                  <div className="flex items-center justify-between p-3 hover:bg-gray-50/50 transition-colors">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-gray-700 font-medium">{isRTL ? "ضريبة القيمة المضافة" : "VAT Tax"}</span>
+                      <span className="text-[10px] bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded font-mono font-bold">14%</span>
+                    </div>
+                    <span className="font-mono font-medium text-gray-800 ltr-preserve">
                       {printableInvoice.currency === "USD"
-                        ? `+$${printableInvoice.customsDuties.toLocaleString()}`
-                        : `+${printableInvoice.customsDuties.toLocaleString()} ${t("common.egp")}`}
+                        ? `+$${printableInvoice.vatAmount.toLocaleString()}`
+                        : `+${printableInvoice.vatAmount.toLocaleString()} ${t("common.egp")}`}
                     </span>
                   </div>
-                )}
-                {printableInvoice.discount > 0 && (
-                  <div className="flex justify-between text-emerald-600">
-                    <span>{isRTL ? "الخصم الممنوح:" : "Special Discount:"}</span>
-                    <span>
-                      {printableInvoice.currency === "USD"
-                        ? `-$${printableInvoice.discount.toLocaleString()}`
-                        : `-${printableInvoice.discount.toLocaleString()} ${t("common.egp")}`}
+                </div>
+
+                {/* Total Highlight Box */}
+                <div className="bg-gradient-to-r from-orange-50 via-amber-50/50 to-orange-50 border-2 border-[#C45B2A]/30 rounded-xl p-4 flex items-center justify-between shadow-2xs">
+                  <div>
+                    <span className="text-xs font-black text-gray-900 block">
+                      {isRTL ? "الإجمالي الكلي المستحق" : "Total Due Amount"}
+                    </span>
+                    <span className="text-[10px] text-gray-500 font-medium">
+                      {isRTL ? "شامل ضريبة القيمة المضافة (14%) وكافة الرسوم" : "Includes VAT 14% & all charges"}
                     </span>
                   </div>
+                  <div className={isRTL ? "text-left" : "text-right"}>
+                    <span className="text-lg sm:text-xl font-black font-mono text-[#C45B2A] ltr-preserve block">
+                      {printableInvoice.currency === "USD"
+                        ? `$${printableInvoice.totalAmount.toLocaleString()} USD`
+                        : `${printableInvoice.totalAmount.toLocaleString()} ${t("common.egp")}`}
+                    </span>
+                  </div>
+                </div>
+
+                {printableInvoice.notes && (
+                  <div className="p-3 bg-gray-50 rounded-lg border border-gray-200/80 text-[11px] text-gray-600">
+                    <span className="font-bold text-gray-700 block mb-0.5">{isRTL ? "ملاحظات السداد:" : "Payment Notes:"}</span>
+                    <p>{printableInvoice.notes}</p>
+                  </div>
                 )}
-                <div className="flex justify-between">
-                  <span>{isRTL ? "ضريبة القيمة المضافة (14%):" : "VAT (14%):"}</span>
-                  <span>+${printableInvoice.vatAmount}</span>
-                  <span>
-                    {printableInvoice.currency === "USD"
-                      ? `+$${printableInvoice.vatAmount.toLocaleString()}`
-                      : `+${printableInvoice.vatAmount.toLocaleString()} ${t("common.egp")}`}
-                  </span>
-                </div>
-                <div className="flex justify-between font-black text-sm text-[#C45B2A] pt-2 border-t border-gray-200">
-                  <span>{isRTL ? "الإجمالي الكلي:" : "TOTAL DUE:"}</span>
-                  <span className="ltr-preserve">${printableInvoice.totalAmount} USD</span>
-                  <span>{isRTL ? "الإجمالي الكلي المستحق:" : "TOTAL DUE:"}</span>
-                  <span className="ltr-preserve">
-                    {printableInvoice.currency === "USD"
-                      ? `$${printableInvoice.totalAmount.toLocaleString()} USD`
-                      : `${printableInvoice.totalAmount.toLocaleString()} ${t("common.egp")}`}
-                  </span>
-                </div>
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="p-4 bg-gray-50 border-t border-gray-100 gap-2">
               <Button
                 variant="brand"
                 size="sm"
                 onClick={() => window.print()}
-                className="w-full sm:w-auto h-10 text-xs font-bold cursor-pointer justify-center"
+                className="w-full sm:w-auto h-10 text-xs font-bold cursor-pointer justify-center shadow-xs"
               >
                 <Printer className="h-4 w-4 shrink-0" />
                 <span>{isRTL ? "طباعة الفاتورة" : "Print Official PDF"}</span>
@@ -547,7 +627,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                 <p className="text-emerald-900 font-bold">{isRTL ? "المبلغ المراد سداده:" : "Total Amount to Settle:"}</p>
                 <p className="text-xl font-black font-mono text-emerald-800 mt-0.5 ltr-preserve">
                   {paymentModalInvoice.currency === "USD"
-                    ? `$${paymentModalInvoice.totalAmount}`
+                    ? `$${paymentModalInvoice.totalAmount.toLocaleString()} USD`
                     : `${paymentModalInvoice.totalAmount.toLocaleString()} ${t("common.egp")}`}
                 </p>
               </div>
