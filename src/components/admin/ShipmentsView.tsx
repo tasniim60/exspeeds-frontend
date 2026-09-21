@@ -1964,7 +1964,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                     <option value="Bill Of Lading (B/L)">Bill Of Lading (B/L)</option>
                     <option value="Post/EMS (with USPS)">Post/EMS (with USPS)</option>
                     <option value="Air Cargo">Air Cargo</option>
-                    <option value="Other">شركة شحن أخرى (Other)</option>
+                    <option value="Other">{isRTL ? "شركة شحن أخرى (Other Carrier)" : "Other Carrier"}</option>
                   </select>
                   <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
                 </div>

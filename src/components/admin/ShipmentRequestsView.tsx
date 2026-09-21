@@ -3262,7 +3262,11 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                           <option value="UPS">UPS</option>
                           <option value="TNT Express">TNT Express</option>
                           <option value="DB Schenker USA">DB Schenker USA</option>
-                          <option value="Other">{isRTL ? "ناقل آخر" : "Other Carrier"}</option>
+                          <option value="Container Tracking">Container Tracking</option>
+                          <option value="Bill Of Lading (B/L)">Bill Of Lading (B/L)</option>
+                          <option value="Post/EMS (with USPS)">Post/EMS (with USPS)</option>
+                          <option value="Air Cargo">Air Cargo</option>
+                          <option value="Other">{isRTL ? "شركة شحن أخرى (Other Carrier)" : "Other Carrier"}</option>
                         </select>
                       </div>
 
