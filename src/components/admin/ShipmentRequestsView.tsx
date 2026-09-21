@@ -1845,9 +1845,9 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
 
               {/* Header Action: WhatsApp Message Button */}
               <div className="flex items-center gap-2 self-start sm:self-auto">
-                {selectedRequest.phone && (
+                {(selectedRequest.whatsapp || selectedRequest.phone) && (
                   <a
-                    href={`https://wa.me/${selectedRequest.phone.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
+                    href={`https://wa.me/${(selectedRequest.whatsapp || selectedRequest.phone).replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
                       `مرحباً ${selectedRequest.customerName}، بخصوص طلب الشحن رقم ${selectedRequest.requestNumber} من ${selectedRequest.pickupCity} إلى ${selectedRequest.deliveryCity}...`
                     )}`}
                     target="_blank"

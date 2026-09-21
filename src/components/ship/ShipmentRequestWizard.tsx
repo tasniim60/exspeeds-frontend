@@ -395,10 +395,10 @@ export default function ShipmentRequestWizard() {
   const handleChange = (field: string, value: any) => {
     updateFormData(field as any, value);
     if (field === "pickupContactPhone") {
-      if (!formData.whatsapp || formData.whatsapp === formData.pickupContactPhone) {
+      if (!formData.whatsapp || formData.whatsapp === "" || formData.whatsapp === formData.pickupContactPhone) {
         updateFormData("whatsapp" as any, value);
       }
-      if (!formData.phone || formData.phone === formData.pickupContactPhone) {
+      if (!formData.phone || formData.phone === "" || formData.phone === formData.pickupContactPhone) {
         updateFormData("phone" as any, value);
       }
     }
@@ -544,6 +544,13 @@ export default function ShipmentRequestWizard() {
         ? formData.customShipmentType.trim()
         : formData.shipmentType;
 
+    const resolvedCustomerPhone =
+      (formData.whatsapp && formData.whatsapp.trim()) ||
+      (formData.phone && formData.phone.trim()) ||
+      (formData.pickupContactPhone && formData.pickupContactPhone.trim()) ||
+      (user?.phone && user.phone.trim()) ||
+      "";
+
     const payload = {
       ...formData,
       serviceId: selectedService,
@@ -555,18 +562,8 @@ export default function ShipmentRequestWizard() {
       email: user?.email || formData.email,
       companyName: user?.company || formData.companyName,
       company_name: user?.company || formData.companyName,
-      phone:
-        formData.whatsapp?.trim() ||
-        formData.phone?.trim() ||
-        formData.pickupContactPhone?.trim() ||
-        user?.phone?.trim() ||
-        "",
-      whatsapp:
-        formData.whatsapp?.trim() ||
-        formData.phone?.trim() ||
-        formData.pickupContactPhone?.trim() ||
-        user?.phone?.trim() ||
-        "",
+      phone: resolvedCustomerPhone,
+      whatsapp: resolvedCustomerPhone,
       country: formData.pickupCountry,
       city: formData.pickupCity,
       address: formData.pickupAddress,
@@ -652,13 +649,13 @@ export default function ShipmentRequestWizard() {
     const displayService = req.serviceTitle || activeService.title || "-";
 
     const clientWhatsApp =
-      req.whatsapp?.trim() ||
-      req.phone?.trim() ||
-      formData.whatsapp?.trim() ||
-      formData.phone?.trim() ||
-      req.pickupContactPhone?.trim() ||
-      formData.pickupContactPhone?.trim() ||
-      user?.phone?.trim() ||
+      (req.whatsapp && req.whatsapp !== "-" && String(req.whatsapp).trim() ? String(req.whatsapp).trim() : null) ||
+      (req.phone && req.phone !== "-" && String(req.phone).trim() ? String(req.phone).trim() : null) ||
+      (req.pickupContactPhone && req.pickupContactPhone !== "-" && String(req.pickupContactPhone).trim() ? String(req.pickupContactPhone).trim() : null) ||
+      (formData.whatsapp && formData.whatsapp !== "-" && String(formData.whatsapp).trim() ? String(formData.whatsapp).trim() : null) ||
+      (formData.phone && formData.phone !== "-" && String(formData.phone).trim() ? String(formData.phone).trim() : null) ||
+      (formData.pickupContactPhone && formData.pickupContactPhone !== "-" && String(formData.pickupContactPhone).trim() ? String(formData.pickupContactPhone).trim() : null) ||
+      (user?.phone && user.phone !== "-" && String(user.phone).trim() ? String(user.phone).trim() : null) ||
       "-";
 
     if (locale === "ar") {
@@ -669,10 +666,14 @@ export default function ShipmentRequestWizard() {
         `${rlm}نوع الخدمة: *${displayService}*`,
         `${rlm}────────────────────`,
         `${rlm}*بيانات العميل:*`,
-        `${rlm}- الاسم: ${req.customerName || user?.name || "-"}`,
-        `${rlm}- البريد الإلكتروني: ${req.email || user?.email || "-"}`,
+        `${rlm}- الاسم: ${req.customerName || "-"}`,
+        `${rlm}- البريد الإلكتروني: ${req.email || "-"}`,
         `${rlm}- رقم الواتساب: ${clientWhatsApp}`,
       ];
+
+      if (req.phone && req.phone !== clientWhatsApp && req.phone !== "-") {
+        parts.push(`${rlm}- رقم هاتف إضافي: ${req.phone}`);
+      }
 
       if (req.companyName) {
         parts.push(`${rlm}- الشركة: ${req.companyName}`);
@@ -738,10 +739,14 @@ export default function ShipmentRequestWizard() {
         `Service Type: *${displayService}*`,
         `────────────────────`,
         `*Customer Details:*`,
-        `- Name: ${req.customerName || user?.name || "-"}`,
-        `- Email: ${req.email || user?.email || "-"}`,
-        `- WhatsApp Number: ${clientWhatsApp}`,
+        `- Name: ${req.customerName || "-"}`,
+        `- Email: ${req.email || "-"}`,
+        `- WhatsApp: ${clientWhatsApp}`,
       ];
+
+      if (req.phone && req.phone !== clientWhatsApp && req.phone !== "-") {
+        parts.push(`- Additional Phone: ${req.phone}`);
+      }
 
       if (req.companyName) {
         parts.push(`- Company: ${req.companyName}`);
@@ -1277,7 +1282,7 @@ export default function ShipmentRequestWizard() {
 
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">
-                  {isRTL ? "رقم هاتف مسؤول الاستلام" : "Contact Phone"} <span className="text-rose-500">*</span>
+                  {isRTL ? "رقم الهاتف / الواتساب للتواصل" : "Contact Phone / WhatsApp"} <span className="text-rose-500">*</span>
                 </label>
                 <div className="relative flex items-center">
                   <Phone className={`absolute ${isRTL ? "right-3" : "left-3"} h-4 w-4 text-gray-400 pointer-events-none`} />
@@ -2126,21 +2131,26 @@ export default function ShipmentRequestWizard() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
                     <div className="bg-white p-2.5 rounded-xl border border-gray-200/70">
-                      <label className="text-[11px] font-bold uppercase text-gray-700 block mb-1">
-                        {isRTL ? "رقم الواتساب (للتواصل واستلام السعر):" : "WhatsApp Number (For Quote):"}
+                      <label className="text-[11px] font-bold uppercase text-gray-500 block mb-1">
+                        {isRTL ? "رقم الواتساب للتواصل واستلام السعر:" : "WhatsApp for Rates & Contact:"}
                       </label>
-                      <input
-                        type="tel"
-                        value={formData.whatsapp || formData.phone || formData.pickupContactPhone || user?.phone || ""}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          handleChange("whatsapp", val);
-                          handleChange("phone", val);
-                        }}
-                        placeholder={isRTL ? "مثال: +20 120 802 7171" : "e.g. +20 120 802 7171"}
-                        className="w-full h-8 px-2.5 bg-gray-50 hover:bg-white focus:bg-white border border-gray-300 focus:border-[#C45B2A] focus:ring-1 focus:ring-[#C45B2A]/30 rounded-lg text-xs font-mono font-bold text-gray-900 outline-none transition-all"
-                        dir="ltr"
-                      />
+                      <div className="relative flex items-center">
+                        <Phone className={`w-3.5 h-3.5 text-[#C45B2A] absolute ${isRTL ? "right-2.5" : "left-2.5"} pointer-events-none`} />
+                        <input
+                          type="tel"
+                          value={formData.whatsapp || formData.phone || formData.pickupContactPhone || user?.phone || ""}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            handleChange("whatsapp", val);
+                            handleChange("phone", val);
+                          }}
+                          placeholder="+20 120 802 7171"
+                          dir="ltr"
+                          className={`w-full h-8 bg-gray-50 hover:bg-white focus:bg-white text-gray-900 text-xs font-mono font-bold rounded-lg border border-gray-200 focus:border-[#C45B2A] focus:ring-1 focus:ring-[#C45B2A]/20 outline-none transition-all ${
+                            isRTL ? "pr-8 pl-2.5" : "pl-8 pr-2.5"
+                          }`}
+                        />
+                      </div>
                     </div>
 
                     <div className="bg-white p-2.5 rounded-xl border border-gray-200/70">

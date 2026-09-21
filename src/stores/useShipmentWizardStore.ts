@@ -233,29 +233,27 @@ export const useShipmentWizardStore = create<ShipmentWizardState>((set, get) => 
 
       if (savedDraft) {
         const parsed = JSON.parse(savedDraft);
-        const effectivePhone = parsed.phone || parsed.whatsapp || parsed.pickupContactPhone || user?.phone || nextFormData.phone;
         nextFormData = {
           ...nextFormData,
           ...parsed,
           customerName: parsed.customerName || user?.name || nextFormData.customerName,
           email: parsed.email || user?.email || nextFormData.email,
           companyName: parsed.companyName || user?.company || nextFormData.companyName,
-          phone: effectivePhone,
-          whatsapp: effectivePhone,
+          phone: parsed.phone || user?.phone || nextFormData.phone,
+          whatsapp: parsed.whatsapp || user?.phone || nextFormData.whatsapp,
           pickupContactName: parsed.pickupContactName || user?.name || nextFormData.pickupContactName,
           pickupContactPhone: parsed.pickupContactPhone || user?.phone || nextFormData.pickupContactPhone,
         };
       } else if (user) {
-        const userPhone = user.phone || "";
         nextFormData = {
           ...nextFormData,
           customerName: user.name || "",
           email: user.email || "",
           companyName: user.company || "",
-          phone: userPhone,
-          whatsapp: userPhone,
+          phone: user.phone || "",
+          whatsapp: user.phone || "",
           pickupContactName: user.name || "",
-          pickupContactPhone: userPhone,
+          pickupContactPhone: user.phone || "",
         };
       }
 
@@ -317,10 +315,11 @@ export const useShipmentWizardStore = create<ShipmentWizardState>((set, get) => 
 
     const generatedReqNumber = `REQ-${Math.floor(10000 + Math.random() * 90000)}`;
     const f = state.formData;
-    const resolvedClientPhone =
-      f.whatsapp?.trim() ||
-      f.phone?.trim() ||
-      f.pickupContactPhone?.trim() ||
+
+    const resolvedContactPhone =
+      (f.whatsapp && f.whatsapp.trim()) ||
+      (f.phone && f.phone.trim()) ||
+      (f.pickupContactPhone && f.pickupContactPhone.trim()) ||
       "";
 
     const newRequest: ShipmentRequest = {
@@ -328,8 +327,8 @@ export const useShipmentWizardStore = create<ShipmentWizardState>((set, get) => 
       requestNumber: generatedReqNumber,
       customerName: f.customerName,
       companyName: f.companyName,
-      phone: resolvedClientPhone,
-      whatsapp: resolvedClientPhone,
+      phone: resolvedContactPhone,
+      whatsapp: resolvedContactPhone,
       email: f.email,
       country: f.pickupCountry,
       city: f.pickupCity,
