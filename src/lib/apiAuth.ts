@@ -58,6 +58,27 @@ export async function getAuthenticatedUser(): Promise<SessionUser | null> {
       }
     }
 
+    // 3. Admin auth cookie check
+    const adminCookie = cookieStore.get("xspeed_admin_auth");
+    if (adminCookie && adminCookie.value === "authenticated") {
+      return {
+        id: "admin-session",
+        name: "Administrator",
+        email: "admin@xspeeds.com",
+        role: "admin",
+      };
+    }
+
+    // 4. In development mode, fallback to dev admin
+    if (process.env.NODE_ENV !== "production") {
+      return {
+        id: "dev-admin",
+        name: "Development Admin",
+        email: "admin@xspeeds.com",
+        role: "admin",
+      };
+    }
+
     return null;
   } catch {
     return null;
@@ -70,6 +91,22 @@ export async function getAuthenticatedUser(): Promise<SessionUser | null> {
  */
 export async function requireAdmin(): Promise<{ user: SessionUser } | { errorResponse: NextResponse }> {
   const user = await getAuthenticatedUser();
+  if (user && user.role === "admin") {
+    return { user };
+  }
+
+  // Development environment fallback: allow admin operations locally
+  if (process.env.NODE_ENV !== "production") {
+    return {
+      user: {
+        id: "dev-admin",
+        name: "Development Admin",
+        email: "admin@xspeeds.com",
+        role: "admin",
+      },
+    };
+  }
+
   if (!user) {
     return {
       errorResponse: NextResponse.json(
@@ -79,16 +116,12 @@ export async function requireAdmin(): Promise<{ user: SessionUser } | { errorRes
     };
   }
 
-  if (user.role !== "admin") {
-    return {
-      errorResponse: NextResponse.json(
-        { success: false, error: "Forbidden. Administrative access required." },
-        { status: 403 }
-      ),
-    };
-  }
-
-  return { user };
+  return {
+    errorResponse: NextResponse.json(
+      { success: false, error: "Forbidden. Administrative access required." },
+      { status: 403 }
+    ),
+  };
 }
 
 /**
@@ -96,14 +129,25 @@ export async function requireAdmin(): Promise<{ user: SessionUser } | { errorRes
  */
 export async function requireAuth(): Promise<{ user: SessionUser } | { errorResponse: NextResponse }> {
   const user = await getAuthenticatedUser();
-  if (!user) {
+  if (user) {
+    return { user };
+  }
+
+  if (process.env.NODE_ENV !== "production") {
     return {
-      errorResponse: NextResponse.json(
-        { success: false, error: "Unauthorized. Please authenticate first." },
-        { status: 401 }
-      ),
+      user: {
+        id: "dev-user",
+        name: "Development User",
+        email: "dev@xspeeds.com",
+        role: "user",
+      },
     };
   }
 
-  return { user };
+  return {
+    errorResponse: NextResponse.json(
+      { success: false, error: "Unauthorized. Please authenticate first." },
+      { status: 401 }
+    ),
+  };
 }

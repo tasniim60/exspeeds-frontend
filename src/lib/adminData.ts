@@ -3910,7 +3910,7 @@ export class AdminStorage {
     const requests = this.getShipmentRequests();
     const nowIso = new Date().toISOString();
     const updated = requests.map((r) => {
-      if (r.id !== id) return r;
+      if (r.id !== id && r.requestNumber !== id) return r;
 
       const newStatus = patch.status || r.status;
       const autoTimestamps: Partial<ShipmentRequest> = {};

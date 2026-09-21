@@ -77,7 +77,7 @@ export const ServerStore = {
     const current = this.getShipments();
     let updatedItem: Shipment | null = null;
     const updated = current.map((s) => {
-      if (s.id === id) {
+      if (s.id === id || s.awb === id) {
         updatedItem = { ...s, ...patch };
         return updatedItem;
       }
@@ -88,7 +88,7 @@ export const ServerStore = {
   },
   deleteShipment(id: string): boolean {
     const current = this.getShipments();
-    const filtered = current.filter((s) => s.id !== id);
+    const filtered = current.filter((s) => s.id !== id && s.awb !== id);
     this.saveShipments(filtered);
     return true;
   },
@@ -110,7 +110,7 @@ export const ServerStore = {
     const current = this.getShipmentRequests();
     let updatedItem: ShipmentRequest | null = null;
     const updated = current.map((r) => {
-      if (r.id === id) {
+      if (r.id === id || r.requestNumber === id) {
         updatedItem = { ...r, ...patch, updatedAt: new Date().toISOString() };
         return updatedItem;
       }
@@ -121,7 +121,7 @@ export const ServerStore = {
   },
   deleteShipmentRequest(id: string): boolean {
     const current = this.getShipmentRequests();
-    const filtered = current.filter((r) => r.id !== id);
+    const filtered = current.filter((r) => r.id !== id && r.requestNumber !== id);
     this.saveShipmentRequests(filtered);
     return true;
   },

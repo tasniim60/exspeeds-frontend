@@ -639,6 +639,15 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
         approvedAt: new Date().toISOString(),
       };
 
+      // Optimistic local state update
+      setRequests((prev) =>
+        prev.map((r) =>
+          r.id === req.id || r.requestNumber === req.requestNumber
+            ? { ...r, ...patch, updatedAt: new Date().toISOString() }
+            : r
+        )
+      );
+
       await ShipmentRequestService.updateRequest(req.id, patch);
 
       if (onTriggerNotification) {
@@ -709,14 +718,25 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
       targetStatus = "Approved";
     }
 
-    await ShipmentRequestService.updateRequest(selectedRequest.id, {
+    const patch: Partial<ShipmentRequest> = {
       quotedPrice: trimmedPrice,
       agreedPrice: trimmedPrice,
       currency: curr,
       internalNotes: internalNotesInput,
       status: targetStatus,
       approvedAt: targetStatus === "Approved" ? (selectedRequest.approvedAt || new Date().toISOString()) : selectedRequest.approvedAt,
-    });
+    };
+
+    // Optimistic local update
+    setRequests((prev) =>
+      prev.map((r) =>
+        r.id === selectedRequest.id || r.requestNumber === selectedRequest.requestNumber
+          ? { ...r, ...patch, updatedAt: new Date().toISOString() }
+          : r
+      )
+    );
+
+    await ShipmentRequestService.updateRequest(selectedRequest.id, patch);
 
     if (onTriggerNotification) {
       onTriggerNotification(
@@ -739,14 +759,25 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
     const trimmedPrice = quotedPriceInput.trim();
     const curr = currencyInput || selectedRequest.currency || "EGP";
 
-    await ShipmentRequestService.updateRequest(selectedRequest.id, {
+    const patch: Partial<ShipmentRequest> = {
       status: newStatus,
       quotedPrice: trimmedPrice || selectedRequest.quotedPrice,
       agreedPrice: trimmedPrice || selectedRequest.agreedPrice || selectedRequest.quotedPrice,
       currency: curr,
       approvedAt: newStatus === "Approved" ? new Date().toISOString() : selectedRequest.approvedAt,
       internalNotes: customNote ? `${selectedRequest.internalNotes ? selectedRequest.internalNotes + " | " : ""}${customNote}` : internalNotesInput,
-    });
+    };
+
+    // Optimistic local update
+    setRequests((prev) =>
+      prev.map((r) =>
+        r.id === selectedRequest.id || r.requestNumber === selectedRequest.requestNumber
+          ? { ...r, ...patch, updatedAt: new Date().toISOString() }
+          : r
+      )
+    );
+
+    await ShipmentRequestService.updateRequest(selectedRequest.id, patch);
 
     if (onTriggerNotification) {
       onTriggerNotification(
@@ -857,25 +888,36 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
       ],
     };
 
-    // 1. Add shipment to local storage and backend API
+    // 1. Add shipment to local storage, global Zustand store, and backend API
     const currentShipments = AdminStorage.getShipments();
-    AdminStorage.saveShipments([newShipment, ...currentShipments]);
+    AdminStorage.saveShipments([newShipment, ...currentShipments.filter((s) => s.id !== newShipment.id && s.awb !== newShipment.awb)]);
 
     try {
-      await ShipmentService.createShipment(newShipment);
+      await useAdminStore.getState().addShipment(newShipment);
     } catch {
-      // Storage already updated
+      await ShipmentService.createShipment(newShipment);
     }
 
     // 2. Update request status to Converted
-    await ShipmentRequestService.updateRequest(requestToConvert.id, {
+    const patch: Partial<ShipmentRequest> = {
       status: "Converted to Shipment",
       linkedAwb: trimmedAwb,
       agreedPrice: sellingVal.toString(),
       quotedPrice: sellingVal.toString(),
       currency: currency,
       convertedAt: new Date().toISOString(),
-    });
+    };
+
+    // Optimistic local update
+    setRequests((prev) =>
+      prev.map((r) =>
+        r.id === requestToConvert.id || r.requestNumber === requestToConvert.requestNumber
+          ? { ...r, ...patch, updatedAt: new Date().toISOString() }
+          : r
+      )
+    );
+
+    await ShipmentRequestService.updateRequest(requestToConvert.id, patch);
 
     if (onTriggerNotification) {
       onTriggerNotification(

@@ -1,34 +1,13 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { ServerStore } from "@/lib/serverStore";
 import { ShipmentRequest } from "@/lib/adminData";
+import { requireAdmin, getAuthenticatedUser } from "@/lib/apiAuth";
 
 export const dynamic = "force-dynamic";
 
-function getAuthenticatedUser() {
-  try {
-    const cookieStore = cookies();
-    const sessionCookie = cookieStore.get("xspeed_session");
-    if (!sessionCookie || !sessionCookie.value) return null;
-    let data: any = null;
-    try {
-      data = JSON.parse(decodeURIComponent(sessionCookie.value));
-    } catch {
-      try {
-        data = JSON.parse(sessionCookie.value);
-      } catch {
-        data = null;
-      }
-    }
-    return data && (data.email || data.name) ? data : null;
-  } catch {
-    return null;
-  }
-}
-
 export async function GET(request: Request) {
   try {
-    const authUser = getAuthenticatedUser();
+    const authUser = await getAuthenticatedUser();
     const requests = ServerStore.getShipmentRequests();
 
     // If authenticated user is a normal customer, return their authorized requests
@@ -63,7 +42,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const authUser = getAuthenticatedUser();
+    const authUser = await getAuthenticatedUser();
     const body: ShipmentRequest = await request.json();
 
     if (authUser && authUser.role !== "admin") {
@@ -116,10 +95,8 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const authUser = getAuthenticatedUser();
-    if (!authUser || authUser.role !== "admin") {
-      return NextResponse.json({ success: false, error: "Forbidden: Admin access required" }, { status: 403 });
-    }
+    const auth = await requireAdmin();
+    if ("errorResponse" in auth) return auth.errorResponse;
 
     const body = await request.json();
     const { id, ...patch } = body;
@@ -168,10 +145,8 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const authUser = getAuthenticatedUser();
-    if (!authUser || authUser.role !== "admin") {
-      return NextResponse.json({ success: false, error: "Forbidden: Admin access required" }, { status: 403 });
-    }
+    const auth = await requireAdmin();
+    if ("errorResponse" in auth) return auth.errorResponse;
 
     const { searchParams } = new URL(request.url);
     const id = searchParams.get("id");
