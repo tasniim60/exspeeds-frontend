@@ -1177,10 +1177,10 @@ function ClientProfileContent() {
                     </div>
                     <div>
                       <h2 className="text-base font-bold text-gray-900">
-                        {t("client.profile.personalInfoTitle") || (isRTL ? "البيانات الشخصية وبيانات العمل" : "Personal & Business Details")}
+                        {t("client.profile.personalInfoTitle") || (isRTL ? "البيانات الشخصية" : "Personal Details")}
                       </h2>
                       <p className="text-xs text-gray-500 mt-0.5">
-                        {t("client.profile.personalInfoSubtitle") || (isRTL ? "تحديث وتعديل بيانات التواصل المسجلة لطلب واستلام الشحنات." : "Update your primary contact information for shipment inquiries.")}
+                        {t("client.profile.personalInfoSubtitle") || (isRTL ? "تحديث وتعديل بيانات الحساب المسجلة." : "Update your primary contact information.")}
                       </p>
                     </div>
                   </div>
@@ -1207,25 +1207,6 @@ function ClientProfileContent() {
                     </div>
                   </div>
 
-                  {/* Company Name */}
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                      {t("client.profile.companyLabel") || (isRTL ? "اسم الشركة / المؤسسة" : "Company / Enterprise")}
-                    </label>
-                    <div className="relative flex items-center">
-                      <Building className={`absolute ${isRTL ? "right-3.5" : "left-3.5"} h-4 w-4 text-gray-400 pointer-events-none`} />
-                      <input
-                        type="text"
-                        value={company}
-                        onChange={(e) => setCompany(e.target.value)}
-                        placeholder={t("client.profile.companyPlaceholder") || (isRTL ? "اسم الشركة (اختياري)" : "Company Name (Optional)")}
-                        className={`w-full h-11 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all ${
-                          isRTL ? "pr-10 pl-4 text-right" : "pl-10 pr-4 text-left"
-                        }`}
-                      />
-                    </div>
-                  </div>
-
                   {/* Email */}
                   <div>
                     <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
@@ -1243,26 +1224,6 @@ function ClientProfileContent() {
                         }`}
                         dir="ltr"
                         required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Phone */}
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
-                      {t("client.profile.phoneLabel") || (isRTL ? "رقم الهاتف / الواتساب" : "Phone / WhatsApp")}
-                    </label>
-                    <div className="relative flex items-center">
-                      <Phone className={`absolute ${isRTL ? "right-3.5" : "left-3.5"} h-4 w-4 text-gray-400 pointer-events-none`} />
-                      <input
-                        type="tel"
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder={t("client.profile.phonePlaceholder") || "+20 120 802 7171"}
-                        className={`w-full h-11 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all ${
-                          isRTL ? "pr-10 pl-4" : "pl-10 pr-4"
-                        }`}
-                        dir="ltr"
                       />
                     </div>
                   </div>
