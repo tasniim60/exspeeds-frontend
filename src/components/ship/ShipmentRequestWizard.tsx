@@ -601,6 +601,7 @@ export default function ShipmentRequestWizard() {
         sessionStorage.removeItem(STORAGE_KEY_DRAFT);
         sessionStorage.removeItem(STORAGE_KEY_STEP);
       } catch {}
+      redirectToWhatsApp(saved);
     } catch {
       const reqNumber = `REQ-${Math.floor(10000 + Math.random() * 90000)}`;
       const fallbackRequest = {
@@ -615,6 +616,7 @@ export default function ShipmentRequestWizard() {
         sessionStorage.removeItem(STORAGE_KEY_DRAFT);
         sessionStorage.removeItem(STORAGE_KEY_STEP);
       } catch {}
+      redirectToWhatsApp(fallbackRequest);
     } finally {
       setIsSubmitting(false);
     }
@@ -626,7 +628,7 @@ export default function ShipmentRequestWizard() {
     setTimeout(() => setCopiedReqNumber(false), 3000);
   };
 
-  const generateWhatsAppUrl = (req: any) => {
+  function generateWhatsAppUrl(req: any) {
     let text = "";
     const displayType = req.shipmentType || (formData.shipmentType === "Other" ? formData.customShipmentType : formData.shipmentType) || "-";
     const displayService = req.serviceTitle || activeService.title || "-";
@@ -773,7 +775,31 @@ export default function ShipmentRequestWizard() {
     }
 
     return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
-  };
+  }
+
+  function redirectToWhatsApp(req: any) {
+    try {
+      const waUrl = generateWhatsAppUrl(req);
+      if (typeof window === "undefined" || !waUrl) return;
+
+      const isMobileDevice = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+        navigator.userAgent
+      );
+
+      if (isMobileDevice) {
+        window.location.href = waUrl;
+      } else {
+        const win = window.open(waUrl, "_blank", "noopener,noreferrer");
+        if (!win || win.closed || typeof win.closed === "undefined") {
+          setTimeout(() => {
+            window.location.href = waUrl;
+          }, 600);
+        }
+      }
+    } catch (e) {
+      console.warn("[redirectToWhatsApp] Warning:", e);
+    }
+  }
 
   // SUCCESS SCREEN (Minimal & focused, no profile redirect button)
   if (submittedData) {
@@ -830,6 +856,7 @@ export default function ShipmentRequestWizard() {
           >
             <MessageSquare className="w-4 h-4" />
             <span>{isRTL ? "متابعة الطلب واستلام السعر عبر واتساب" : "Chat & Receive Quote on WhatsApp"}</span>
+            <ExternalLink className="w-3.5 h-3.5 opacity-80" />
           </a>
 
           <button
@@ -841,6 +868,15 @@ export default function ShipmentRequestWizard() {
             <span>{isRTL ? "طلب جديد" : "New Request"}</span>
           </button>
         </div>
+
+        <p className="text-[11px] text-gray-500 font-medium flex items-center justify-center gap-1.5 pt-1">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping inline-block" />
+          <span>
+            {isRTL
+              ? "تم فتح محادثة واتساب تلقائياً... إذا لم تفتح المحادثة يمكنك الضغط على الزر الأخضر أعلاه."
+              : "WhatsApp opened automatically. If not opened, click the green button above."}
+          </span>
+        </p>
       </div>
     );
   }
@@ -2135,11 +2171,12 @@ export default function ShipmentRequestWizard() {
                   {isSubmitting ? (
                     <div className="flex items-center gap-2">
                       <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                      <span>{isRTL ? "جاري تسجيل الطلب وإرساله..." : "Submitting Request..."}</span>
+                      <span>{isRTL ? "جاري تسجيل الطلب والتحويل لواتساب..." : "Submitting & Opening WhatsApp..."}</span>
                     </div>
                   ) : (
                     <>
-                      <span>{isRTL ? "تأكيد وإرسال طلب الشحن" : "Confirm & Submit Request"}</span>
+                      <MessageSquare className="w-4 h-4 text-emerald-300" />
+                      <span>{isRTL ? "تأكيد وإرسال طلب الشحن واستلام السعر عبر واتساب" : "Confirm Request & Chat on WhatsApp"}</span>
                       <ArrowRight className={`w-4 h-4 ${isRTL ? "rotate-180" : ""}`} />
                     </>
                   )}
