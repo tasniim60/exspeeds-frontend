@@ -394,6 +394,14 @@ export default function ShipmentRequestWizard() {
 
   const handleChange = (field: string, value: any) => {
     updateFormData(field as any, value);
+    if (field === "pickupContactPhone") {
+      if (!formData.whatsapp || formData.whatsapp === formData.pickupContactPhone) {
+        updateFormData("whatsapp" as any, value);
+      }
+      if (!formData.phone || formData.phone === formData.pickupContactPhone) {
+        updateFormData("phone" as any, value);
+      }
+    }
     if (generalError) {
       setGeneralError(null);
     }
@@ -547,8 +555,18 @@ export default function ShipmentRequestWizard() {
       email: user?.email || formData.email,
       companyName: user?.company || formData.companyName,
       company_name: user?.company || formData.companyName,
-      phone: user?.phone || formData.phone,
-      whatsapp: formData.whatsapp || user?.phone || formData.phone,
+      phone:
+        formData.whatsapp?.trim() ||
+        formData.phone?.trim() ||
+        formData.pickupContactPhone?.trim() ||
+        user?.phone?.trim() ||
+        "",
+      whatsapp:
+        formData.whatsapp?.trim() ||
+        formData.phone?.trim() ||
+        formData.pickupContactPhone?.trim() ||
+        user?.phone?.trim() ||
+        "",
       country: formData.pickupCountry,
       city: formData.pickupCity,
       address: formData.pickupAddress,
@@ -633,6 +651,16 @@ export default function ShipmentRequestWizard() {
     const displayType = req.shipmentType || (formData.shipmentType === "Other" ? formData.customShipmentType : formData.shipmentType) || "-";
     const displayService = req.serviceTitle || activeService.title || "-";
 
+    const clientWhatsApp =
+      req.whatsapp?.trim() ||
+      req.phone?.trim() ||
+      formData.whatsapp?.trim() ||
+      formData.phone?.trim() ||
+      req.pickupContactPhone?.trim() ||
+      formData.pickupContactPhone?.trim() ||
+      user?.phone?.trim() ||
+      "-";
+
     if (locale === "ar") {
       const rlm = "\u200F";
       const parts: string[] = [
@@ -641,9 +669,9 @@ export default function ShipmentRequestWizard() {
         `${rlm}نوع الخدمة: *${displayService}*`,
         `${rlm}────────────────────`,
         `${rlm}*بيانات العميل:*`,
-        `${rlm}- الاسم: ${req.customerName || "-"}`,
-        `${rlm}- البريد الإلكتروني: ${req.email || "-"}`,
-        `${rlm}- الهاتف: ${req.phone || req.whatsapp || "-"}`,
+        `${rlm}- الاسم: ${req.customerName || user?.name || "-"}`,
+        `${rlm}- البريد الإلكتروني: ${req.email || user?.email || "-"}`,
+        `${rlm}- رقم الواتساب: ${clientWhatsApp}`,
       ];
 
       if (req.companyName) {
@@ -710,9 +738,9 @@ export default function ShipmentRequestWizard() {
         `Service Type: *${displayService}*`,
         `────────────────────`,
         `*Customer Details:*`,
-        `- Name: ${req.customerName || "-"}`,
-        `- Email: ${req.email || "-"}`,
-        `- Phone: ${req.phone || req.whatsapp || "-"}`,
+        `- Name: ${req.customerName || user?.name || "-"}`,
+        `- Email: ${req.email || user?.email || "-"}`,
+        `- WhatsApp Number: ${clientWhatsApp}`,
       ];
 
       if (req.companyName) {
@@ -2098,12 +2126,21 @@ export default function ShipmentRequestWizard() {
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
                     <div className="bg-white p-2.5 rounded-xl border border-gray-200/70">
-                      <span className="text-[11px] font-bold uppercase text-gray-400 block mb-0.5">
-                        {isRTL ? "رقم الهاتف / واتساب:" : "Phone / WhatsApp:"}
-                      </span>
-                      <p className="font-mono font-bold text-gray-900" dir="ltr">
-                        {formData.phone || formData.whatsapp || user?.phone || "—"}
-                      </p>
+                      <label className="text-[11px] font-bold uppercase text-gray-700 block mb-1">
+                        {isRTL ? "رقم الواتساب (للتواصل واستلام السعر):" : "WhatsApp Number (For Quote):"}
+                      </label>
+                      <input
+                        type="tel"
+                        value={formData.whatsapp || formData.phone || formData.pickupContactPhone || user?.phone || ""}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          handleChange("whatsapp", val);
+                          handleChange("phone", val);
+                        }}
+                        placeholder={isRTL ? "مثال: +20 120 802 7171" : "e.g. +20 120 802 7171"}
+                        className="w-full h-8 px-2.5 bg-gray-50 hover:bg-white focus:bg-white border border-gray-300 focus:border-[#C45B2A] focus:ring-1 focus:ring-[#C45B2A]/30 rounded-lg text-xs font-mono font-bold text-gray-900 outline-none transition-all"
+                        dir="ltr"
+                      />
                     </div>
 
                     <div className="bg-white p-2.5 rounded-xl border border-gray-200/70">

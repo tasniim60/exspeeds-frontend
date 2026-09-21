@@ -233,27 +233,29 @@ export const useShipmentWizardStore = create<ShipmentWizardState>((set, get) => 
 
       if (savedDraft) {
         const parsed = JSON.parse(savedDraft);
+        const effectivePhone = parsed.phone || parsed.whatsapp || parsed.pickupContactPhone || user?.phone || nextFormData.phone;
         nextFormData = {
           ...nextFormData,
           ...parsed,
           customerName: parsed.customerName || user?.name || nextFormData.customerName,
           email: parsed.email || user?.email || nextFormData.email,
           companyName: parsed.companyName || user?.company || nextFormData.companyName,
-          phone: parsed.phone || user?.phone || nextFormData.phone,
-          whatsapp: parsed.whatsapp || user?.phone || nextFormData.whatsapp,
+          phone: effectivePhone,
+          whatsapp: effectivePhone,
           pickupContactName: parsed.pickupContactName || user?.name || nextFormData.pickupContactName,
           pickupContactPhone: parsed.pickupContactPhone || user?.phone || nextFormData.pickupContactPhone,
         };
       } else if (user) {
+        const userPhone = user.phone || "";
         nextFormData = {
           ...nextFormData,
           customerName: user.name || "",
           email: user.email || "",
           companyName: user.company || "",
-          phone: user.phone || "",
-          whatsapp: user.phone || "",
+          phone: userPhone,
+          whatsapp: userPhone,
           pickupContactName: user.name || "",
-          pickupContactPhone: user.phone || "",
+          pickupContactPhone: userPhone,
         };
       }
 
@@ -315,14 +317,19 @@ export const useShipmentWizardStore = create<ShipmentWizardState>((set, get) => 
 
     const generatedReqNumber = `REQ-${Math.floor(10000 + Math.random() * 90000)}`;
     const f = state.formData;
+    const resolvedClientPhone =
+      f.whatsapp?.trim() ||
+      f.phone?.trim() ||
+      f.pickupContactPhone?.trim() ||
+      "";
 
     const newRequest: ShipmentRequest = {
       id: `req-${Date.now()}`,
       requestNumber: generatedReqNumber,
       customerName: f.customerName,
       companyName: f.companyName,
-      phone: f.phone,
-      whatsapp: f.whatsapp,
+      phone: resolvedClientPhone,
+      whatsapp: resolvedClientPhone,
       email: f.email,
       country: f.pickupCountry,
       city: f.pickupCity,
