@@ -56,7 +56,9 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
   const navLinks = [
     { name: t("nav.home"), href: "/", icon: <Home className="w-4 h-4 shrink-0" /> },
     { name: t("nav.services"), href: "/services", icon: <Layers className="w-4 h-4 shrink-0" /> },
-    { name: t("nav.requestShipment"), href: "/ship", icon: <Package className="w-4 h-4 shrink-0" /> },
+    ...(mounted && user
+      ? [{ name: t("nav.requestShipment"), href: "/ship", icon: <Package className="w-4 h-4 shrink-0" /> }]
+      : []),
     { name: t("nav.track"), href: "/track", icon: <Truck className="w-4 h-4 shrink-0" /> },
     { name: t("nav.about"), href: "/about", icon: <Building2 className="w-4 h-4 shrink-0" /> },
     { name: t("nav.blog"), href: "/blog", icon: <BookOpen className="w-4 h-4 shrink-0" /> },
@@ -270,11 +272,11 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
                     {t("nav.signIn")}
                   </Link>
                   <Link
-                    href={getLocalizedPath("/ship")}
+                    href={getLocalizedPath("/register")}
                     className="inline-flex items-center gap-1.5 bg-gradient-to-r from-[#C45B2A] to-[#E65100] hover:from-[#A34920] hover:to-[#C45B2A] text-white text-xs font-bold py-2 px-3.5 rounded-full shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98] whitespace-nowrap"
                   >
-                    <Plus className="w-3.5 h-3.5" />
-                    <span>{t("nav.requestShipment")}</span>
+                    <UserPlus className="w-3.5 h-3.5" />
+                    <span>{t("nav.register")}</span>
                   </Link>
                 </div>
               )}
