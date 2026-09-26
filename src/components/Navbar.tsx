@@ -56,6 +56,7 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
   const navLinks = [
     { name: t("nav.home"), href: "/", icon: <Home className="w-4 h-4 shrink-0" /> },
     { name: t("nav.services"), href: "/services", icon: <Layers className="w-4 h-4 shrink-0" /> },
+    { name: t("nav.requestShipment"), href: "/ship", icon: <Package className="w-4 h-4 shrink-0" /> },
     { name: t("nav.track"), href: "/track", icon: <Truck className="w-4 h-4 shrink-0" /> },
     { name: t("nav.about"), href: "/about", icon: <Building2 className="w-4 h-4 shrink-0" /> },
     { name: t("nav.blog"), href: "/blog", icon: <BookOpen className="w-4 h-4 shrink-0" /> },
