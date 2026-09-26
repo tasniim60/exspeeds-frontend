@@ -69,7 +69,7 @@ function ClientProfileContent() {
   const tabParam = searchParams.get("tab");
 
   const { user, updateProfile, logout } = useAuth();
-  const { t, isRTL, formatDate } = useLanguage();
+  const { t, isRTL, formatDate, getLocalizedPath } = useLanguage();
 
   const [mounted, setMounted] = useState(false);
   const [activeTab, setActiveTab] = useState<"dashboard" | "settings" | "security">("settings");
@@ -556,26 +556,26 @@ function ClientProfileContent() {
             <div className="flex flex-wrap items-center justify-center gap-2.5 shrink-0">
               {mounted && user?.role === "admin" ? (
                 <Link
-                  href="/admin"
-                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs flex items-center gap-2 shadow-lg transition-all hover:scale-[1.02] cursor-pointer"
+                  href={getLocalizedPath("/admin")}
+                  className="h-11 px-4 sm:px-5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                 >
-                  <ShieldCheck className="w-4 h-4" />
+                  <ShieldCheck className="w-4 h-4 shrink-0" />
                   <span>{isRTL ? "لوحة الإدارة والعمليات" : "Admin Operations Portal"}</span>
                 </Link>
               ) : (
                 <>
                   <Link
-                    href="/ship"
-                    className="px-4 py-2.5 rounded-xl bg-[#C45B2A] hover:bg-[#A8481B] text-white font-bold text-xs flex items-center gap-2 shadow-lg transition-all hover:scale-[1.02] cursor-pointer"
+                    href={getLocalizedPath("/ship")}
+                    className="h-11 px-4 sm:px-5 rounded-xl bg-gradient-to-r from-[#C45B2A] to-[#E65100] hover:from-[#A8481B] hover:to-[#C45B2A] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-md shadow-orange-950/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                   >
-                    <Plus className="w-4 h-4" />
+                    <Plus className="w-4 h-4 stroke-[2.5] shrink-0" />
                     <span>{isRTL ? "طلب شحن جديد" : "New Shipment"}</span>
                   </Link>
                   <Link
-                    href="/track"
-                    className="px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs flex items-center gap-2 border border-white/20 backdrop-blur-sm transition-all hover:scale-[1.02] cursor-pointer"
+                    href={getLocalizedPath("/track")}
+                    className="h-11 px-4 sm:px-5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 border border-white/20 backdrop-blur-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
                   >
-                    <Search className="w-4 h-4" />
+                    <Search className="w-4 h-4 shrink-0" />
                     <span>{isRTL ? "تتبع شحنة" : "Track Consignment"}</span>
                   </Link>
                 </>
@@ -747,10 +747,10 @@ function ClientProfileContent() {
 
                   {/* New Shipment Request Link */}
                   <Link
-                    href="/ship"
-                    className="h-9 px-3.5 rounded-xl bg-[#C45B2A] hover:bg-[#A8481B] text-white text-xs font-bold flex items-center gap-1.5 shadow-xs transition-all hover:scale-[1.02] cursor-pointer shrink-0"
+                    href={getLocalizedPath("/ship")}
+                    className="h-10 px-4 rounded-xl bg-gradient-to-r from-[#C45B2A] to-[#E65100] hover:from-[#A8481B] hover:to-[#C45B2A] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer shrink-0"
                   >
-                    <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                    <Plus className="w-3.5 h-3.5 stroke-[2.5] shrink-0" />
                     <span>{t("client.dashboard.requestsTable.newRequestBtn") || (isRTL ? "طلب شحن جديد" : "New Request")}</span>
                   </Link>
                 </div>
