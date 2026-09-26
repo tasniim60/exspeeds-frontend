@@ -53,17 +53,28 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
     return null;
   }
 
-  const navLinks = [
+  // Public navigation links visible to all visitors
+  const publicNavLinks = [
     { name: t("nav.home"), href: "/", icon: <Home className="w-4 h-4 shrink-0" /> },
     { name: t("nav.services"), href: "/services", icon: <Layers className="w-4 h-4 shrink-0" /> },
-    ...(mounted && user
-      ? [{ name: t("nav.requestShipment"), href: "/ship", icon: <Package className="w-4 h-4 shrink-0" /> }]
-      : []),
     { name: t("nav.track"), href: "/track", icon: <Truck className="w-4 h-4 shrink-0" /> },
     { name: t("nav.about"), href: "/about", icon: <Building2 className="w-4 h-4 shrink-0" /> },
     { name: t("nav.blog"), href: "/blog", icon: <BookOpen className="w-4 h-4 shrink-0" /> },
     { name: t("nav.contact"), href: "/contact", icon: <Phone className="w-4 h-4 shrink-0" /> },
   ];
+
+  // When logged in, include the private shipment booking route
+  const navLinks = mounted && user
+    ? [
+        { name: t("nav.home"), href: "/", icon: <Home className="w-4 h-4 shrink-0" /> },
+        { name: t("nav.services"), href: "/services", icon: <Layers className="w-4 h-4 shrink-0" /> },
+        { name: t("nav.requestShipment"), href: "/ship", icon: <Package className="w-4 h-4 shrink-0" /> },
+        { name: t("nav.track"), href: "/track", icon: <Truck className="w-4 h-4 shrink-0" /> },
+        { name: t("nav.about"), href: "/about", icon: <Building2 className="w-4 h-4 shrink-0" /> },
+        { name: t("nav.blog"), href: "/blog", icon: <BookOpen className="w-4 h-4 shrink-0" /> },
+        { name: t("nav.contact"), href: "/contact", icon: <Phone className="w-4 h-4 shrink-0" /> },
+      ]
+    : publicNavLinks;
 
   return (
     <header className="sticky top-0 z-50 bg-white/90 text-brand-dark border-b border-[#E2E8F0] backdrop-blur-md shadow-xs">

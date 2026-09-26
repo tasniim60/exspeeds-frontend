@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 import {
   Package,
   Globe2,
@@ -23,6 +24,7 @@ import { CARRIERS } from "@/lib/tracking";
 
 export function HomeHeroSection() {
   const router = useRouter();
+  const { user } = useAuth();
   const { t, isRTL, getLocalizedPath } = useLanguage();
   const [carrier, setCarrier] = useState("DHL");
   const [awb, setAwb] = useState("");
@@ -80,10 +82,10 @@ export function HomeHeroSection() {
 
             {/* Hero Action Buttons */}
             <div className="flex flex-wrap items-center gap-3.5 sm:gap-4 pt-1">
-              <Link href={getLocalizedPath("/ship")}>
+              <Link href={user ? getLocalizedPath("/ship") : getLocalizedPath("/login?redirect=/ship")}>
                 <button
                   type="button"
-                  className="bg-gradient-to-r from-[#C45B2A] to-[#E65100] hover:from-[#A34920] hover:to-[#C45B2A] text-white font-bold text-sm sm:text-base px-7 sm:px-8 py-3.5 sm:py-4 rounded-full shadow-lg shadow-orange-500/25 transition-all hover:scale-[1.02] flex items-center gap-2.5 cursor-pointer"
+                  className="bg-gradient-to-r from-[#C45B2A] to-[#E65100] hover:from-[#A34920] hover:to-[#C45B2A] text-white font-bold text-sm sm:text-base px-7 sm:px-8 py-3.5 sm:py-4 rounded-full shadow-lg shadow-orange-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center gap-2.5 cursor-pointer"
                 >
                   <Package className="w-5 h-5 stroke-[2.2]" />
                   <span>{t("home.hero.requestShipment")}</span>

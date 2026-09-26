@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
+import { useAuth } from "@/context/AuthContext";
 import { SectionEyebrow } from "@/components/ui/SectionEyebrow";
 import {
   Plane,
@@ -22,6 +23,7 @@ import {
 } from "lucide-react";
 
 export default function ServicesClient() {
+  const { user } = useAuth();
   const { t, isRTL, getLocalizedPath } = useLanguage();
 
   const services = [
@@ -304,7 +306,7 @@ export default function ServicesClient() {
 
           <div className="flex flex-wrap items-center justify-center gap-4 relative z-10">
             <Link
-              href={getLocalizedPath("/ship")}
+              href={user ? getLocalizedPath("/ship") : getLocalizedPath("/login?redirect=/ship")}
               className="bg-gradient-to-r from-[#C45B2A] to-[#E65100] hover:from-[#A34920] hover:to-[#C45B2A] text-white font-bold text-xs sm:text-sm px-8 py-3.5 rounded-full shadow-lg shadow-orange-500/30 transition-all hover:scale-105 active:scale-95 cursor-pointer min-h-[44px]"
             >
               {t("home.cta.requestBtn")}
