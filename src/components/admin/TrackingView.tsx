@@ -62,7 +62,7 @@ export const TrackingView: React.FC<TrackingViewProps> = ({
     if (found) {
       setSelectedShipment(found);
     } else {
-      alert(`No shipment found with AWB ${searchAwb}`);
+      alert(isRTL ? `لم يتم العثور على شحنة برقم البوليصة: ${searchAwb}` : `No shipment found with AWB ${searchAwb}`);
     }
   };
 
@@ -89,10 +89,10 @@ export const TrackingView: React.FC<TrackingViewProps> = ({
           </div>
           <div>
             <h2 className="text-sm font-bold text-gray-900">
-              {t("admin.tracking.title")}
+              {t("admin.tracking.title") || (isRTL ? "خريطة الأسطول والتتبع الحي" : "Live Fleet Tracking")}
             </h2>
             <p className="text-xs text-gray-500">
-              {t("admin.tracking.subtitle")}
+              {t("admin.tracking.subtitle") || (isRTL ? "تتبع المركبات عبر GPS، قراءات المستشعرات، وروابط تتبع العملاء" : "GPS telemetry, status milestones, and customer tracking links")}
             </p>
           </div>
         </div>
@@ -103,7 +103,7 @@ export const TrackingView: React.FC<TrackingViewProps> = ({
             <Input
               value={searchAwb}
               onChange={(e) => setSearchAwb(e.target.value)}
-              placeholder={t("admin.tracking.searchPlaceholder")}
+              placeholder={t("admin.tracking.searchPlaceholder") || (isRTL ? "بحث برقم البوليصة AWB..." : "Search AWB...")}
               className={`font-mono text-xs uppercase font-bold ltr-preserve ${isRTL ? "pr-9 pl-3 text-right" : "pl-9 pr-3 text-left"}`}
             />
           </div>
@@ -132,7 +132,7 @@ export const TrackingView: React.FC<TrackingViewProps> = ({
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div>
                     <span className="text-[10px] font-mono font-bold tracking-widest text-[#C45B2A] uppercase">
-                      OFFICIAL CARRIER TELEMETRY
+                      {isRTL ? "بيانات التتبع المباشر للناقل" : "OFFICIAL CARRIER TELEMETRY"}
                     </span>
                     <h3 className="text-2xl font-black font-mono tracking-tight mt-0.5 ltr-preserve">
                       {activeShipment.awb}
@@ -145,23 +145,28 @@ export const TrackingView: React.FC<TrackingViewProps> = ({
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant="brand" size="default" className="text-xs font-bold py-1 px-3">
-                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse mr-1" />
-                      {activeShipment.status}
+                    <Badge variant="brand" size="default" className="text-xs font-bold py-1 px-3 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
+                      <span>{activeShipment.status}</span>
                     </Badge>
 
                     <Button
                       size="xs"
                       variant="secondary"
                       onClick={handleCopyPublicLink}
-                      className="text-xs bg-white/10 hover:bg-white/20 text-white border-0 cursor-pointer"
+                      className="text-xs bg-white/10 hover:bg-white/20 text-white border-0 cursor-pointer flex items-center gap-1.5"
                     >
-                      <Copy className="h-3.5 w-3.5" />
-                      <span>{copiedLink ? "Link Copied!" : "Copy Link"}</span>
+                      <Copy className="h-3.5 w-3.5 shrink-0" />
+                      <span>{copiedLink ? (isRTL ? "تم نسخ الرابط!" : "Link Copied!") : (isRTL ? "نسخ الرابط" : "Copy Link")}</span>
                     </Button>
 
                     {/* Direct Carrier Redirect Button */}
-                    <TrackingRedirect carrier={activeShipment.carrier} awb={activeShipment.awb} variant="button" label={`Track on ${activeShipment.carrier}`} />
+                    <TrackingRedirect
+                      carrier={activeShipment.carrier}
+                      awb={activeShipment.awb}
+                      variant="button"
+                      label={isRTL ? `تتبع عبر ${activeShipment.carrier}` : `Track on ${activeShipment.carrier}`}
+                    />
                   </div>
                 </div>
 
@@ -169,7 +174,7 @@ export const TrackingView: React.FC<TrackingViewProps> = ({
                 <div className="p-3 rounded-lg bg-black/40 border border-white/10 flex items-center justify-between text-xs">
                   <span className="flex items-center gap-2 text-gray-300">
                     <MapPin className="h-4 w-4 text-[#C45B2A] shrink-0" />
-                    <span>Current Status: <strong className="text-white">{activeShipment.currentLocation}</strong></span>
+                    <span>{isRTL ? "الموقع والحالة الحالية:" : "Current Status:"} <strong className="text-white">{activeShipment.currentLocation}</strong></span>
                   </span>
                   <span className="font-mono text-[#C45B2A] font-bold">{activeShipment.carrier}</span>
                 </div>
@@ -179,19 +184,19 @@ export const TrackingView: React.FC<TrackingViewProps> = ({
               <div className="p-5 border-b border-gray-100 bg-gray-50/50">
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
                   <div className="p-3 bg-white rounded-lg border border-gray-200 shadow-2xs space-y-1 text-start">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase block">Main Carrier</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase block">{isRTL ? "الناقل الرئيسي" : "Main Carrier"}</span>
                     <p className="font-bold text-gray-900">{activeShipment.carrier}</p>
                   </div>
                   <div className="p-3 bg-white rounded-lg border border-gray-200 shadow-2xs space-y-1 text-start">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase block">Broker Partner</span>
-                    <p className="font-bold text-indigo-600">{activeShipment.broker || "XSpeed"}</p>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase block">{isRTL ? "الوسيط المعتمد" : "Broker Partner"}</span>
+                    <p className="font-bold text-indigo-600">{activeShipment.broker || "XSPEED"}</p>
                   </div>
                   <div className="p-3 bg-white rounded-lg border border-gray-200 shadow-2xs space-y-1 text-start">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase block">Chargeable Weight</span>
-                    <p className="font-bold text-gray-900 font-mono">{activeShipment.weight} KG</p>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase block">{isRTL ? "الوزن المحتسب" : "Chargeable Weight"}</span>
+                    <p className="font-bold text-gray-900 font-mono">{activeShipment.weight} {isRTL ? "كجم" : "KG"}</p>
                   </div>
                   <div className="p-3 bg-white rounded-lg border border-gray-200 shadow-2xs space-y-1 text-start">
-                    <span className="text-[10px] font-bold text-gray-400 uppercase block">Registered By</span>
+                    <span className="text-[10px] font-bold text-gray-400 uppercase block">{isRTL ? "مسؤول التسجيل" : "Registered By"}</span>
                     <p className="font-bold text-emerald-700">{activeShipment.agentName || "مصطفي"}</p>
                   </div>
                 </div>
@@ -200,15 +205,15 @@ export const TrackingView: React.FC<TrackingViewProps> = ({
               {/* Status Milestone Timeline */}
               <CardContent className="p-6 space-y-6 text-start">
                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider">
-                  Consignment Milestone Checklist
+                  {isRTL ? "مراحل وخط سير الشحنة (Milestones)" : "Consignment Milestone Checklist"}
                 </h4>
 
                 <div className="space-y-4">
                   {(activeShipment.timeline || []).map((step, idx) => (
                     <div key={idx} className="flex items-start gap-4 text-xs text-start">
-                      <div className="mt-1 flex flex-col items-center">
+                      <div className="mt-1 flex flex-col items-center shrink-0">
                         <div
-                          className={`w-5 h-5 rounded-full flex items-center justify-center ${
+                          className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
                             step.completed
                               ? "bg-[#C45B2A] text-white"
                               : "bg-gray-200 text-gray-500"
@@ -247,11 +252,11 @@ export const TrackingView: React.FC<TrackingViewProps> = ({
           <Card className="shadow-2xs">
             <CardHeader className="p-5 pb-3 text-start">
               <CardTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
-                <Package className="h-4 w-4 text-[#C45B2A]" />
-                Active Master Ledger AWBs
+                <Package className="h-4 w-4 text-[#C45B2A] shrink-0" />
+                <span>{isRTL ? "الشحنات النشطة بالسجل" : "Active Master Ledger AWBs"}</span>
               </CardTitle>
               <CardDescription className="text-xs text-gray-500">
-                Live consignments currently in transit across carriers
+                {isRTL ? "الشحنات قيد الحركة والترانزيت عبر خطوط الشحن" : "Live consignments currently in transit across carriers"}
               </CardDescription>
             </CardHeader>
             <CardContent className="p-5 pt-0 space-y-2">
@@ -266,7 +271,7 @@ export const TrackingView: React.FC<TrackingViewProps> = ({
                   }`}
                 >
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-mono font-bold text-gray-900">{shp.awb}</span>
+                    <span className="font-mono font-bold text-gray-900 ltr-preserve">{shp.awb}</span>
                     <Badge variant="outline" size="sm">{shp.carrier}</Badge>
                   </div>
 
@@ -278,7 +283,7 @@ export const TrackingView: React.FC<TrackingViewProps> = ({
 
                   <div className="flex items-center justify-between text-[11px] text-gray-500 pt-1.5 mt-1.5 border-t border-gray-200/80 font-mono">
                     <span className="text-emerald-700 font-bold">{shp.status}</span>
-                    <span>{shp.weight} KG</span>
+                    <span>{shp.weight} {isRTL ? "كجم" : "KG"}</span>
                   </div>
                 </div>
               ))}
@@ -288,8 +293,10 @@ export const TrackingView: React.FC<TrackingViewProps> = ({
           {/* Shareable Link Box */}
           <Card className="p-5 bg-gradient-to-br from-amber-50/60 to-white border-amber-200 space-y-3 shadow-2xs text-start">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-[#C45B2A]" />
-              <h4 className="text-xs font-bold text-amber-950 uppercase">Customer Shareable URL</h4>
+              <Sparkles className="h-4 w-4 text-[#C45B2A] shrink-0" />
+              <h4 className="text-xs font-bold text-amber-950 uppercase">
+                {isRTL ? "رابط التتبع المباشر للعميل" : "Customer Shareable URL"}
+              </h4>
             </div>
             <div className="flex gap-2">
               <Input
@@ -308,7 +315,7 @@ export const TrackingView: React.FC<TrackingViewProps> = ({
                 disabled={!activeShipment}
                 className="text-xs font-bold shrink-0 cursor-pointer"
               >
-                Copy
+                {isRTL ? "نسخ" : "Copy"}
               </Button>
             </div>
           </Card>

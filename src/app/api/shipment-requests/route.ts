@@ -106,6 +106,13 @@ export async function PUT(request: Request) {
     if (!patch.updatedAt) {
       patch.updatedAt = new Date().toISOString();
     }
+    if ((patch.status === "Approved" || patch.agreedPrice) && !patch.approvedAt) {
+      patch.approvedAt = new Date().toISOString();
+    }
+    if (patch.status === "Converted to Shipment") {
+      if (!patch.convertedAt) patch.convertedAt = new Date().toISOString();
+      if (!patch.approvedAt) patch.approvedAt = patch.convertedAt;
+    }
     const updated = ServerStore.updateShipmentRequest(id, patch);
 
     if (patch.status === "Approved") {

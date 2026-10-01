@@ -62,7 +62,31 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const requestedLang = searchParams.get("lang") || "ar";
     const normalizedLang = requestedLang === "en" ? "en" : "ar";
-    const posts = await getPosts(50, normalizedLang);
+    const rawPosts = await getPosts(50, normalizedLang);
+
+    // Normalize raw WPPost / JSON items into standard BlogPost objects
+    const posts: BlogPost[] = (rawPosts || []).map((p: any) => ({
+      id: p.id ? (String(p.id).startsWith("wp-") || String(p.id).startsWith("post-") ? String(p.id) : `wp-${p.id}`) : `post-${Date.now()}`,
+      title: typeof p.title === "string" ? p.title : p.title?.rendered || "Untitled Post",
+      slug: p.slug || `post-${p.id || Date.now()}`,
+      author: typeof p.author === "string" ? p.author : p.author_name || "XSPEED Editorial Team",
+      category: typeof p.category === "string" ? p.category : p.category_name || "Technology & Logistics",
+      date: p.date || new Date().toISOString(),
+      status: p.status === "publish" ? "published" : (p.status || "published"),
+      views: typeof p.views === "number" ? p.views : 1,
+      seoScore: typeof p.seoScore === "number" ? p.seoScore : p.rank_math_seo?.seo_score || 90,
+      focusKeyword: typeof p.focusKeyword === "string" ? p.focusKeyword : p.rank_math_seo?.focus_keyword || "",
+      wordCount: typeof p.wordCount === "number" ? p.wordCount : 500,
+      wpEditUrl: p.wpEditUrl || `/wp-admin/post.php?post=${p.id || 101}&action=edit`,
+      imageUrl: p.imageUrl || p.featured_image_url || "/assets/xspeed_about_showcase.jpg",
+      excerpt: typeof p.excerpt === "string" ? p.excerpt : p.excerpt?.rendered || "",
+      content: typeof p.content === "string" ? p.content : p.content?.rendered || "",
+      lang: p.lang || (p.locale === "en" ? "en" : "ar"),
+      translationOf: p.translationOf,
+      translations: p.translations,
+      deeplStatus: p.deeplStatus || "translated",
+    }));
+
     return NextResponse.json({ success: true, posts });
   } catch (error: any) {
     return NextResponse.json(
@@ -261,6 +285,45 @@ export async function POST(request: Request) {
   } catch (error: any) {
     return NextResponse.json(
       { success: false, error: error.message || "Failed to create post" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PUT(request: Request) {
+  try {
+    const body = await request.json();
+    if (!body || (!body.id && !body.slug)) {
+      return NextResponse.json(
+        { success: false, error: "Post ID or slug is required" },
+        { status: 400 }
+      );
+    }
+    const updated = ServerStore.updatePost(body);
+    return NextResponse.json({ success: true, post: updated });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to update post" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    if (!id) {
+      return NextResponse.json(
+        { success: false, error: "Post ID is required" },
+        { status: 400 }
+      );
+    }
+    ServerStore.deletePost(id);
+    return NextResponse.json({ success: true, message: "Post deleted successfully" });
+  } catch (error: any) {
+    return NextResponse.json(
+      { success: false, error: error.message || "Failed to delete post" },
       { status: 500 }
     );
   }

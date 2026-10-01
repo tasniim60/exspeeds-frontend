@@ -43,6 +43,7 @@ export async function apiClient<T>(
 
   try {
     const response = await fetch(url, {
+      credentials: "include",
       ...customConfig,
       headers: {
         "Content-Type": "application/json",

@@ -198,6 +198,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = useCallback(async () => {
     try {
+      if (typeof window !== "undefined") {
+        sessionStorage.removeItem("xspeed_shipment_wizard_draft_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_step_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_service_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_submitted_v3");
+      }
+    } catch {}
+    try {
       await signOut({ redirect: false });
     } catch {
       // ignore NextAuth signout error

@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import {
   Shipment,
+  initialShipments,
   Order,
   Customer,
   Invoice,
@@ -16,12 +17,16 @@ import {
   initialExpenses,
   CarrierTransfer,
   initialCarrierTransfers,
+  CarrierPartner,
+  initialCarrierPartners,
   InternalTransfer,
   initialInternalTransfers,
   SalaryPayment,
   initialSalaries,
   InvoiceLoss,
   initialInvoiceLosses,
+  CarrierInvoiceItem,
+  initialCarrierInvoices,
 } from "./adminData";
 
 const DATA_DIR = path.join(process.cwd(), ".data");
@@ -62,7 +67,12 @@ function writeStore<T>(key: string, data: T): void {
 export const ServerStore = {
   // Shipments
   getShipments(): Shipment[] {
-    return readStore<Shipment[]>("shipments", []);
+    const list = readStore<Shipment[]>("shipments", []);
+    if (!list || list.length === 0) {
+      this.saveShipments(initialShipments);
+      return initialShipments;
+    }
+    return list;
   },
   saveShipments(data: Shipment[]): void {
     writeStore("shipments", data);
@@ -267,6 +277,34 @@ export const ServerStore = {
     return true;
   },
 
+  // Carrier Partners & Brokers (دليل شركات الشحن والوسطاء)
+  getCarrierPartners(): CarrierPartner[] {
+    const list = readStore<CarrierPartner[]>("carrier-partners", []);
+    if (!list || list.length === 0) {
+      this.saveCarrierPartners(initialCarrierPartners);
+      return initialCarrierPartners;
+    }
+    return list;
+    return readStore<CarrierPartner[]>("carrier-partners", []);
+  },
+  saveCarrierPartners(data: CarrierPartner[]): void {
+    writeStore("carrier-partners", data);
+  },
+  addCarrierPartner(item: CarrierPartner): CarrierPartner {
+    const current = this.getCarrierPartners();
+    const updated = [item, ...current.filter((p) => p.id !== item.id)];
+    this.saveCarrierPartners(updated);
+    return item;
+  },
+  deleteCarrierPartner(id: string): boolean {
+    const current = this.getCarrierPartners();
+    const filtered = current.filter(
+      (p) => p.id !== id && p.name.toLowerCase().trim() !== id.toLowerCase().trim()
+    );
+    this.saveCarrierPartners(filtered);
+    return true;
+  },
+
   // Carrier Transfers (سندات سداد شركات الشحن والوسطاء)
   getCarrierTransfers(): CarrierTransfer[] {
     const list = readStore<CarrierTransfer[]>("carrier-transfers", []);
@@ -275,6 +313,7 @@ export const ServerStore = {
       return initialCarrierTransfers;
     }
     return list;
+    return readStore<CarrierTransfer[]>("carrier-transfers", []);
   },
   saveCarrierTransfers(data: CarrierTransfer[]): void {
     writeStore("carrier-transfers", data);
@@ -400,6 +439,50 @@ export const ServerStore = {
     return true;
   },
 
+  // Carrier Invoices Reconciliation (مراجعة وتدقيق فواتير شركات الشحن)
+  getCarrierInvoices(): CarrierInvoiceItem[] {
+    const list = readStore<CarrierInvoiceItem[]>("carrier_invoices", []);
+    if (!list || list.length === 0) {
+      this.saveCarrierInvoices(initialCarrierInvoices);
+      return initialCarrierInvoices;
+    }
+    return list;
+  },
+  saveCarrierInvoices(data: CarrierInvoiceItem[]): void {
+    writeStore("carrier_invoices", data);
+  },
+  addCarrierInvoice(item: CarrierInvoiceItem): CarrierInvoiceItem {
+    const current = this.getCarrierInvoices();
+    const updated = [item, ...current];
+    this.saveCarrierInvoices(updated);
+    return item;
+  },
+  addCarrierInvoices(items: CarrierInvoiceItem[]): CarrierInvoiceItem[] {
+    const current = this.getCarrierInvoices();
+    const updated = [...items, ...current];
+    this.saveCarrierInvoices(updated);
+    return updated;
+  },
+  updateCarrierInvoice(id: string, patch: Partial<CarrierInvoiceItem>): CarrierInvoiceItem | null {
+    const current = this.getCarrierInvoices();
+    let updatedItem: CarrierInvoiceItem | null = null;
+    const updated = current.map((item) => {
+      if (item.id === id || item.awb === id) {
+        updatedItem = { ...item, ...patch };
+        return updatedItem;
+      }
+      return item;
+    });
+    this.saveCarrierInvoices(updated);
+    return updatedItem;
+  },
+  deleteCarrierInvoice(id: string): boolean {
+    const current = this.getCarrierInvoices();
+    const filtered = current.filter((item) => item.id !== id && item.awb !== id);
+    this.saveCarrierInvoices(filtered);
+    return true;
+  },
+
   // Warehouse Items
   getWarehouseItems(): WarehouseItem[] {
     return readStore<WarehouseItem[]>("warehouse", []);
@@ -464,9 +547,43 @@ export const ServerStore = {
 
   // Blog Posts
   getBlogPosts(): BlogPost[] {
-    return readStore<BlogPost[]>("posts", initialBlogPosts);
+    const list = readStore<BlogPost[]>("posts", []);
+    if (!list || list.length === 0) {
+      this.saveBlogPosts(initialBlogPosts);
+      return initialBlogPosts;
+    }
+    return list;
   },
   saveBlogPosts(data: BlogPost[]): void {
     writeStore("posts", data);
+  },
+  addPost(item: BlogPost): BlogPost {
+    const current = this.getBlogPosts();
+    const updated = [item, ...current.filter((p) => p.id !== item.id && p.slug !== item.slug)];
+    this.saveBlogPosts(updated);
+    return item;
+  },
+  updatePost(item: BlogPost): BlogPost | null {
+    const current = this.getBlogPosts();
+    let updatedItem: BlogPost | null = null;
+    const updated = current.map((p) => {
+      if (p.id === item.id || p.slug === item.slug) {
+        updatedItem = { ...p, ...item };
+        return updatedItem;
+      }
+      return p;
+    });
+    if (!updatedItem) {
+      updatedItem = item;
+      updated.unshift(item);
+    }
+    this.saveBlogPosts(updated);
+    return updatedItem;
+  },
+  deletePost(id: string): boolean {
+    const current = this.getBlogPosts();
+    const filtered = current.filter((p) => p.id !== id && p.slug !== id);
+    this.saveBlogPosts(filtered);
+    return true;
   },
 };

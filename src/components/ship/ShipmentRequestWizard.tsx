@@ -387,6 +387,13 @@ export default function ShipmentRequestWizard() {
   const initFromStorageAndUser = useShipmentWizardStore((s) => s.initFromStorageAndUser);
   const resetDraft = useShipmentWizardStore((s) => s.resetDraft);
 
+  const [submissionBanner, setSubmissionBanner] = useState<{
+    requestNumber: string;
+    waUrl: string;
+    pickupCity?: string;
+    deliveryCity?: string;
+  } | null>(null);
+
   // Restore draft state on mount via Zustand store
   useEffect(() => {
     initFromStorageAndUser(user);
@@ -616,7 +623,16 @@ export default function ShipmentRequestWizard() {
         sessionStorage.removeItem(STORAGE_KEY_DRAFT);
         sessionStorage.removeItem(STORAGE_KEY_STEP);
       } catch {}
+      const waUrl = generateWhatsAppUrl(saved);
       redirectToWhatsApp(saved);
+      resetDraft();
+      setSubmissionBanner({
+        requestNumber: saved.requestNumber || "REQ-OK",
+        waUrl,
+        pickupCity: formData.pickupCountry ? `${formData.pickupCity}, ${formData.pickupCountry}` : formData.pickupCity,
+        deliveryCity: formData.deliveryCountry ? `${formData.deliveryCity}, ${formData.deliveryCountry}` : formData.deliveryCity,
+      });
+      updateStep(1);
     } catch {
       const reqNumber = `REQ-${Math.floor(10000 + Math.random() * 90000)}`;
       const fallbackRequest = {
@@ -631,7 +647,16 @@ export default function ShipmentRequestWizard() {
         sessionStorage.removeItem(STORAGE_KEY_DRAFT);
         sessionStorage.removeItem(STORAGE_KEY_STEP);
       } catch {}
+      const waUrl = generateWhatsAppUrl(fallbackRequest);
       redirectToWhatsApp(fallbackRequest);
+      resetDraft();
+      setSubmissionBanner({
+        requestNumber: reqNumber,
+        waUrl,
+        pickupCity: formData.pickupCountry ? `${formData.pickupCity}, ${formData.pickupCountry}` : formData.pickupCity,
+        deliveryCity: formData.deliveryCountry ? `${formData.deliveryCity}, ${formData.deliveryCountry}` : formData.deliveryCity,
+      });
+      updateStep(1);
     } finally {
       setIsSubmitting(false);
     }
@@ -648,16 +673,6 @@ export default function ShipmentRequestWizard() {
     const displayType = req.shipmentType || (formData.shipmentType === "Other" ? formData.customShipmentType : formData.shipmentType) || "-";
     const displayService = req.serviceTitle || activeService.title || "-";
 
-    const clientWhatsApp =
-      (req.whatsapp && req.whatsapp !== "-" && String(req.whatsapp).trim() ? String(req.whatsapp).trim() : null) ||
-      (req.phone && req.phone !== "-" && String(req.phone).trim() ? String(req.phone).trim() : null) ||
-      (req.pickupContactPhone && req.pickupContactPhone !== "-" && String(req.pickupContactPhone).trim() ? String(req.pickupContactPhone).trim() : null) ||
-      (formData.whatsapp && formData.whatsapp !== "-" && String(formData.whatsapp).trim() ? String(formData.whatsapp).trim() : null) ||
-      (formData.phone && formData.phone !== "-" && String(formData.phone).trim() ? String(formData.phone).trim() : null) ||
-      (formData.pickupContactPhone && formData.pickupContactPhone !== "-" && String(formData.pickupContactPhone).trim() ? String(formData.pickupContactPhone).trim() : null) ||
-      (user?.phone && user.phone !== "-" && String(user.phone).trim() ? String(user.phone).trim() : null) ||
-      "-";
-
     if (locale === "ar") {
       const rlm = "\u200F";
       const parts: string[] = [
@@ -668,16 +683,7 @@ export default function ShipmentRequestWizard() {
         `${rlm}*بيانات العميل:*`,
         `${rlm}- الاسم: ${req.customerName || "-"}`,
         `${rlm}- البريد الإلكتروني: ${req.email || "-"}`,
-        `${rlm}- رقم الواتساب: ${clientWhatsApp}`,
       ];
-
-      if (req.phone && req.phone !== clientWhatsApp && req.phone !== "-") {
-        parts.push(`${rlm}- رقم هاتف إضافي: ${req.phone}`);
-      }
-
-      if (req.companyName) {
-        parts.push(`${rlm}- الشركة: ${req.companyName}`);
-      }
 
       parts.push(
         `${rlm}────────────────────`,
@@ -741,16 +747,7 @@ export default function ShipmentRequestWizard() {
         `*Customer Details:*`,
         `- Name: ${req.customerName || "-"}`,
         `- Email: ${req.email || "-"}`,
-        `- WhatsApp: ${clientWhatsApp}`,
       ];
-
-      if (req.phone && req.phone !== clientWhatsApp && req.phone !== "-") {
-        parts.push(`- Additional Phone: ${req.phone}`);
-      }
-
-      if (req.companyName) {
-        parts.push(`- Company: ${req.companyName}`);
-      }
 
       parts.push(
         `────────────────────`,
@@ -1027,6 +1024,60 @@ export default function ShipmentRequestWizard() {
           </div>
         </div>
       </div>
+
+      {/* Submission Success Alert Banner (Non-blocking notification on fresh wizard) */}
+      {submissionBanner && (
+        <div className="m-5 mb-0 p-4 sm:p-5 bg-gradient-to-r from-emerald-50 via-emerald-50/70 to-orange-50/50 border-2 border-emerald-300 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 animate-fade-up shadow-xs">
+          <div className="flex items-start gap-3">
+            <div className="p-2 rounded-xl bg-emerald-100 text-emerald-700 shrink-0 mt-0.5 sm:mt-0">
+              <CheckCircle2 className="w-5 h-5 stroke-[2.5]" />
+            </div>
+            <div className="space-y-1 text-start">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="bg-emerald-600 text-white text-[11px] font-extrabold uppercase px-2.5 py-0.5 rounded-full">
+                  {isRTL ? "تم إرسال الطلب بنجاح" : "Request Submitted"}
+                </span>
+                <span className="text-xs font-mono font-black text-gray-900 bg-white px-2 py-0.5 rounded-md border border-gray-200" dir="ltr">
+                  {submissionBanner.requestNumber}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => copyToClipboard(submissionBanner.requestNumber)}
+                  className="p-1 rounded-md bg-white hover:bg-gray-100 text-gray-700 border border-gray-200 transition-colors cursor-pointer"
+                  title={isRTL ? "نسخ الرقم المرجعي" : "Copy Reference"}
+                >
+                  {copiedReqNumber ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+              <p className="text-xs text-gray-700 font-medium">
+                {isRTL
+                  ? "تم تسجيل طلبك وفتح محادثة واتساب للتسعير والتأكيد. يمكنك أيضاً تسجيل طلب شحنة جديدة مباشرة أدناه."
+                  : "Your request is registered and WhatsApp was opened for quoting. You can create another shipment below."}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+            <a
+              href={submissionBanner.waUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="h-9 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+            >
+              <MessageSquare className="w-3.5 h-3.5" />
+              <span>{isRTL ? "فتح واتساب" : "WhatsApp"}</span>
+              <ExternalLink className="w-3 h-3 opacity-80" />
+            </a>
+            <button
+              type="button"
+              onClick={() => setSubmissionBanner(null)}
+              className="h-9 px-3 rounded-xl bg-white hover:bg-gray-100 text-gray-600 border border-gray-200 text-xs font-bold transition-colors cursor-pointer"
+            >
+              {isRTL ? "إغلاق" : "Dismiss"}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Global Validation Alert */}
       {generalError && (
@@ -2111,53 +2162,19 @@ export default function ShipmentRequestWizard() {
                 </div>
 
                 <div className="space-y-2 text-xs">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                    <div className="bg-white p-2.5 rounded-xl border border-gray-200/70">
-                      <span className="text-[11px] font-bold uppercase text-gray-400 block mb-0.5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    <div className="bg-white p-3 rounded-xl border border-gray-200/70">
+                      <span className="text-[11px] font-bold uppercase text-gray-400 block mb-1">
                         {isRTL ? "اسم العميل:" : "Customer Name:"}
                       </span>
-                      <p className="font-bold text-gray-900">{formData.customerName || user?.name || "—"}</p>
+                      <p className="font-bold text-gray-900 text-sm">{formData.customerName || user?.name || "—"}</p>
                     </div>
 
-                    <div className="bg-white p-2.5 rounded-xl border border-gray-200/70">
-                      <span className="text-[11px] font-bold uppercase text-gray-400 block mb-0.5">
-                        {isRTL ? "اسم الشركة:" : "Company Name:"}
-                      </span>
-                      <p className="font-bold text-gray-900">
-                        {formData.companyName || user?.company || (isRTL ? "فردي / شخصي" : "Individual / Personal")}
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-0.5">
-                    <div className="bg-white p-2.5 rounded-xl border border-gray-200/70">
-                      <label className="text-[11px] font-bold uppercase text-gray-500 block mb-1">
-                        {isRTL ? "رقم الواتساب للتواصل واستلام السعر:" : "WhatsApp for Rates & Contact:"}
-                      </label>
-                      <div className="relative flex items-center">
-                        <Phone className={`w-3.5 h-3.5 text-[#C45B2A] absolute ${isRTL ? "right-2.5" : "left-2.5"} pointer-events-none`} />
-                        <input
-                          type="tel"
-                          value={formData.whatsapp || formData.phone || formData.pickupContactPhone || user?.phone || ""}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            handleChange("whatsapp", val);
-                            handleChange("phone", val);
-                          }}
-                          placeholder="+20 120 802 7171"
-                          dir="ltr"
-                          className={`w-full h-8 bg-gray-50 hover:bg-white focus:bg-white text-gray-900 text-xs font-mono font-bold rounded-lg border border-gray-200 focus:border-[#C45B2A] focus:ring-1 focus:ring-[#C45B2A]/20 outline-none transition-all ${
-                            isRTL ? "pr-8 pl-2.5" : "pl-8 pr-2.5"
-                          }`}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="bg-white p-2.5 rounded-xl border border-gray-200/70">
-                      <span className="text-[11px] font-bold uppercase text-gray-400 block mb-0.5">
+                    <div className="bg-white p-3 rounded-xl border border-gray-200/70">
+                      <span className="text-[11px] font-bold uppercase text-gray-400 block mb-1">
                         {isRTL ? "البريد الإلكتروني:" : "Email Address:"}
                       </span>
-                      <p className="font-mono text-gray-900 text-[11px] truncate" dir="ltr" title={formData.email || user?.email}>
+                      <p className="font-mono text-gray-900 text-xs sm:text-sm font-semibold truncate" dir="ltr" title={formData.email || user?.email}>
                         {formData.email || user?.email || "—"}
                       </p>
                     </div>

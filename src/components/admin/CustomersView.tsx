@@ -43,8 +43,6 @@ interface CustomersViewProps {
   expenses?: BusinessExpense[];
   onAddCustomer: (customer: Customer) => void;
   onUpdateCustomer: (customer: Customer) => void;
-  onAddCollection?: (collection: CustomerCollection) => void;
-  onDeleteCollection?: (id: string) => void;
 }
 
 export const CustomersView: React.FC<CustomersViewProps> = ({
@@ -55,8 +53,6 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
   expenses = [],
   onAddCustomer,
   onUpdateCustomer,
-  onAddCollection,
-  onDeleteCollection,
 }) => {
   const { t, isRTL, formatCurrency } = useLanguage();
   const [search, setSearch] = useState("");
@@ -65,7 +61,6 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
 
   // Modals & Profile Drawer
   const [addModalOpen, setAddModalOpen] = useState(false);
-  const [collectionModalOpen, setCollectionModalOpen] = useState(false);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [drawerTab, setDrawerTab] = useState<"ledger" | "shipments" | "collections" | "profile">("ledger");
 
@@ -80,17 +75,6 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
   const [formCreditLimit, setFormCreditLimit] = useState("30000");
   const [formTaxNumber, setFormTaxNumber] = useState("");
   const [formManager, setFormManager] = useState("مصطفي");
-
-  // Form State: Record Collection
-  const [colTargetCustomer, setColTargetCustomer] = useState<string>("");
-  const [colAmount, setColAmount] = useState<string>("");
-  const [colCurrency, setColCurrency] = useState<"EGP" | "USD">("EGP");
-  const [colDate, setColDate] = useState<string>(new Date().toISOString().split("T")[0]);
-  const [colReceivingAccount, setColReceivingAccount] = useState<string>("CIB account");
-  const [colPaymentMethod, setColPaymentMethod] = useState<string>("تحويل بنكي CIB");
-  const [colReceiptNumber, setColReceiptNumber] = useState<string>("");
-  const [colRecordedBy, setColRecordedBy] = useState<string>("بسمة");
-  const [colNotes, setColNotes] = useState<string>("");
 
   // Map each customer to their exact legacy equation balance
   const customerBalances = useMemo(() => {
@@ -161,51 +145,6 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
     setFormCompany("");
     setFormEmail("");
     setFormPhone("");
-  };
-
-  const openRecordCollectionModal = (customer?: Customer) => {
-    const cust = customer || selectedCustomer || customers[0];
-    if (cust) {
-      setColTargetCustomer(cust.company || cust.name);
-    }
-    setColAmount("");
-    setColCurrency("EGP");
-    setColDate(new Date().toISOString().split("T")[0]);
-    setColReceivingAccount("CIB account");
-    setColPaymentMethod("تحويل بنكي CIB");
-    setColReceiptNumber(`COL-${Date.now().toString().slice(-4)}`);
-    setColRecordedBy("بسمة");
-    setColNotes("");
-    setCollectionModalOpen(true);
-  };
-
-  const handleSaveCollection = (e: React.FormEvent) => {
-    e.preventDefault();
-    const amt = parseFloat(colAmount);
-    if (isNaN(amt) || amt <= 0 || !colTargetCustomer) return;
-
-    const matchedCust = customers.find(
-      (c) => c.company.toLowerCase() === colTargetCustomer.toLowerCase() || c.name.toLowerCase() === colTargetCustomer.toLowerCase()
-    );
-
-    const newCol: CustomerCollection = {
-      id: `col-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      customerId: matchedCust ? matchedCust.id : undefined,
-      clientName: colTargetCustomer,
-      amount: amt,
-      currency: colCurrency,
-      date: colDate,
-      receivingAccount: colReceivingAccount,
-      paymentMethod: colPaymentMethod,
-      receiptNumber: colReceiptNumber || `REC-${Math.floor(1000 + Math.random() * 9000)}`,
-      recordedBy: colRecordedBy,
-      notes: colNotes,
-    };
-
-    if (onAddCollection) {
-      onAddCollection(newCol);
-    }
-    setCollectionModalOpen(false);
   };
 
   const filteredCustomers = customers.filter((c) => {
@@ -301,16 +240,6 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2">
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => openRecordCollectionModal()}
-            className="text-xs font-semibold cursor-pointer flex items-center gap-1.5 border-emerald-200 text-emerald-700 hover:bg-emerald-50 hover:text-emerald-800"
-          >
-            <Receipt className="h-4 w-4 text-emerald-600" />
-            <span>{isRTL ? "تسجيل تحصيل" : "Record Collection"}</span>
-          </Button>
-
           <Button
             size="sm"
             variant="brand"
@@ -435,7 +364,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
 
       {/* Customer Directory Table */}
       <Card className="shadow-2xs overflow-hidden border-gray-200">
-        <Table>
+        <Table className="min-w-[850px]">
           <TableHeader className="bg-gray-50/80">
             <TableRow>
               <TableHead className="text-start">{t("admin.customers.table.code")}</TableHead>
@@ -547,19 +476,11 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                       <Button
                         size="xs"
                         variant="outline"
-                        onClick={() => openRecordCollectionModal(cust)}
-                        className="text-xs font-semibold cursor-pointer border-emerald-200 text-emerald-700 hover:bg-emerald-50"
-                      >
-                        <Receipt className="h-3.5 w-3.5" />
-                        <span>{isRTL ? "تحصيل" : "Collect"}</span>
-                      </Button>
-                      <Button
-                        size="xs"
-                        variant="ghost"
                         onClick={() => setSelectedCustomer(cust)}
-                        className="text-xs cursor-pointer hover:bg-gray-100"
+                        className="text-xs font-semibold cursor-pointer border-brand-500/30 text-[#C45B2A] hover:bg-orange-50 rounded-lg px-2.5 py-1"
                       >
-                        {isRTL ? "كشف حساب" : "Statement"}
+                        <UserCheck className="h-3.5 w-3.5" />
+                        <span>{isRTL ? "كشف الحساب" : "Statement"}</span>
                       </Button>
                     </div>
                   </TableCell>
@@ -601,15 +522,6 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                 </SheetDescription>
               </div>
 
-              <Button
-                size="sm"
-                variant="brand"
-                onClick={() => openRecordCollectionModal(selectedCustomer)}
-                className="text-xs font-bold cursor-pointer flex items-center gap-1.5 shrink-0"
-              >
-                <Receipt className="h-4 w-4" />
-                <span>{isRTL ? "تسجيل سند تحصيل" : "Record Collection"}</span>
-              </Button>
             </div>
           </SheetHeader>
 
@@ -799,15 +711,9 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                   <span className="text-xs font-bold text-gray-700">
                     {isRTL ? "سجل التحصيلات والمقبوضات البنكية والنقدية" : "Verified Inward Collections"}
                   </span>
-                  <Button
-                    size="xs"
-                    variant="outline"
-                    onClick={() => openRecordCollectionModal(selectedCustomer)}
-                    className="text-xs text-emerald-700 border-emerald-300 hover:bg-emerald-50 cursor-pointer"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    <span>{isRTL ? "إضافة سند تحصيل" : "New Collection"}</span>
-                  </Button>
+                  <Badge variant="outline" className="text-[10px] bg-emerald-50 text-emerald-700 border-emerald-200">
+                    {selectedCustomerCollections.length} {isRTL ? "سند تحصيل" : "Receipts"}
+                  </Badge>
                 </div>
 
                 <div className="overflow-x-auto w-full max-h-72 overflow-y-auto rounded-lg border border-gray-200">
@@ -819,8 +725,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                         <TableHead className="text-start">{isRTL ? "المبلغ" : "Amount"}</TableHead>
                         <TableHead className="text-start">{isRTL ? "الحساب / الخزينة" : "Vault / Account"}</TableHead>
                         <TableHead className="text-start">{isRTL ? "طريقة الدفع" : "Method"}</TableHead>
-                        <TableHead className="text-start">{isRTL ? "المسؤول" : "Recorder"}</TableHead>
-                        <TableHead className="text-end">{isRTL ? "إجراء" : "Action"}</TableHead>
+                        <TableHead className="text-end">{isRTL ? "المسؤول" : "Recorder"}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -840,24 +745,7 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
                             </span>
                           </TableCell>
                           <TableCell className="text-xs text-gray-600">{col.paymentMethod}</TableCell>
-                          <TableCell className="text-xs text-gray-600">{col.recordedBy}</TableCell>
-                          <TableCell className="text-end py-2">
-                            {onDeleteCollection && (
-                              <div className="flex items-center justify-end">
-                                <Button
-                                  type="button"
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => onDeleteCollection(col.id)}
-                                  className="h-8 w-8 p-0 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
-                                  title={isRTL ? "حذف سند التحصيل" : "Delete collection"}
-                                  aria-label={isRTL ? "حذف سند التحصيل" : "Delete collection"}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            )}
-                          </TableCell>
+                          <TableCell className="text-end text-xs text-gray-600 font-medium">{col.recordedBy}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -921,189 +809,6 @@ export const CustomersView: React.FC<CustomersViewProps> = ({
           </SheetFooter>
         </Sheet>
       )}
-
-      {/* ── Record Customer Collection Modal (`Dialog`) ── */}
-      <Dialog open={collectionModalOpen} onOpenChange={setCollectionModalOpen}>
-        <DialogContent className="max-w-md text-start" onClose={() => setCollectionModalOpen(false)}>
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Receipt className="h-5 w-5 text-emerald-600" />
-              <span>{isRTL ? "تسجيل سند تحصيل وقبض نقدية" : "Record Customer Collection"}</span>
-            </DialogTitle>
-            <DialogDescription>
-              {isRTL
-                ? "إيداع مبالغ سداد في الخزينة أو الحساب البنكي، لخصمها فوريًا من رصيد العميل التراكمي"
-                : "Credit client collection to treasury account to deduct from cumulative balance"}
-            </DialogDescription>
-          </DialogHeader>
-
-          <form onSubmit={handleSaveCollection} className="space-y-3.5">
-            {/* Target Client */}
-            <div>
-              <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
-                {isRTL ? "اسم العميل / الشركة" : "Customer / Client Name"} *
-              </label>
-              <select
-                required
-                value={colTargetCustomer}
-                onChange={(e) => setColTargetCustomer(e.target.value)}
-                className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-800 cursor-pointer"
-              >
-                <option value="">{isRTL ? "-- اختر العميل --" : "-- Select Customer --"}</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.company}>
-                    {c.company} ({c.name})
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Amount & Currency */}
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
-                  {isRTL ? "المبلغ المحصل" : "Amount Collected"} *
-                </label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  required
-                  value={colAmount}
-                  onChange={(e) => setColAmount(e.target.value)}
-                  placeholder="2500"
-                  className="text-xs font-mono font-bold"
-                />
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
-                  {isRTL ? "العملة" : "Currency"}
-                </label>
-                <select
-                  value={colCurrency}
-                  onChange={(e) => setColCurrency(e.target.value as "EGP" | "USD")}
-                  className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-800 cursor-pointer"
-                >
-                  <option value="EGP">EGP (جنيه مصري)</option>
-                  <option value="USD">USD (دولار أمريكي)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Receiving Account (Treasury) & Date */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
-                  {isRTL ? "حساب / خزينة الإيداع" : "Receiving Treasury Vault"} *
-                </label>
-                <select
-                  required
-                  value={colReceivingAccount}
-                  onChange={(e) => setColReceivingAccount(e.target.value)}
-                  className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-800 cursor-pointer"
-                >
-                  {MASTER_FINANCIAL_ACCOUNTS.map((acc) => (
-                    <option key={acc} value={acc}>
-                      {acc}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
-                  {isRTL ? "تاريخ التحصيل" : "Collection Date"}
-                </label>
-                <Input
-                  type="date"
-                  required
-                  value={colDate}
-                  onChange={(e) => setColDate(e.target.value)}
-                  className="text-xs font-mono"
-                />
-              </div>
-            </div>
-
-            {/* Payment Method & Receipt # */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
-                  {isRTL ? "طريقة السداد" : "Payment Method"}
-                </label>
-                <select
-                  value={colPaymentMethod}
-                  onChange={(e) => setColPaymentMethod(e.target.value)}
-                  className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-800 cursor-pointer"
-                >
-                  <option value="تحويل بنكي CIB">تحويل بنكي CIB</option>
-                  <option value="نقدي (كاش)">نقدي (كاش بالفرع)</option>
-                  <option value="محفظة إلكترونية">محفظة إلكترونية (فودافون/سبيدكس)</option>
-                  <option value="شيك بنكي">شيك بنكي مقبول الدفع</option>
-                  <option value="بطاقة بنكية POS">بطاقة بنكية POS</option>
-                </select>
-              </div>
-              <div>
-                <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
-                  {isRTL ? "رقم إيصال / سند القبض" : "Receipt # / Ref"}
-                </label>
-                <Input
-                  value={colReceiptNumber}
-                  onChange={(e) => setColReceiptNumber(e.target.value)}
-                  placeholder="COL-8821"
-                  className="text-xs font-mono"
-                />
-              </div>
-            </div>
-
-            {/* Recorded By */}
-            <div>
-              <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
-                {isRTL ? "المسؤول عن التسجيل" : "Recorded By"}
-              </label>
-              <select
-                value={colRecordedBy}
-                onChange={(e) => setColRecordedBy(e.target.value)}
-                className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-800 cursor-pointer"
-              >
-                {MASTER_AGENTS.map((agent) => (
-                  <option key={agent} value={agent}>
-                    {agent}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Notes */}
-            <div>
-              <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
-                {isRTL ? "ملاحظات السند" : "Notes / Remarks"}
-              </label>
-              <Input
-                value={colNotes}
-                onChange={(e) => setColNotes(e.target.value)}
-                placeholder={isRTL ? "سداد تحت حساب شحنات أغسطس..." : "Payment on account..."}
-                className="text-xs"
-              />
-            </div>
-
-            <DialogFooter className="pt-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setCollectionModalOpen(false)}
-                className="w-full sm:w-auto h-10 text-xs cursor-pointer justify-center"
-              >
-                {t("common.cancel")}
-              </Button>
-              <Button
-                type="submit"
-                variant="brand"
-                className="w-full sm:w-auto h-10 text-xs font-bold cursor-pointer justify-center bg-emerald-600 hover:bg-emerald-700 text-white"
-              >
-                {isRTL ? "حفظ سند التحصيل" : "Save Collection"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       {/* ── Add Customer Modal ── */}
       <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>

@@ -20,7 +20,7 @@ function TrackContent() {
   const { t, isRTL } = useLanguage();
   const searchParams = useSearchParams();
   const initialAwb = searchParams.get("awb") || "";
-  const initialCarrierParam = searchParams.get("carrier") || "SMSA";
+  const initialCarrierParam = searchParams.get("carrier") || "XSPEED";
 
   const [selectedCarrier, setSelectedCarrier] = useState<string>(
     getCarrierKey(initialCarrierParam)

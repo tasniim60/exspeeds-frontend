@@ -7,6 +7,7 @@ import { useForm } from "react-hook-form";
 import {
   User,
   Mail,
+  Phone,
   Lock,
   ShieldCheck,
   Truck,
@@ -26,6 +27,7 @@ import { signIn } from "next-auth/react";
 interface RegisterFormInputs {
   name: string;
   email: string;
+  phone: string;
   password: string;
   confirmPassword: string;
 }
@@ -52,6 +54,7 @@ function RegisterForm() {
     defaultValues: {
       name: "",
       email: "",
+      phone: "",
       password: "",
       confirmPassword: "",
     },
@@ -61,6 +64,12 @@ function RegisterForm() {
 
   useEffect(() => {
     if (user) {
+      try {
+        sessionStorage.removeItem("xspeed_shipment_wizard_draft_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_step_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_service_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_submitted_v3");
+      } catch {}
       const rawDestination = redirectParam || (user.role === "admin" ? "/admin" : "/ship");
       router.replace(getLocalizedPath(rawDestination));
     }
@@ -72,6 +81,12 @@ function RegisterForm() {
     setIsGoogleLoading(true);
     setErrorMsg(null);
     try {
+      try {
+        sessionStorage.removeItem("xspeed_shipment_wizard_draft_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_step_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_service_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_submitted_v3");
+      } catch {}
       await signIn("google", {
         callbackUrl: getLocalizedPath(redirectParam || "/ship"),
       });
@@ -93,10 +108,17 @@ function RegisterForm() {
     const res = await registerWithBackend({
       name: data.name.trim() || "Customer",
       email: cleanEmail,
+      phone: data.phone.trim(),
       password: data.password,
     });
 
     if (res.success) {
+      try {
+        sessionStorage.removeItem("xspeed_shipment_wizard_draft_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_step_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_service_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_submitted_v3");
+      } catch {}
       const rawDestination = redirectParam || (isAdmin ? "/admin" : "/ship");
       router.push(getLocalizedPath(rawDestination));
     } else {
@@ -254,6 +276,44 @@ function RegisterForm() {
                 )}
               </div>
 
+              {/* Phone / Mobile */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-semibold text-brand-dark">
+                    {t("auth.phoneLabel") || (isRTL ? "رقم الهاتف / الموبايل" : "Mobile / Phone Number")}
+                  </label>
+                  <span className="text-[10px] text-[#64748B] font-medium">
+                    {isRTL ? "للتواصل ومتابعة الشحنات" : "For updates & tracking"}
+                  </span>
+                </div>
+                <div className="relative flex items-center">
+                  <input
+                    type="tel"
+                    dir="ltr"
+                    {...register("phone", {
+                      required: t("auth.validation.phoneRequired") || (isRTL ? "رقم الهاتف مطلوب لتسجيل الحساب" : "Phone number is required"),
+                      pattern: {
+                        value: /^[0-9+() -]{8,20}$/,
+                        message: t("auth.validation.phoneInvalid") || (isRTL ? "يرجى إدخال رقم هاتف صحيح (8 أرقام على الأقل)" : "Please enter a valid phone number (min 8 digits)"),
+                      },
+                    })}
+                    placeholder={isRTL ? "01012345678" : "+20 100 000 0000"}
+                    className={`w-full h-10 rounded-xl ${
+                      isRTL ? "pr-10 pl-4 text-left font-mono" : "pl-10 pr-4 text-left font-mono"
+                    } bg-white border ${
+                      errors.phone ? "border-red-500 bg-red-50/50" : "border-[#E2E8F0]"
+                    } text-xs sm:text-sm font-medium text-brand-dark outline-none focus:border-brand-orange focus:ring-2 focus:ring-brand-orange/15 transition-all placeholder:text-[#94A3B8] shadow-xs`}
+                  />
+                  <Phone className={`absolute ${isRTL ? "right-3.5" : "left-3.5"} w-4 h-4 text-[#94A3B8] pointer-events-none`} />
+                </div>
+                {errors.phone && (
+                  <p className="text-[11px] font-semibold text-red-600 px-1 flex items-center gap-1 animate-fade-up">
+                    <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                    <span>{errors.phone.message}</span>
+                  </p>
+                )}
+              </div>
+
               {/* Email */}
               <div className="space-y-1.5">
                 <label className="block text-xs font-semibold text-brand-dark">
@@ -265,7 +325,7 @@ function RegisterForm() {
                     {...register("email", {
                       required: t("auth.validation.emailRequired") || (isRTL ? "البريد الإلكتروني مطلوب" : "Email address is required"),
                       pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+.[A-Z]{2,}$/i,
                         message: t("auth.validation.emailInvalid") || (isRTL ? "يرجى إدخال بريد إلكتروني صحيح" : "Please enter a valid email address"),
                       },
                     })}

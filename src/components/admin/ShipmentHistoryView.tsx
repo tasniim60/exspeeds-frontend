@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Shipment, Customer } from "@/lib/adminData";
+import { CARRIERS } from "@/lib/tracking";
 import { TrackingRedirect } from "@/components/TrackingRedirect";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -253,6 +254,11 @@ export const ShipmentHistoryView: React.FC<ShipmentHistoryViewProps> = ({
                 <option value="DHL">Express</option>
                 <option value="SMSA">SMSA Express</option>
                 <option value="Aramex">Aramex Air</option>
+                {CARRIERS.map((c) => (
+                  <option key={c.id} value={c.name}>
+                    {c.displayName}
+                  </option>
+                ))}
               </select>
             </div>
           </div>

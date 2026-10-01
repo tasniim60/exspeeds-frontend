@@ -1307,7 +1307,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                         onClick={handleResetFilters}
                         className="mt-4 text-xs font-bold rounded-xl cursor-pointer"
                       >
-                        <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                        <RotateCcw className="w-3.5 h-3.5 shrink-0 me-1.5" />
                         <span>{isRTL ? "إعادة ضبط جميع الفلاتر" : "Clear all filters"}</span>
                       </Button>
                     )}
@@ -1608,25 +1608,26 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
 
                       {/* 19. الإجراءات */}
                       <TableCell className="py-3 px-3 text-end whitespace-nowrap">
-                        <div className="flex items-center justify-end gap-1">
+                        <div className="flex items-center justify-end gap-1.5">
                           <Button
                             size="icon"
                             variant="ghost"
                             onClick={() => setInspectShipment(s)}
-                            className="h-8 w-8 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg cursor-pointer"
+                            className="h-8 w-8 text-slate-600 hover:text-[#C45B2A] bg-slate-50 hover:bg-orange-50 border border-slate-200/80 hover:border-orange-200 rounded-lg cursor-pointer shadow-2xs shrink-0"
                             title={t("admin.shipments.table.viewInspect")}
+                            aria-label={t("admin.shipments.table.viewInspect")}
                           >
-                            <Eye className="h-4 w-4 text-[#C45B2A]" />
+                            <Eye className="h-4 w-4 text-[#C45B2A] shrink-0" />
                           </Button>
                           <Button
                             size="icon"
                             variant="ghost"
                             onClick={() => onDeleteShipment(s.id)}
-                            className="h-8 w-8 text-rose-500 hover:text-rose-700 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            className="h-8 w-8 text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200/90 hover:border-rose-600 rounded-lg transition-all cursor-pointer shadow-2xs shrink-0 inline-flex items-center justify-center"
                             title={t("admin.shipments.table.delete")}
                             aria-label={t("admin.shipments.table.delete")}
                           >
-                            <Trash2 className="h-4 w-4" />
+                            <Trash2 className="h-4 w-4 shrink-0" />
                           </Button>
                         </div>
                       </TableCell>
@@ -1679,7 +1680,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                 onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                 className="h-8 px-2.5 rounded-lg text-xs font-bold disabled:opacity-40 cursor-pointer"
               >
-                <ChevronLeft className="w-3.5 h-3.5 mr-1" />
+                <ChevronLeft className={`w-3.5 h-3.5 shrink-0 me-1.5 ${isRTL ? "rotate-180" : ""}`} />
                 <span>{isRTL ? "السابق" : "Prev"}</span>
               </Button>
 
@@ -1695,7 +1696,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                 className="h-8 px-2.5 rounded-lg text-xs font-bold disabled:opacity-40 cursor-pointer"
               >
                 <span>{isRTL ? "التالي" : "Next"}</span>
-                <ChevronRight className="w-3.5 h-3.5 ml-1" />
+                <ChevronRight className={`w-3.5 h-3.5 shrink-0 ms-1.5 ${isRTL ? "rotate-180" : ""}`} />
               </Button>
             </div>
           </div>
@@ -2139,6 +2140,11 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                     <option value="Post/EMS (with USPS)">Post/EMS (with USPS)</option>
                     <option value="Air Cargo">Air Cargo</option>
                     <option value="Other">{isRTL ? "شركة شحن أخرى (Other Carrier)" : "Other Carrier"}</option>
+                    {MASTER_CARRIERS.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
                   </select>
                   <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
                 </div>

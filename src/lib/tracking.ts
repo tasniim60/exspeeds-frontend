@@ -14,6 +14,15 @@ export interface CarrierOption {
 
 export const CARRIERS: CarrierOption[] = [
   {
+    id: "XSPEED",
+    name: "XSPEED Express",
+    displayName: "XSPEED Express",
+    code: "XSPEED",
+    placeholder: "Enter XSPEED AWB number...",
+    isExternal: false,
+    category: "courier",
+  },
+  {
     id: "SMSA",
     name: "SMSA Express",
     displayName: "SMSA Express",
@@ -24,9 +33,9 @@ export const CARRIERS: CarrierOption[] = [
   },
   {
     id: "DHL",
-    name: "Express",
-    displayName: "Express",
-    code: "Express",
+    name: "DHL Express",
+    displayName: "DHL Express",
+    code: "DHL",
     placeholder: "Enter DHL tracking number...",
     isExternal: true,
     category: "courier",
@@ -115,6 +124,7 @@ export const CARRIERS: CarrierOption[] = [
 ];
 
 export const CARRIER_URL_TEMPLATES: Record<string, string> = {
+  XSPEED: "https://exspeeds.com/track?awb={AWB}",
   SMSA: "https://www.smsaexpress.com/trackingdetails?tracknumbers%5B0%5D={AWB}",
   DHL: "https://www.dhl.com/eg-en/home/tracking/tracking-express.html?submit=1&tracking-id={AWB}",
   Express: "https://www.dhl.com/eg-en/home/tracking/tracking-express.html?submit=1&tracking-id={AWB}",
@@ -142,10 +152,11 @@ export function cleanAwbNumber(rawAwb: string): string {
  * Normalizes carrier name into standard carrier key
  */
 export function getCarrierKey(carrierInput?: string | null): string {
-  if (!carrierInput) return "SMSA";
+  if (!carrierInput) return "XSPEED";
   const c = carrierInput.toUpperCase().trim();
+  if (c === "XSPEED" || c.includes("XSPEED") || c === "SPEEDEX" || c.includes("SPEEDEX")) return "XSPEED";
   if (c === "SMSA" || c.includes("SMSA")) return "SMSA";
-  if (c === "DHL" || c === "EXPRESS" || c.includes("DHL")) return "DHL";
+  if (c === "DHL" || c.includes("DHL")) return "DHL";
   if (c === "UPS" || c.includes("UPS")) return "UPS";
   if (c === "TNT" || c.includes("TNT")) return "TNT";
   if (c === "FEDEX" || c.includes("FEDEX") || c === "FDX") return "FedEx";
@@ -155,7 +166,7 @@ export function getCarrierKey(carrierInput?: string | null): string {
   if (c.includes("POST") || c.includes("EMS") || c.includes("USPS")) return "PostEMS";
   if (c.includes("CONTAINER") || c === "CONT" || c.includes("CONT")) return "Container";
   if (c.includes("LADING") || c.includes("BILL") || c.includes("B/L") || c === "BL") return "BillOfLading";
-  return "SMSA";
+  return "XSPEED";
 }
 
 /**

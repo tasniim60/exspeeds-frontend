@@ -101,6 +101,26 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
     setCreateModalOpen(false);
   };
 
+  const formatStageName = (stage: string, isRtlMode: boolean) => {
+    if (!isRtlMode) return stage;
+    switch (stage) {
+      case "New Bookings":
+        return "حجوزات جديدة";
+      case "Processing":
+        return "قيد التجهيز";
+      case "Ready for Dispatch":
+        return "جاهزة للإرسال";
+      case "In-Transit":
+        return "قيد الشحن والترانزيت";
+      case "Delivered":
+        return "تم التسليم";
+      case "Exception":
+        return "مرتجعات واستثناءات";
+      default:
+        return stage;
+    }
+  };
+
   const stages: Order["status"][] = [
     "New Bookings",
     "Processing",
@@ -414,10 +434,10 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mr-1">
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider me-1">
             {t("common.status")}:
           </span>
-          {["all", "New Bookings", "Ready for Dispatch", "In-Transit", "Delivered"].map((st) => (
+          {["all", "New Bookings", "Processing", "Ready for Dispatch", "In-Transit", "Delivered"].map((st) => (
             <button
               key={st}
               onClick={() => setStatusFilter(st)}
@@ -427,7 +447,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
                   : "bg-gray-100 text-gray-600 hover:bg-gray-200"
               }`}
             >
-              {st === "all" ? t("admin.orders.allStatuses") : st}
+              {st === "all" ? t("admin.orders.allStatuses") : formatStageName(st, isRTL)}
             </button>
           ))}
         </div>
@@ -444,7 +464,7 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
                 className="bg-gray-50/80 rounded-xl p-3 border border-gray-200 min-w-[240px] flex flex-col"
               >
                 <div className="flex items-center justify-between pb-2 mb-2 border-b border-gray-200">
-                  <span className="font-bold text-xs text-gray-800">{stage}</span>
+                  <span className="font-bold text-xs text-gray-800">{formatStageName(stage, isRTL)}</span>
                   <span className="text-[10px] font-bold bg-white text-gray-700 px-2 py-0.5 rounded-full border border-gray-200 shadow-2xs">
                     {stageOrders.length}
                   </span>
@@ -485,9 +505,9 @@ export const OrdersView: React.FC<OrdersViewProps> = ({
                               e.stopPropagation();
                               onDispatchOrder(ord);
                             }}
-                            className="w-full text-xs font-bold"
+                            className="w-full text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
                           >
-                            <Truck className="h-3.5 w-3.5" />
+                            <Truck className="h-3.5 w-3.5 shrink-0" />
                             <span>{isRTL ? "إصدار بوليصة وإرسال" : "Dispatch AWB"}</span>
                           </Button>
                         </div>

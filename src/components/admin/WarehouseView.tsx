@@ -233,22 +233,30 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
         </div>
 
         <div className="flex flex-wrap items-center gap-1.5 w-full sm:w-auto">
-          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mr-1">
+          <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider me-1">
             {isRTL ? "التصنيف:" : "Category:"}
           </span>
-          {["all", "Electronics", "Pharmaceuticals", "Apparel", "Automotive Parts"].map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategoryFilter(cat)}
-              className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
-                categoryFilter === cat
-                  ? "bg-[#251516] text-white"
-                  : "bg-gray-100 text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              {cat === "all" ? t("common.all") : cat}
-            </button>
-          ))}
+          {["all", "Electronics", "Pharmaceuticals", "Apparel", "Automotive Parts"].map((cat) => {
+            const label = cat === "all" ? t("common.all") : (isRTL ? (
+              cat === "Electronics" ? "إلكترونيات" :
+              cat === "Pharmaceuticals" ? "أدوية ومستلزمات" :
+              cat === "Apparel" ? "ملابس وأزياء" :
+              cat === "Automotive Parts" ? "قطع غيار" : cat
+            ) : cat);
+            return (
+              <button
+                key={cat}
+                onClick={() => setCategoryFilter(cat)}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                  categoryFilter === cat
+                    ? "bg-[#251516] text-white"
+                    : "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                }`}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -281,7 +289,14 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
 
                 <TableCell>
                   <Badge variant="outline" size="sm">
-                    {item.category}
+                    {isRTL ? (
+                      item.category === "Electronics" ? "إلكترونيات" :
+                      item.category === "Pharmaceuticals" ? "أدوية ومستلزمات" :
+                      item.category === "Apparel" ? "ملابس وأزياء" :
+                      item.category === "Automotive Parts" ? "قطع غيار" :
+                      item.category === "Industrial" ? "معدات صناعية" :
+                      item.category === "Documents" ? "مستندات ووثائق" : item.category
+                    ) : item.category}
                   </Badge>
                 </TableCell>
 
@@ -304,12 +319,23 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
                 </TableCell>
 
                 <TableCell>
-                  <span className="text-xs text-gray-600 text-start">{item.temperatureZone}</span>
+                  <span className="text-xs text-gray-600 text-start">
+                    {isRTL ? (
+                      item.temperatureZone === "Ambient" ? "مستودع جاف" :
+                      item.temperatureZone === "Cold Chain (2-8°C)" ? "تبريد (2-8°C)" :
+                      item.temperatureZone === "Frozen (-20°C)" ? "تجميد (-20°C)" :
+                      item.temperatureZone === "Secure Vault" ? "خزينة آمنة" : item.temperatureZone
+                    ) : item.temperatureZone}
+                  </span>
                 </TableCell>
 
                 <TableCell className="text-end">
                   <Badge variant={item.status === "Stored" ? "success" : item.status === "In Staging" ? "brand" : "warning"} size="sm">
-                    {item.status}
+                    {isRTL ? (
+                      item.status === "Stored" ? "مخزن" :
+                      item.status === "In Staging" ? "قيد التجهيز" :
+                      item.status === "Dispatched" ? "تم التوجيه" : item.status
+                    ) : item.status}
                   </Badge>
                 </TableCell>
               </TableRow>
@@ -360,12 +386,12 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
                   onChange={(e) => setCategory(e.target.value as any)}
                   className="w-full h-9 rounded-lg border border-gray-200 bg-white px-2.5 text-xs font-semibold text-gray-700 cursor-pointer"
                 >
-                  <option value="Electronics">Electronics</option>
-                  <option value="Pharmaceuticals">Pharmaceuticals</option>
-                  <option value="Automotive Parts">Automotive Parts</option>
-                  <option value="Apparel">Apparel</option>
-                  <option value="Industrial">Industrial</option>
-                  <option value="Documents">Documents</option>
+                  <option value="Electronics">{isRTL ? "إلكترونيات" : "Electronics"}</option>
+                  <option value="Pharmaceuticals">{isRTL ? "أدوية ومستلزمات" : "Pharmaceuticals"}</option>
+                  <option value="Automotive Parts">{isRTL ? "قطع غيار سيارات" : "Automotive Parts"}</option>
+                  <option value="Apparel">{isRTL ? "ملابس وأزياء" : "Apparel"}</option>
+                  <option value="Industrial">{isRTL ? "معدات صناعية" : "Industrial"}</option>
+                  <option value="Documents">{isRTL ? "مستندات ووثائق" : "Documents"}</option>
                 </select>
               </div>
             </div>

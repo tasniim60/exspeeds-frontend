@@ -92,18 +92,25 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       keywords: ["shipments", "awb", "tracking", "شحنات", "بوليصة", "بوالص", "تتبع", "قيد"],
     },
     {
+      id: "pickups",
+      label: isRTL ? "استلام وبك أب" : "Pickup Orders",
+      description: isRTL ? "إدارة طلبات استلام الشحنات وتنسيق المناديب والواتساب" : "Pickup dispatch & courier coordination",
+      icon: Package,
+      keywords: ["pickup", "courier", "dispatch", "بيك", "بيك اب", "استلام", "مندوب", "طلب استلام"],
+    },
+    {
       id: "invoices",
-      label: t("admin.sidebar.invoices") || (isRTL ? "الفواتير والمطالبات" : "Invoices & Billing"),
-      description: isRTL ? "إصدار الفواتير الضريبية، تسجيل المدفوعات والتحصيل" : "Tax Invoices, Payment Tracking & Receivables",
+      label: t("admin.sidebar.invoices") || (isRTL ? "مراجعة فواتير الشركات" : "Carrier Invoices Audit"),
+      description: isRTL ? "مراجعة فواتير شركات الشحن وتدقيق الفروقات والخسائر" : "Carrier Invoices Audit & Discrepancies",
       icon: Receipt,
-      keywords: ["invoices", "billing", "فاتورة", "فواتير", "مطالبات", "تحصيل", "دفع", "ضرائب", "vat"],
+      keywords: ["invoices", "billing", "فاتورة", "فواتير", "مطالبات", "تدقيق", "مراجعة"],
     },
     {
       id: "customers",
       label: isRTL ? "العملاء ومراقبة الحسابات" : "Customers & Accounts",
-      description: isRTL ? "إدارة حسابات العملاء، الأرصدة التراكمية، وسندات التحصيل" : "Customer Accounts, Dynamic Balances & Collections",
+      description: isRTL ? "إدارة حسابات العملاء، الأرصدة التراكمية، وكشوف الحساب" : "Customer Accounts, Dynamic Balances & Statements",
       icon: Users,
-      keywords: ["customers", "clients", "balance", "collections", "عملاء", "حسابات", "رصيد", "تحصيل", "سندات", "مديونية"],
+      keywords: ["customers", "clients", "balance", "عملاء", "حسابات", "رصيد", "كشف حساب", "مديونية"],
     },
     {
       id: "carriers",
@@ -113,18 +120,46 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
       keywords: ["carriers", "brokers", "dhl", "fedex", "aramex", "smsa", "شركات", "شحن", "ناقل", "وسطاء", "تكلفة", "سداد"],
     },
     {
-      id: "treasury",
-      label: isRTL ? "الخزينة ومراقبة السيولة" : "Treasury & Multi-Vault",
-      description: isRTL ? "أرصدة الحسابات الخمسة، السيولة النقدية، والمناقلات الداخلية" : "5 Vault Balances, Real-time Cash Flow & Transfers",
-      icon: Landmark,
-      keywords: ["treasury", "vault", "cash", "cib", "speedex", "wallet", "خزينة", "سيولة", "حسابات", "بنك", "مناقلة", "نقدية"],
+      id: "collections",
+      label: isRTL ? "التحصيل وسندات القبض" : "Customer Collections",
+      description: isRTL ? "سندات ومقبوضات العملاء وتغذية الخزائن" : "Customer Payment Receipts & Vault Inflows",
+      icon: Receipt,
+      keywords: ["collections", "receipts", "cash", "wire", "تحصيل", "سند", "مقبوضات", "قبض", "سندات"],
     },
     {
       id: "expenses",
-      label: isRTL ? "المصروفات والمرتبات" : "Expenses & Payroll",
-      description: isRTL ? "تسجيل المصروفات العامة، مرتبات وسلف الموظفين" : "Operating Expenses, Staff Salaries & Advance Ledger",
+      label: isRTL ? "المصروفات العامة" : "General Expenses",
+      description: isRTL ? "تسجيل المصروفات التشغيلية والإدارية وتقسيمها" : "Operating & Administrative Expenses Ledger",
       icon: WalletCards,
-      keywords: ["expenses", "salaries", "payroll", "advance", "مصروفات", "مصاريف", "مرتبات", "سلف", "رواتب", "سلفة"],
+      keywords: ["expenses", "general", "مصروفات", "مصاريف", "عامة", "ايجار", "بنزين", "تشغيل"],
+    },
+    {
+      id: "extra-expenses",
+      label: isRTL ? "إضافي شحنة (AWB)" : "Shipment Extra Expenses",
+      description: isRTL ? "تسجيل المصاريف الإضافية والأرضيات المرتبطة ببوالص الشحن" : "AWB Extra Surcharges & Demurrage Fees",
+      icon: Package,
+      keywords: ["extra", "surcharge", "demurrage", "اضافي", "اضافي شحنة", "ارضيات", "جمارك", "تغليف"],
+    },
+    {
+      id: "salaries",
+      label: isRTL ? "المرتبات والسلف" : "Salaries & Advances",
+      description: isRTL ? "مسحوبات المرتبات الشهرية وسلف وبدلات العاملين" : "Staff Payroll, Monthly Salaries & Advance Ledger",
+      icon: Users,
+      keywords: ["salaries", "advance", "payroll", "مرتبات", "رواتب", "سلف", "سلفة", "موظفين", "عاملين"],
+    },
+    {
+      id: "treasury",
+      label: isRTL ? "الخزينة ومراقبة السيولة" : "Treasury & Multi-Vault",
+      description: isRTL ? "أرصدة الحسابات الخمسة، السيولة النقدية والعهد" : "5 Vault Balances, Real-time Cash Flow & Liquidity",
+      icon: Landmark,
+      keywords: ["treasury", "vault", "cash", "cib", "speedex", "wallet", "خزينة", "سيولة", "حسابات", "بنك", "نقدية"],
+    },
+    {
+      id: "internal-transfers",
+      label: isRTL ? "التحويلات والمناقلات الداخلية" : "Internal Transfers",
+      description: isRTL ? "المناقلات والتحويلات المالية بين الخزائن والعهد" : "Inter-vault fund transfers and custody movements",
+      icon: Landmark,
+      keywords: ["transfer", "internal", "vault", "مناقلة", "تحويل داخلي", "تحويلات", "نقل سيولة"],
     },
     {
       id: "reports",
@@ -219,7 +254,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
               <X className="h-4 w-4" />
             </button>
           )}
-          <span className={`hidden sm:inline-block font-mono text-[11px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded-md ${isRTL ? "mr-2" : "ml-2"}`}>
+          <span className="hidden sm:inline-block font-mono text-[11px] bg-gray-200 text-gray-600 px-2 py-0.5 rounded-md ms-2">
             ESC
           </span>
         </div>

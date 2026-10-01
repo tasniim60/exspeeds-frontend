@@ -1227,6 +1227,45 @@ function ClientProfileContent() {
                       />
                     </div>
                   </div>
+
+                  {/* Phone / WhatsApp */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                      {t("client.profile.phoneLabel") || (isRTL ? "رقم الهاتف / الواتساب" : "Phone / WhatsApp Number")}
+                    </label>
+                    <div className="relative flex items-center">
+                      <Phone className={`absolute ${isRTL ? "right-3.5" : "left-3.5"} h-4 w-4 text-gray-400 pointer-events-none`} />
+                      <input
+                        type="tel"
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder={isRTL ? "01012345678 أو +20..." : "+20 101 234 5678"}
+                        className={`w-full h-11 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold font-mono rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all ${
+                          isRTL ? "pr-10 pl-4" : "pl-10 pr-4"
+                        }`}
+                        dir="ltr"
+                      />
+                    </div>
+                  </div>
+
+                  {/* Company / Business Name */}
+                  <div>
+                    <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+                      {t("client.profile.companyLabel") || (isRTL ? "اسم الشركة أو النشاط التجاري" : "Company / Business Name")}
+                    </label>
+                    <div className="relative flex items-center">
+                      <Building className={`absolute ${isRTL ? "right-3.5" : "left-3.5"} h-4 w-4 text-gray-400 pointer-events-none`} />
+                      <input
+                        type="text"
+                        value={company}
+                        onChange={(e) => setCompany(e.target.value)}
+                        placeholder={isRTL ? "مثال: شركة النور للتجارة" : "e.g. Al-Nour Trading Ltd."}
+                        className={`w-full h-11 bg-gray-50 hover:bg-gray-50/80 focus:bg-white text-[#251516] text-xs font-bold rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all ${
+                          isRTL ? "pr-10 pl-4 text-right" : "pl-10 pr-4 text-left"
+                        }`}
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex justify-end pt-5 border-t border-gray-100">

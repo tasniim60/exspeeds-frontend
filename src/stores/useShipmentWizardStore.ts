@@ -263,7 +263,7 @@ export const useShipmentWizardStore = create<ShipmentWizardState>((set, get) => 
       set({
         formData: nextFormData,
         selectedService: savedService || "express-parcel",
-        submittedData: savedSubmitted ? JSON.parse(savedSubmitted) : null,
+        submittedData: null,
         step: targetStep,
         isHydrated: true,
       });

@@ -43,8 +43,8 @@ interface ResetPasswordInputs {
 function ForgotPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirectParam = searchParams.get("redirect") || "";
-  const initialEmail = searchParams.get("email") || "";
+  const redirectParam = searchParams?.get("redirect") || "";
+  const initialEmail = searchParams?.get("email") || "";
 
   const { t, isRTL, getLocalizedPath } = useLanguage();
   const { forgotPassword, resetPassword } = useAuth();

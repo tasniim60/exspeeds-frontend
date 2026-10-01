@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/context/AuthContext";
 import { useLanguage } from "@/context/LanguageContext";
 import ShipmentRequestWizard from "@/components/ship/ShipmentRequestWizard";
-import { ShieldAlert, LogIn, UserPlus, UserCheck, ArrowUpRight } from "lucide-react";
+import { ShieldAlert, LogIn, UserPlus } from "lucide-react";
 import { SectionEyebrow } from "@/components/ui/SectionEyebrow";
 
 export default function ShipClient() {
@@ -107,33 +107,6 @@ export default function ShipClient() {
                 ? "اختر نوع الخدمة اللوجستية المطلوبة أو أدخل تفاصيل شحنتك لحجز موعد الاستلام والتنسيق المباشر مع فريق العمليات."
                 : "Select your required logistics service or enter cargo specs for instant dispatch and direct WhatsApp coordination.")}
           </p>
-        </div>
-
-        {/* User Context Badge */}
-        <div className="max-w-4xl mx-auto bg-emerald-50/80 border border-emerald-200/80 rounded-2xl p-3.5 sm:p-4 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-2xs">
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0">
-              <UserCheck className="w-4 h-4" />
-            </div>
-            <div className="text-start">
-              <p className="text-xs font-bold text-emerald-950">
-                {isRTL ? "تم تسجيل الدخول بحساب:" : "Signed in as:"}{" "}
-                <span className="font-black text-[#C45B2A]">{user.name || user.email}</span>
-              </p>
-              <p className="text-[11px] text-emerald-700">
-                {isRTL
-                  ? "سيتم ربط طلب الشحن تلقائياً ببياناتك وسجلك التجاري."
-                  : "Your shipment request will be automatically linked to your account profile."}
-              </p>
-            </div>
-          </div>
-          <Link
-            href={getLocalizedPath("/profile")}
-            className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-900 bg-white hover:bg-emerald-100/60 border border-emerald-200 px-3.5 py-1.5 rounded-xl transition-colors shrink-0 cursor-pointer"
-          >
-            <span>{t("nav.profile") || (isRTL ? "الملف الشخصي" : "Profile")}</span>
-            <ArrowUpRight className="w-3.5 h-3.5" />
-          </Link>
         </div>
 
         {/* Wizard Component */}

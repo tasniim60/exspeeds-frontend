@@ -110,7 +110,7 @@ const LOGISTICS_IMAGE_PRESETS = [
 ];
 
 export const PostsView: React.FC<PostsViewProps> = ({
-  posts,
+  posts = [],
   onAddPost,
   onUpdatePost,
   onDeletePost,
@@ -443,8 +443,24 @@ export const PostsView: React.FC<PostsViewProps> = ({
     }
   };
 
+  const getSafeString = (val: any): string => {
+    if (typeof val === "string") return val;
+    if (val && typeof val === "object" && typeof val.rendered === "string") return val.rendered;
+    return "";
+  };
+
   const handleOpenEdit = (post: BlogPost) => {
     setEditingPost(post);
+    setEditingPost({
+      ...post,
+      title: getSafeString(post.title),
+      author: getSafeString(post.author) || "XSPEED Logistics Editorial Team",
+      category: getSafeString(post.category) || "Technology & Logistics",
+      focusKeyword: getSafeString(post.focusKeyword),
+      content: getSafeString(post.content),
+      excerpt: getSafeString(post.excerpt),
+      imageUrl: post.imageUrl || "/assets/xspeed_about_showcase.jpg",
+    });
     setEditModalTab("content");
   };
 
@@ -455,16 +471,35 @@ export const PostsView: React.FC<PostsViewProps> = ({
     setEditingPost(null);
   };
 
-  const filteredPosts = posts.filter((p) => {
-    const pLang = p.lang || (/[\u0600-\u06FF]/.test(p.title) ? "ar" : "en");
+  const handleDeletePost = (id: string, postTitle: any) => {
+    const titleStr = getSafeString(postTitle);
+    const confirmMsg = isRTL
+      ? `هل أنت متأكد من حذف المقال: "${titleStr}"؟`
+      : `Are you sure you want to delete the article: "${titleStr}"?`;
+    if (typeof window !== "undefined" && window.confirm(confirmMsg)) {
+      onDeletePost(id);
+    }
+  };
+
+  const filteredPosts = (posts || []).filter((p) => {
+    if (!p) return false;
+    const pTitle = getSafeString(p.title);
+    const pAuthor = getSafeString(p.author);
+    const pCategory = getSafeString(p.category);
+    const pKeyword = getSafeString(p.focusKeyword);
+    const pLang = p.lang || (/[\u0600-\u06FF]/.test(pTitle) ? "ar" : "en");
+
     if (languageFilter !== "all" && pLang !== languageFilter) {
       return false;
     }
+    const query = (search || "").toLowerCase().trim();
+    if (!query) return true;
+
     return (
-      p.title.toLowerCase().includes(search.toLowerCase()) ||
-      p.author.toLowerCase().includes(search.toLowerCase()) ||
-      p.category.toLowerCase().includes(search.toLowerCase()) ||
-      (p.focusKeyword && p.focusKeyword.toLowerCase().includes(search.toLowerCase()))
+      pTitle.toLowerCase().includes(query) ||
+      pAuthor.toLowerCase().includes(query) ||
+      pCategory.toLowerCase().includes(query) ||
+      pKeyword.toLowerCase().includes(query)
     );
   });
 
@@ -503,7 +538,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
           <div className="flex items-baseline gap-1.5" >
             <span className="text-2xl font-black font-mono text-emerald-800">
               {posts.length > 0
-                ? Math.round(posts.reduce((acc, p) => acc + p.seoScore, 0) / posts.length)
+                ? Math.round(posts.reduce((acc, p) => acc + (p?.seoScore || 0), 0) / posts.length)
                 : 0}
             </span>
             <span className="text-xs font-bold text-emerald-600">/ 100</span>
@@ -527,13 +562,13 @@ export const PostsView: React.FC<PostsViewProps> = ({
           </div>
           <div className="flex items-baseline gap-1.5" >
             <span className="text-2xl font-black font-mono text-gray-900">
-              {posts.reduce((acc, p) => acc + p.views, 0).toLocaleString()}
+              {posts.reduce((acc, p) => acc + (p?.views || 0), 0).toLocaleString()}
             </span>
             <span className="text-xs font-bold text-gray-500">{isRTL ? "قارئ" : "Views"}</span>
           </div>
           <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500 font-medium">
             <span>{isRTL ? "معدل الزيارات:" : "Traffic Rate:"}</span>
-            <span className="text-indigo-600 font-bold">+{Math.round(posts.reduce((acc, p) => acc + p.views, 0) / (posts.length || 1))} / مقال</span>
+            <span className="text-indigo-600 font-bold">+{Math.round(posts.reduce((acc, p) => acc + (p?.views || 0), 0) / (posts.length || 1))} / مقال</span>
           </div>
         </Card>
 
@@ -699,30 +734,30 @@ export const PostsView: React.FC<PostsViewProps> = ({
                         <div className="w-12 h-12 rounded-xl overflow-hidden shrink-0 border border-gray-200 bg-gray-100 shadow-2xs">
                           <img
                             src={post.imageUrl || "/assets/xspeed_about_showcase.jpg"}
-                            alt={post.title}
+                            alt={getSafeString(post.title)}
                             className="w-full h-full object-cover"
                           />
                         </div>
                         <div className="text-start min-w-0">
                           <a
-                            href={`/blog/${post.slug}`}
+                            href={`/${post.lang || (isRTL ? "ar" : "en")}/blog/${post.slug}`}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="font-bold text-gray-900 line-clamp-1 hover:text-[#C45B2A] transition-colors block text-xs"
                           >
-                            {post.title}
+                            {getSafeString(post.title)}
                           </a>
                           <p className="font-mono text-[10px] text-gray-400 truncate max-w-[220px] mt-0.5 ltr-preserve" dir="ltr">
-                            /blog/{post.slug}
+                            /{post.lang || (isRTL ? "ar" : "en")}/blog/{post.slug}
                           </p>
                         </div>
                       </div>
                     </TableCell>
 
                     <TableCell className="text-xs text-start py-3 px-4">
-                      <p className="font-semibold text-gray-800">{post.author}</p>
+                      <p className="font-semibold text-gray-800">{getSafeString(post.author)}</p>
                       <Badge variant="secondary" className="text-[10px] py-0 px-1.5 mt-1 font-normal bg-gray-100 text-gray-600 border border-gray-200">
-                        {post.category}
+                        {getSafeString(post.category)}
                       </Badge>
                     </TableCell>
 
@@ -778,7 +813,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
 
                     <TableCell className="text-xs text-start py-3 px-4">
                       <span className="font-mono text-gray-700 bg-gray-100/80 border border-gray-200 px-2 py-0.5 rounded-lg text-[11px] ltr-preserve inline-block">
-                        {post.focusKeyword || "logistics"}
+                        {getSafeString(post.focusKeyword) || "logistics"}
                       </span>
                     </TableCell>
 
@@ -786,20 +821,20 @@ export const PostsView: React.FC<PostsViewProps> = ({
                       <div className="flex items-center gap-1.5">
                         <span
                           className={`font-mono text-xs font-bold px-2 py-0.5 rounded-lg ${
-                            post.seoScore >= 80
+                            (post.seoScore || 0) >= 80
                               ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                              : post.seoScore >= 50
+                              : (post.seoScore || 0) >= 50
                               ? "bg-amber-50 text-amber-700 border border-amber-200"
                               : "bg-red-50 text-red-600 border border-red-200"
                           }`}
                         >
-                          {post.seoScore}/100
+                          {post.seoScore || 90}/100
                         </span>
                       </div>
                     </TableCell>
 
                     <TableCell className="font-mono text-xs text-gray-700 font-semibold py-3 px-4">
-                      {post.views.toLocaleString()}
+                      {(post.views || 0).toLocaleString()}
                     </TableCell>
 
                     <TableCell className="text-xs text-gray-500 font-medium py-3 px-4 whitespace-nowrap">
@@ -832,7 +867,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
                     <TableCell className="text-end py-3 px-4">
                       <div className="flex items-center justify-end gap-1">
                         <a
-                          href={`/blog/${post.slug}`}
+                          href={`/${post.lang || (isRTL ? "ar" : "en")}/blog/${post.slug}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-gray-100 transition-colors cursor-pointer"
@@ -844,19 +879,21 @@ export const PostsView: React.FC<PostsViewProps> = ({
                         <button
                           type="button"
                           onClick={() => handleOpenEdit(post)}
-                          className="p-1.5 rounded-lg text-gray-500 hover:text-[#C45B2A] hover:bg-orange-50 transition-colors cursor-pointer"
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-600 hover:text-[#C45B2A] bg-slate-50 hover:bg-orange-50 border border-slate-200/80 hover:border-orange-200 transition-all cursor-pointer shadow-2xs shrink-0"
                           title={isRTL ? "تعديل المقال والـ SEO" : "Edit Post & SEO"}
+                          aria-label={isRTL ? "تعديل المقال والـ SEO" : "Edit Post & SEO"}
                         >
-                          <Edit2 className="h-4 w-4" />
+                          <Edit2 className="h-4 w-4 shrink-0" />
                         </button>
 
                         <button
                           type="button"
-                          onClick={() => onDeletePost(post.id)}
-                          className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                          onClick={() => handleDeletePost(post.id, post.title)}
+                          className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200/90 hover:border-rose-600 transition-all cursor-pointer shadow-2xs shrink-0"
                           title={isRTL ? "حذف المقال" : "Delete Post"}
+                          aria-label={isRTL ? "حذف المقال" : "Delete Post"}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className="h-4 w-4 shrink-0" />
                         </button>
                       </div>
                     </TableCell>
@@ -923,7 +960,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
               </div>
 
               {/* Live SEO Score Gauge */}
-              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-xl mr-2">
+              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-xl me-2">
                 <span className="text-[11px] font-bold text-gray-500">{t("admin.posts.modal.seoScoreLabel")}</span>
                 <span
                   className={`font-mono text-xs font-extrabold px-2 py-0.5 rounded-md ${
@@ -952,7 +989,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 }`}
               >
-                <FileText className="w-3.5 h-3.5" />
+                <FileText className="w-3.5 h-3.5 shrink-0" />
                 <span>{t("admin.posts.modal.tabContent")}</span>
               </button>
 
@@ -965,9 +1002,9 @@ export const PostsView: React.FC<PostsViewProps> = ({
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 }`}
               >
-                <Globe className="w-3.5 h-3.5" />
+                <Globe className="w-3.5 h-3.5 shrink-0" />
                 <span>{t("admin.posts.modal.tabSeo")}</span>
-                <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-gray-200 text-gray-700 ml-1">
+                <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-gray-200 text-gray-700 ms-1">
                   {seoAudit.score}%
                 </span>
               </button>
@@ -981,7 +1018,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 }`}
               >
-                <Languages className="w-3.5 h-3.5 text-indigo-600" />
+                <Languages className="w-3.5 h-3.5 shrink-0 text-indigo-600" />
                 <span>{isRTL ? "مراجعة ترجمة DeepL" : "DeepL Translation Review"}</span>
                 {hasGeneratedTranslation && (
                   <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
@@ -1643,7 +1680,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-xl mr-8 rtl:mr-0 rtl:ml-8">
+              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-xl me-8">
                 <span className="text-[11px] font-bold text-gray-500">{isRTL ? "نتيجة SEO:" : "SEO Score:"}</span>
                 <span className="font-mono text-xs font-bold text-emerald-600 ltr-preserve" dir="ltr">
                   {editingPost.seoScore}/100
@@ -1662,7 +1699,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 }`}
               >
-                <FileText className="w-3.5 h-3.5" />
+                <FileText className="w-3.5 h-3.5 shrink-0" />
                 <span>{isRTL ? "١. محتوى المقال والصورة" : "1. Article Content & Image"}</span>
               </button>
 
@@ -1675,7 +1712,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
                     : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
                 }`}
               >
-                <Globe className="w-3.5 h-3.5" />
+                <Globe className="w-3.5 h-3.5 shrink-0" />
                 <span>{isRTL ? "٢. الكلمات المفتاحية وإعدادات SEO" : "2. Keywords & SEO Settings"}</span>
               </button>
             </div>

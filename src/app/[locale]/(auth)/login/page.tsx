@@ -53,6 +53,12 @@ function LoginForm() {
 
   useEffect(() => {
     if (user) {
+      try {
+        sessionStorage.removeItem("xspeed_shipment_wizard_draft_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_step_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_service_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_submitted_v3");
+      } catch {}
       const rawDestination = redirectParam || (user.role === "admin" ? "/admin" : "/ship");
       router.replace(getLocalizedPath(rawDestination));
     }
@@ -78,6 +84,12 @@ function LoginForm() {
     setIsGoogleLoading(true);
     setAuthError(null);
     try {
+      try {
+        sessionStorage.removeItem("xspeed_shipment_wizard_draft_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_step_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_service_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_submitted_v3");
+      } catch {}
       await signIn("google", {
         callbackUrl: getLocalizedPath(redirectParam || "/ship"),
       });
@@ -98,6 +110,12 @@ function LoginForm() {
 
     const success = await loginWithBackend(cleanEmail, cleanPass);
     if (success) {
+      try {
+        sessionStorage.removeItem("xspeed_shipment_wizard_draft_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_step_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_service_v3");
+        sessionStorage.removeItem("xspeed_shipment_wizard_submitted_v3");
+      } catch {}
       const isAdmin = cleanEmail.includes("admin");
       const rawDestination = redirectParam || (isAdmin ? "/admin" : "/ship");
       router.push(getLocalizedPath(rawDestination));

@@ -10,33 +10,63 @@ import { useLanguage } from "@/context/LanguageContext";
 import { useAdminStore } from "@/stores/useAdminStore";
 
 const StatisticsView = dynamic(() => import("@/components/admin/StatisticsView").then((m) => m.StatisticsView), {
+  ssr: false,
   loading: () => <ViewSkeleton />,
 });
 const ShipmentsView = dynamic(() => import("@/components/admin/ShipmentsView").then((m) => m.ShipmentsView), {
+  ssr: false,
   loading: () => <ViewSkeleton />,
 });
 const ReportsView = dynamic(() => import("@/components/admin/ReportsView").then((m) => m.ReportsView), {
+  ssr: false,
   loading: () => <ViewSkeleton />,
 });
 const PostsView = dynamic(() => import("@/components/admin/PostsView").then((m) => m.PostsView), {
+  ssr: false,
   loading: () => <ViewSkeleton />,
 });
 const ShipmentRequestsView = dynamic(() => import("@/components/admin/ShipmentRequestsView"), {
+  ssr: false,
   loading: () => <ViewSkeleton />,
 });
 const InvoicesView = dynamic(() => import("@/components/admin/InvoicesView").then((m) => m.InvoicesView), {
+  ssr: false,
   loading: () => <ViewSkeleton />,
 });
 const CustomersView = dynamic(() => import("@/components/admin/CustomersView").then((m) => m.CustomersView), {
+  ssr: false,
   loading: () => <ViewSkeleton />,
 });
 const CarriersView = dynamic(() => import("@/components/admin/CarriersView").then((m) => m.CarriersView), {
+  ssr: false,
+  loading: () => <ViewSkeleton />,
+});
+const CollectionsView = dynamic(() => import("@/components/admin/CollectionsView").then((m) => m.CollectionsView), {
+  ssr: false,
+  loading: () => <ViewSkeleton />,
+});
+const PickupsView = dynamic(() => import("@/components/admin/PickupsView").then((m) => m.PickupsView), {
+  ssr: false,
+  loading: () => <ViewSkeleton />,
+});
+const ExtraExpensesView = dynamic(() => import("@/components/admin/ExtraExpensesView").then((m) => m.ExtraExpensesView), {
+  ssr: false,
+  loading: () => <ViewSkeleton />,
+});
+const SalariesView = dynamic(() => import("@/components/admin/SalariesView").then((m) => m.SalariesView), {
+  ssr: false,
   loading: () => <ViewSkeleton />,
 });
 const TreasuryView = dynamic(() => import("@/components/admin/TreasuryView").then((m) => m.TreasuryView), {
+  ssr: false,
+  loading: () => <ViewSkeleton />,
+});
+const InternalTransfersView = dynamic(() => import("@/components/admin/InternalTransfersView").then((m) => m.InternalTransfersView), {
+  ssr: false,
   loading: () => <ViewSkeleton />,
 });
 const ExpensesView = dynamic(() => import("@/components/admin/ExpensesView").then((m) => m.ExpensesView), {
+  ssr: false,
   loading: () => <ViewSkeleton />,
 });
 
@@ -73,9 +103,11 @@ function AdminPageContent() {
   const collections = useAdminStore((s) => s.collections);
   const expenses = useAdminStore((s) => s.expenses);
   const carrierTransfers = useAdminStore((s) => s.carrierTransfers);
+  const carrierPartners = useAdminStore((s) => s.carrierPartners);
   const internalTransfers = useAdminStore((s) => s.internalTransfers);
   const salaries = useAdminStore((s) => s.salaries);
   const invoiceLosses = useAdminStore((s) => s.invoiceLosses);
+  const carrierInvoices = useAdminStore((s) => s.carrierInvoices);
   const notifications = useAdminStore((s) => s.notifications);
   const posts = useAdminStore((s) => s.posts);
 
@@ -102,6 +134,8 @@ function AdminPageContent() {
   const deleteExpense = useAdminStore((s) => s.deleteExpense);
   const addCarrierTransfer = useAdminStore((s) => s.addCarrierTransfer);
   const deleteCarrierTransfer = useAdminStore((s) => s.deleteCarrierTransfer);
+  const addCarrierPartner = useAdminStore((s) => s.addCarrierPartner);
+  const deleteCarrierPartner = useAdminStore((s) => s.deleteCarrierPartner);
   const addInternalTransfer = useAdminStore((s) => s.addInternalTransfer);
   const deleteInternalTransfer = useAdminStore((s) => s.deleteInternalTransfer);
   const addSalary = useAdminStore((s) => s.addSalary);
@@ -110,6 +144,10 @@ function AdminPageContent() {
   const deleteInvoiceLoss = useAdminStore((s) => s.deleteInvoiceLoss);
   const addInvoice = useAdminStore((s) => s.addInvoice);
   const updateInvoice = useAdminStore((s) => s.updateInvoice);
+  const addCarrierInvoice = useAdminStore((s) => s.addCarrierInvoice);
+  const addCarrierInvoices = useAdminStore((s) => s.addCarrierInvoices);
+  const updateCarrierInvoice = useAdminStore((s) => s.updateCarrierInvoice);
+  const deleteCarrierInvoice = useAdminStore((s) => s.deleteCarrierInvoice);
   const addPost = useAdminStore((s) => s.addPost);
   const updatePost = useAdminStore((s) => s.updatePost);
   const deletePost = useAdminStore((s) => s.deletePost);
@@ -263,11 +301,25 @@ function AdminPageContent() {
             />
           )}
 
+          {activeTab === "pickups" && (
+            <PickupsView
+              customers={customers}
+              onTriggerNotification={(title, message, severity) =>
+                triggerNotification(title, message, severity, "shipment", "pickups")
+              }
+            />
+          )}
+
           {activeTab === "invoices" && (
             <InvoicesView
+              carrierInvoices={carrierInvoices}
+              shipments={shipments}
+              onAddCarrierInvoice={addCarrierInvoice}
+              onAddCarrierInvoices={addCarrierInvoices}
+              onUpdateCarrierInvoice={updateCarrierInvoice}
+              onDeleteCarrierInvoice={deleteCarrierInvoice}
               invoices={invoices}
               customers={customers}
-              shipments={shipments}
               onAddInvoice={addInvoice}
               onUpdateInvoice={updateInvoice}
             />
@@ -282,8 +334,6 @@ function AdminPageContent() {
               expenses={expenses}
               onAddCustomer={addCustomer}
               onUpdateCustomer={updateCustomer}
-              onAddCollection={addCollection}
-              onDeleteCollection={deleteCollection}
             />
           )}
 
@@ -291,8 +341,46 @@ function AdminPageContent() {
             <CarriersView
               shipments={shipments}
               carrierTransfers={carrierTransfers}
+              carrierPartners={carrierPartners}
               onAddCarrierTransfer={addCarrierTransfer}
               onDeleteCarrierTransfer={deleteCarrierTransfer}
+              onAddCarrierPartner={addCarrierPartner}
+              onDeleteCarrierPartner={deleteCarrierPartner}
+            />
+          )}
+
+          {activeTab === "collections" && (
+            <CollectionsView
+              collections={collections}
+              customers={customers}
+              onAddCollection={addCollection}
+              onDeleteCollection={deleteCollection}
+            />
+          )}
+
+          {activeTab === "expenses" && (
+            <ExpensesView
+              expenses={expenses}
+              onAddExpense={addExpense}
+              onDeleteExpense={deleteExpense}
+            />
+          )}
+
+          {activeTab === "extra-expenses" && (
+            <ExtraExpensesView
+              expenses={expenses}
+              shipments={shipments}
+              customers={customers}
+              onAddExpense={addExpense}
+              onDeleteExpense={deleteExpense}
+            />
+          )}
+
+          {activeTab === "salaries" && (
+            <SalariesView
+              salaries={salaries}
+              onAddSalary={addSalary}
+              onDeleteSalary={deleteSalary}
             />
           )}
 
@@ -303,21 +391,14 @@ function AdminPageContent() {
               carrierTransfers={carrierTransfers}
               internalTransfers={internalTransfers}
               salaries={salaries}
-              onAddInternalTransfer={addInternalTransfer}
-              onDeleteInternalTransfer={deleteInternalTransfer}
-              onAddSalary={addSalary}
-              onDeleteSalary={deleteSalary}
             />
           )}
 
-          {activeTab === "expenses" && (
-            <ExpensesView
-              expenses={expenses}
-              salaries={salaries}
-              onAddExpense={addExpense}
-              onDeleteExpense={deleteExpense}
-              onAddSalary={addSalary}
-              onDeleteSalary={deleteSalary}
+          {activeTab === "internal-transfers" && (
+            <InternalTransfersView
+              internalTransfers={internalTransfers}
+              onAddInternalTransfer={addInternalTransfer}
+              onDeleteInternalTransfer={deleteInternalTransfer}
             />
           )}
 
@@ -326,6 +407,9 @@ function AdminPageContent() {
               shipments={shipments}
               invoices={invoices}
               customers={customers}
+              expenses={expenses}
+              onAddExpense={addExpense}
+              onDeleteExpense={deleteExpense}
               invoiceLosses={invoiceLosses}
               onAddInvoiceLoss={addInvoiceLoss}
               onDeleteInvoiceLoss={deleteInvoiceLoss}

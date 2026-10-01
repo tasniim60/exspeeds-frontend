@@ -11,9 +11,11 @@ import {
   CustomerCollection,
   BusinessExpense,
   CarrierTransfer,
+  CarrierPartner,
   InternalTransfer,
   SalaryPayment,
   InvoiceLoss,
+  CarrierInvoiceItem,
 } from "@/lib/adminData";
 import {
   shipmentService,
@@ -26,6 +28,7 @@ import {
   collectionService,
   expenseService,
   carrierTransferService,
+  carrierPartnerService,
   treasuryService,
   invoiceLossService,
 } from "@/services";
@@ -34,11 +37,16 @@ export type AdminTab =
   | "statistics"
   | "requests"
   | "shipments"
+  | "pickups"
   | "invoices"
   | "customers"
   | "carriers"
-  | "treasury"
+  | "collections"
   | "expenses"
+  | "extra-expenses"
+  | "salaries"
+  | "treasury"
+  | "internal-transfers"
   | "reports"
   | "posts";
 
@@ -83,9 +91,11 @@ interface AdminState {
   collections: CustomerCollection[];
   expenses: BusinessExpense[];
   carrierTransfers: CarrierTransfer[];
+  carrierPartners: CarrierPartner[];
   internalTransfers: InternalTransfer[];
   salaries: SalaryPayment[];
   invoiceLosses: InvoiceLoss[];
+  carrierInvoices: CarrierInvoiceItem[];
 
   // Operational Flags
   isLoadingData: boolean;
@@ -132,6 +142,9 @@ interface AdminState {
   addCarrierTransfer: (newTransfer: CarrierTransfer) => Promise<void>;
   deleteCarrierTransfer: (id: string) => Promise<void>;
 
+  addCarrierPartner: (newPartner: CarrierPartner) => Promise<void>;
+  deleteCarrierPartner: (id: string) => Promise<void>;
+
   addInternalTransfer: (newTransfer: InternalTransfer) => Promise<void>;
   deleteInternalTransfer: (id: string) => Promise<void>;
 
@@ -143,6 +156,11 @@ interface AdminState {
 
   addInvoice: (newInvoice: Invoice) => Promise<void>;
   updateInvoice: (updatedInvoice: Invoice) => Promise<void>;
+
+  addCarrierInvoice: (newItem: CarrierInvoiceItem) => Promise<void>;
+  addCarrierInvoices: (newItems: CarrierInvoiceItem[]) => Promise<void>;
+  updateCarrierInvoice: (id: string, patch: Partial<CarrierInvoiceItem>) => Promise<void>;
+  deleteCarrierInvoice: (id: string) => Promise<void>;
 
   addWarehouseItem: (newItem: WarehouseItem) => Promise<void>;
 
@@ -174,9 +192,11 @@ export const useAdminStore = create<AdminState>((set, get) => ({
   collections: [],
   expenses: [],
   carrierTransfers: [],
+  carrierPartners: [],
   internalTransfers: [],
   salaries: [],
   invoiceLosses: [],
+  carrierInvoices: [],
   warehouseItems: [],
   notifications: [],
   posts: [],
@@ -281,9 +301,12 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         colList,
         expList,
         ctList,
+        cpList,
         itList,
         salList,
         lossList,
+        cinvList,
+        postList,
       ] = await Promise.all([
         shipmentService.getShipments(),
         orderService.getOrders(),
@@ -294,9 +317,12 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         collectionService.getCollections(),
         expenseService.getExpenses(),
         carrierTransferService.getTransfers(),
+        carrierPartnerService.getPartners(),
         treasuryService.getInternalTransfers(),
         treasuryService.getSalaries(),
         invoiceLossService.getLosses(),
+        invoiceService.getCarrierInvoices(),
+        postService.getPosts(),
       ]);
 
       set({
@@ -304,15 +330,17 @@ export const useAdminStore = create<AdminState>((set, get) => ({
         orders: ordList || [],
         customers: custList || [],
         invoices: invList || [],
+        carrierInvoices: cinvList || [],
         collections: colList || [],
         expenses: expList || [],
         carrierTransfers: ctList || [],
+        carrierPartners: cpList || [],
         internalTransfers: itList || [],
         salaries: salList || [],
         invoiceLosses: lossList || [],
         warehouseItems: whList || [],
         notifications: notifList || [],
-        posts: AdminStorage.getBlogPosts(),
+        posts: postList || [],
         isLoadingData: false,
         isInitialized: true,
       });
@@ -560,6 +588,31 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     await carrierTransferService.deleteTransfer(id);
   },
 
+  addCarrierPartner: async (newPartner: CarrierPartner) => {
+    set((state) => ({
+      carrierPartners: [newPartner, ...state.carrierPartners.filter((p) => p.id !== newPartner.id)],
+    }));
+    await carrierPartnerService.createPartner(newPartner);
+
+    get().triggerNotification(
+      "إضافة شريك شحن / وسيط",
+      `تم تسجيل ${newPartner.type === "Broker" ? "وسيط الشحن" : "شركة الشحن"} '${newPartner.name}' بنجاح في دليل الناقلين.`,
+      "success",
+      "system",
+      "carriers",
+      newPartner.id
+    );
+  },
+
+  deleteCarrierPartner: async (id: string) => {
+    set((state) => ({
+      carrierPartners: state.carrierPartners.filter(
+        (p) => p.id !== id && p.name.toLowerCase().trim() !== id.toLowerCase().trim()
+      ),
+    }));
+    await carrierPartnerService.deletePartner(id);
+  },
+
   addInternalTransfer: async (newTransfer: InternalTransfer) => {
     set((state) => ({ internalTransfers: [newTransfer, ...state.internalTransfers] }));
     await treasuryService.createInternalTransfer(newTransfer);
@@ -653,6 +706,49 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     }
   },
 
+  addCarrierInvoice: async (newItem: CarrierInvoiceItem) => {
+    set((state) => ({ carrierInvoices: [newItem, ...state.carrierInvoices] }));
+    await invoiceService.createCarrierInvoice(newItem);
+
+    get().triggerNotification(
+      "تم تدقيق فاتورة شركة شحن",
+      `تم إدراج البوليصة ${newItem.awb} بفاتورة ${newItem.invoiceNumber} (${newItem.carrier}) بتكلفة مفوترة ${newItem.billedCost.toLocaleString()} ج.م وفرق ${newItem.costDiff.toLocaleString()} ج.م.`,
+      newItem.costDiff > 0 ? "warning" : "success",
+      "invoice",
+      "invoices",
+      newItem.awb
+    );
+  },
+
+  addCarrierInvoices: async (newItems: CarrierInvoiceItem[]) => {
+    set((state) => ({ carrierInvoices: [...newItems, ...state.carrierInvoices] }));
+    await invoiceService.bulkCreateCarrierInvoices(newItems);
+
+    get().triggerNotification(
+      "استيراد فواتير مجمعة",
+      `تم استيراد ${newItems.length} بند تدقيق فواتير شركات الشحن بنجاح.`,
+      "success",
+      "invoice",
+      "invoices"
+    );
+  },
+
+  updateCarrierInvoice: async (id: string, patch: Partial<CarrierInvoiceItem>) => {
+    set((state) => ({
+      carrierInvoices: state.carrierInvoices.map((item) =>
+        item.id === id ? { ...item, ...patch } : item
+      ),
+    }));
+    await invoiceService.updateCarrierInvoice(id, patch);
+  },
+
+  deleteCarrierInvoice: async (id: string) => {
+    set((state) => ({
+      carrierInvoices: state.carrierInvoices.filter((item) => item.id !== id),
+    }));
+    await invoiceService.deleteCarrierInvoice(id);
+  },
+
   addWarehouseItem: async (newItem: WarehouseItem) => {
     set((state) => ({ warehouseItems: [newItem, ...state.warehouseItems] }));
     await warehouseService.createItem(newItem);
@@ -669,12 +765,16 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     );
   },
 
-  addPost: (newPost: BlogPost) => {
-    set((state) => {
-      const updated = [newPost, ...state.posts];
-      postService.createPost(newPost);
-      return { posts: updated };
-    });
+  addPost: async (newPost: BlogPost) => {
+    set((state) => ({
+      posts: [newPost, ...state.posts.filter((p) => p.id !== newPost.id && p.slug !== newPost.slug)],
+    }));
+    await postService.createPost(newPost);
+    const current = AdminStorage.getBlogPosts();
+    AdminStorage.saveBlogPosts([
+      newPost,
+      ...current.filter((p) => p.id !== newPost.id && p.slug !== newPost.slug),
+    ]);
 
     get().triggerNotification(
       "Blog Article Published",
@@ -686,12 +786,11 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     );
   },
 
-  updatePost: (updatedPost: BlogPost) => {
-    set((state) => {
-      const updated = state.posts.map((p) => (p.id === updatedPost.id ? updatedPost : p));
-      postService.updatePost(updatedPost);
-      return { posts: updated };
-    });
+  updatePost: async (updatedPost: BlogPost) => {
+    set((state) => ({
+      posts: state.posts.map((p) => (p.id === updatedPost.id || p.slug === updatedPost.slug ? updatedPost : p)),
+    }));
+    await postService.updatePost(updatedPost);
 
     get().triggerNotification(
       "Blog Article Updated",
@@ -703,12 +802,11 @@ export const useAdminStore = create<AdminState>((set, get) => ({
     );
   },
 
-  deletePost: (id: string) => {
-    set((state) => {
-      const updated = state.posts.filter((p) => p.id !== id);
-      postService.deletePost(id);
-      return { posts: updated };
-    });
+  deletePost: async (id: string) => {
+    set((state) => ({
+      posts: state.posts.filter((p) => p.id !== id && p.slug !== id),
+    }));
+    await postService.deletePost(id);
   },
 
   markNotificationRead: async (id: string) => {

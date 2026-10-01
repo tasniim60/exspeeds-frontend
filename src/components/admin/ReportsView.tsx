@@ -39,9 +39,6 @@ import {
   AdminStorage,
   MASTER_FINANCIAL_ACCOUNTS,
   MASTER_AGENTS,
-  MASTER_EXPENSE_ITEMS,
-  MASTER_EXTRA_EXPENSES,
-  MASTER_CLIENT_ACCOUNTS,
 } from "@/lib/adminData";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -49,6 +46,9 @@ interface ReportsViewProps {
   shipments: Shipment[];
   invoices: Invoice[];
   customers: Customer[];
+  expenses?: BusinessExpense[];
+  onAddExpense?: (expense: BusinessExpense) => void;
+  onDeleteExpense?: (id: string) => void;
   invoiceLosses?: InvoiceLoss[];
   onAddInvoiceLoss?: (loss: InvoiceLoss) => void;
   onDeleteInvoiceLoss?: (id: string) => void;
@@ -58,6 +58,9 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
   shipments,
   invoices,
   customers,
+  expenses: propExpenses,
+  onAddExpense,
+  onDeleteExpense,
   invoiceLosses,
   onAddInvoiceLoss,
   onDeleteInvoiceLoss,
@@ -78,25 +81,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
   const [includeVat, setIncludeVat] = useState<boolean>(true);
 
   // Expense Management State
-  const [expenses, setExpenses] = useState<BusinessExpense[]>([]);
-  const [isAddExpenseOpen, setIsAddExpenseOpen] = useState<boolean>(false);
-  const [expenseNature, setExpenseNature] = useState<"general" | "shipment_extra">("general");
-  const [expenseItem, setExpenseItem] = useState<string>(MASTER_EXPENSE_ITEMS[0]);
-  const [customExpenseTitle, setCustomExpenseTitle] = useState<string>("");
-  const [extraExpenseType, setExtraExpenseType] = useState<string>(MASTER_EXTRA_EXPENSES[0]);
-  const [payingAccount, setPayingAccount] = useState<string>(MASTER_FINANCIAL_ACCOUNTS[0]);
-  const [recorder, setRecorder] = useState<string>(MASTER_AGENTS[0]);
-  const [paymentMethod, setPaymentMethod] = useState<string>("نقدي (كاش)");
-  const [isClientSplit, setIsClientSplit] = useState<boolean>(false);
-  const [allocatedClient, setAllocatedClient] = useState<string>(MASTER_CLIENT_ACCOUNTS[0] || "");
-  const [linkedAwb, setLinkedAwb] = useState<string>("");
-  const [expenseTitle, setExpenseTitle] = useState("");
-  const [expenseCategory, setExpenseCategory] = useState<BusinessExpense["category"]>("Rent & Facilities");
-  const [expenseAmount, setExpenseAmount] = useState<string>("");
-  const [expenseCurrency, setExpenseCurrency] = useState<"EGP" | "USD">("EGP");
-  const [expenseDate, setExpenseDate] = useState<string>(new Date().toISOString().split("T")[0]);
-  const [expenseReceipt, setExpenseReceipt] = useState("");
-  const [expenseNotes, setExpenseNotes] = useState("");
+  const [localExpenses, setLocalExpenses] = useState<BusinessExpense[]>([]);
 
   const [isDownloadingPdf, setIsDownloadingPdf] = useState<boolean>(false);
   const [isExportingExcel, setIsExportingExcel] = useState<boolean>(false);
@@ -116,12 +101,17 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
   const [lossDate, setLossDate] = useState(new Date().toISOString().split("T")[0]);
   const [lossNotes, setLossNotes] = useState("");
 
-  // Load expenses and invoice losses on mount
+  // Load expenses and invoice losses on mount if props are not provided
   useEffect(() => {
-    setExpenses(AdminStorage.getExpenses());
-    setLocalInvoiceLosses(AdminStorage.getInvoiceLosses());
-  }, []);
+    if (!propExpenses || propExpenses.length === 0) {
+      setLocalExpenses(AdminStorage.getExpenses());
+    }
+    if (!invoiceLosses || invoiceLosses.length === 0) {
+      setLocalInvoiceLosses(AdminStorage.getInvoiceLosses());
+    }
+  }, [propExpenses, invoiceLosses]);
 
+  const expenses = propExpenses && propExpenses.length > 0 ? propExpenses : localExpenses;
   const activeInvoiceLosses = invoiceLosses && invoiceLosses.length > 0 ? invoiceLosses : localInvoiceLosses;
 
   // Helper currency conversion
@@ -359,60 +349,14 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
   const overallMarginPct =
     grandTotalSales > 0 ? ((grandTotalNetProfit / grandTotalSales) * 100).toFixed(1) : "0";
 
-  const handleAddExpense = (e: React.FormEvent) => {
-    e.preventDefault();
-    const parsedAmount = parseFloat(expenseAmount);
-    if (isNaN(parsedAmount) || parsedAmount <= 0) return;
-
-    let finalTitle = "";
-    let finalCategory = expenseCategory;
-
-    if (expenseNature === "general") {
-      finalTitle = expenseItem === "أخرى" && customExpenseTitle.trim()
-        ? customExpenseTitle.trim()
-        : (customExpenseTitle.trim() || expenseItem);
-    } else {
-      finalTitle = `${extraExpenseType}${linkedAwb ? ` - ${isRTL ? "بوليصة" : "AWB"} ${linkedAwb}` : ""}`;
-      finalCategory = "Customs & Port Demurrage";
-    }
-
-    if (!finalTitle.trim()) return;
-
-    const newExp: BusinessExpense = {
-      id: `exp-${Date.now()}`,
-      title: finalTitle,
-      category: finalCategory,
-      amount: parsedAmount,
-      currency: expenseCurrency,
-      date: expenseDate || new Date().toISOString().split("T")[0],
-      notes: expenseNotes.trim() || undefined,
-      receiptNumber: expenseReceipt.trim() || undefined,
-      payingAccount: payingAccount,
-      recorder: recorder,
-      paymentMethod: paymentMethod,
-      allocatedClient: (expenseNature === "shipment_extra" || isClientSplit) ? allocatedClient : undefined,
-      linkedAwb: expenseNature === "shipment_extra" && linkedAwb ? linkedAwb : undefined,
-      expenseNature: expenseNature,
-    };
-
-    AdminStorage.addExpense(newExp);
-    setExpenses(AdminStorage.getExpenses());
-    setIsAddExpenseOpen(false);
-
-    // Reset Form
-    setExpenseTitle("");
-    setCustomExpenseTitle("");
-    setExpenseAmount("");
-    setExpenseReceipt("");
-    setExpenseNotes("");
-    setIsClientSplit(false);
-    setLinkedAwb("");
-  };
-
   const handleDeleteExpense = (id: string) => {
     if (confirm(isRTL ? "هل أنت متأكد من حذف هذا المصروف؟" : "Delete this expense record?")) {
-      AdminStorage.deleteExpense(id);
-      setExpenses(AdminStorage.getExpenses());
+      if (onDeleteExpense) {
+        onDeleteExpense(id);
+      } else {
+        AdminStorage.deleteExpense(id);
+        setLocalExpenses(AdminStorage.getExpenses());
+      }
     }
   };
 
@@ -708,16 +652,6 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
               USD ($)
             </button>
           </div>
-
-          {/* Add Expense Button */}
-          <Button
-            size="sm"
-            onClick={() => setIsAddExpenseOpen(true)}
-            className="h-10 px-3.5 bg-gray-900 hover:bg-gray-800 text-white font-bold text-xs gap-1.5 rounded-xl cursor-pointer shadow-2xs"
-          >
-            <Plus className="w-4 h-4 text-orange-400" />
-            <span>{isRTL ? "تسجيل مصروف جديد" : "Add Expense"}</span>
-          </Button>
 
           {/* Add Invoice Loss Button */}
           <Button
@@ -1210,14 +1144,6 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                 : "Real recorded expenses factored into net profit calculation"}
             </CardDescription>
           </div>
-          <Button
-            size="sm"
-            onClick={() => setIsAddExpenseOpen(true)}
-            className="h-8 px-3 bg-[#C45B2A] hover:bg-[#A34920] text-white text-xs font-bold gap-1 rounded-xl"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>{isRTL ? "إضافة مصروف" : "Add Expense"}</span>
-          </Button>
         </CardHeader>
 
         <div className="overflow-x-auto w-full">
@@ -1324,11 +1250,11 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                           <button
                             type="button"
                             onClick={() => handleDeleteExpense(exp.id)}
-                            className="h-8 w-8 inline-flex items-center justify-center text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+                            className="h-8 w-8 inline-flex items-center justify-center text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200/90 hover:border-rose-600 rounded-lg transition-all cursor-pointer shadow-2xs shrink-0"
                             title={isRTL ? "حذف المصروف" : "Delete Expense"}
                             aria-label={isRTL ? "حذف المصروف" : "Delete Expense"}
                           >
-                            <Trash2 className="w-4 h-4" />
+                            <Trash2 className="w-4 h-4 shrink-0" />
                           </button>
                         </div>
                       </TableCell>
@@ -1340,329 +1266,6 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
           </Table>
         </div>
       </Card>
-
-      {/* ── ADD EXPENSE MODAL ── */}
-      {isAddExpenseOpen && (
-        <Dialog open={isAddExpenseOpen} onOpenChange={setIsAddExpenseOpen}>
-          <DialogContent className="max-w-lg w-full p-5 sm:p-6 text-start max-h-[90vh] overflow-y-auto">
-            <DialogTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <Receipt className="w-5 h-5 text-[#C45B2A]" />
-              <span>{isRTL ? "تسجيل مصروف جديد (مطابق لنظام السجلات)" : "Record Expense (Ledger System)"}</span>
-            </DialogTitle>
-            <DialogDescription className="text-xs text-gray-500">
-              {isRTL
-                ? "قيد المصروفات العامة أو الرسوم الإضافية للشحنات وتوزيعها على الخزن والعملاء."
-                : "Record general overhead or extra shipment surcharges allocated to vaults and accounts."}
-            </DialogDescription>
-
-            {/* Nature Toggle */}
-            <div className="flex rounded-xl bg-gray-100 p-1 mt-3 gap-1">
-              <button
-                type="button"
-                onClick={() => setExpenseNature("general")}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                  expenseNature === "general"
-                    ? "bg-white text-gray-900 shadow-xs"
-                    : "text-gray-500 hover:text-gray-800"
-                }`}
-              >
-                {isRTL ? "مصروف عام (2_المصاريف_العامة)" : "General Overhead"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setExpenseNature("shipment_extra")}
-                className={`flex-1 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer ${
-                  expenseNature === "shipment_extra"
-                    ? "bg-white text-gray-900 shadow-xs"
-                    : "text-gray-500 hover:text-gray-800"
-                }`}
-              >
-                {isRTL ? "مصاريف إضافية للشحنة (9_مصاريف)" : "Shipment Surcharge"}
-              </button>
-            </div>
-
-            <form onSubmit={handleAddExpense} className="space-y-3.5 pt-3">
-              {expenseNature === "general" ? (
-                /* General Expense Fields */
-                <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">
-                        {isRTL ? "بند المصروف المعتمد" : "Expense Item"} <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={expenseItem}
-                        onChange={(e) => setExpenseItem(e.target.value)}
-                        className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-lg px-2 cursor-pointer"
-                      >
-                        {MASTER_EXPENSE_ITEMS.map((item) => (
-                          <option key={item} value={item}>
-                            {item}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">
-                        {isRTL ? "التصنيف المحاسبي" : "Accounting Category"}
-                      </label>
-                      <select
-                        value={expenseCategory}
-                        onChange={(e) => setExpenseCategory(e.target.value as any)}
-                        className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-lg px-2 cursor-pointer"
-                      >
-                        <option value="Rent & Facilities">{isRTL ? "إيجار ومرافق" : "Rent & Facilities"}</option>
-                        <option value="Salaries & Operations">{isRTL ? "رواتب وتشغيل" : "Salaries & Operations"}</option>
-                        <option value="Fuel & Linehaul">{isRTL ? "وقود ونقل" : "Fuel & Linehaul"}</option>
-                        <option value="Packaging & Supplies">{isRTL ? "تغليف ومطبوعات" : "Packaging & Supplies"}</option>
-                        <option value="Customs & Port Demurrage">{isRTL ? "رسوم جمارك وموانئ" : "Customs & Demurrage"}</option>
-                        <option value="Software & Marketing">{isRTL ? "برمجيات وتسويق" : "Software & Marketing"}</option>
-                        <option value="Other">{isRTL ? "أخرى" : "Other"}</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {expenseItem === "أخرى" && (
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">
-                        {isRTL ? "تفصيل بند المصروف المخصص" : "Custom Title"} <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        required
-                        value={customExpenseTitle}
-                        onChange={(e) => setCustomExpenseTitle(e.target.value)}
-                        placeholder={isRTL ? "اكتب اسم المصروف المخصص..." : "Enter custom title..."}
-                        className="text-xs"
-                      />
-                    </div>
-                  )}
-
-                  {/* Client Split Checkbox & Select */}
-                  <div className="p-3 bg-amber-50/70 border border-amber-200/80 rounded-xl space-y-2">
-                    <label className="flex items-center gap-2 cursor-pointer select-none">
-                      <input
-                        type="checkbox"
-                        checked={isClientSplit}
-                        onChange={(e) => setIsClientSplit(e.target.checked)}
-                        className="rounded text-[#C45B2A] focus:ring-[#C45B2A] h-4 w-4"
-                      />
-                      <span className="text-xs font-bold text-gray-800">
-                        {isRTL ? "توزيع المصروف على حساب عميل (Client Split)" : "Allocate / Split to Client"}
-                      </span>
-                    </label>
-                    {isClientSplit && (
-                      <div>
-                        <select
-                          value={allocatedClient}
-                          onChange={(e) => setAllocatedClient(e.target.value)}
-                          className="w-full h-8 bg-white border border-amber-300 text-xs font-bold text-gray-800 rounded-lg px-2 cursor-pointer"
-                        >
-                          {MASTER_CLIENT_ACCOUNTS.map((client) => (
-                            <option key={client} value={client}>
-                              {client}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    )}
-                  </div>
-                </>
-              ) : (
-                /* Shipment Extra Surcharge Fields */
-                <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">
-                        {isRTL ? "نوع الرسم الإضافي" : "Surcharge Type"} <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={extraExpenseType}
-                        onChange={(e) => setExtraExpenseType(e.target.value)}
-                        className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-lg px-2 cursor-pointer"
-                      >
-                        {MASTER_EXTRA_EXPENSES.map((type) => (
-                          <option key={type} value={type}>
-                            {type}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label className="block text-xs font-bold text-gray-700 mb-1">
-                        {isRTL ? "رقم بوليصة الشحن (AWB)" : "Linked AWB"} <span className="text-red-500">*</span>
-                      </label>
-                      <Input
-                        required
-                        value={linkedAwb}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          setLinkedAwb(val);
-                          const m = shipments.find((s) => s.awb === val);
-                          if (m && (m.account || m.company)) {
-                            setAllocatedClient(m.account || m.company || "");
-                          }
-                        }}
-                        placeholder="e.g. 875202433089"
-                        className="font-mono text-xs uppercase ltr-preserve"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">
-                      {isRTL ? "العميل المرتبط بالشحنة" : "Allocated Client"}
-                    </label>
-                    <select
-                      value={allocatedClient}
-                      onChange={(e) => setAllocatedClient(e.target.value)}
-                      className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-lg px-2 cursor-pointer"
-                    >
-                      {MASTER_CLIENT_ACCOUNTS.map((client) => (
-                        <option key={client} value={client}>
-                          {client}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </>
-              )}
-
-              {/* Amount, Currency, Paying Account, Recorder */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    {isRTL ? "المبلغ والعملة" : "Amount & Currency"} <span className="text-red-500">*</span>
-                  </label>
-                  <div className="flex gap-1">
-                    <Input
-                      required
-                      type="number"
-                      step="0.01"
-                      value={expenseAmount}
-                      onChange={(e) => setExpenseAmount(e.target.value)}
-                      placeholder="0.00"
-                      className="text-xs font-mono"
-                    />
-                    <select
-                      value={expenseCurrency}
-                      onChange={(e) => setExpenseCurrency(e.target.value as any)}
-                      className="h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-lg px-1.5"
-                    >
-                      <option value="EGP">EGP</option>
-                      <option value="USD">USD</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    {isRTL ? "الخزنة / الحساب المسحوب منه" : "Paying Vault / Account"} <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={payingAccount}
-                    onChange={(e) => setPayingAccount(e.target.value)}
-                    className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-lg px-2 cursor-pointer"
-                  >
-                    {MASTER_FINANCIAL_ACCOUNTS.map((acc) => (
-                      <option key={acc} value={acc}>
-                        {acc}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    {isRTL ? "القائم بالصرف / المسجل" : "Recorder / Agent"} <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={recorder}
-                    onChange={(e) => setRecorder(e.target.value)}
-                    className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-lg px-2 cursor-pointer"
-                  >
-                    {MASTER_AGENTS.map((ag) => (
-                      <option key={ag} value={ag}>
-                        {ag}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    {isRTL ? "طريقة الدفع" : "Payment Method"}
-                  </label>
-                  <select
-                    value={paymentMethod}
-                    onChange={(e) => setPaymentMethod(e.target.value)}
-                    className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-lg px-2 cursor-pointer"
-                  >
-                    <option value="نقدي (كاش)">{isRTL ? "نقدي (كاش)" : "Cash"}</option>
-                    <option value="تحويل بنكي CIB">{isRTL ? "تحويل بنكي CIB" : "CIB Bank Wire"}</option>
-                    <option value="محفظة إلكترونية">{isRTL ? "محفظة إلكترونية (Speedex Wallet)" : "Speedex Wallet"}</option>
-                    <option value="بطاقة ائتمان">{isRTL ? "بطاقة ائتمان / خصم" : "Card"}</option>
-                  </select>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    {isRTL ? "تاريخ الصرف" : "Date"}
-                  </label>
-                  <Input
-                    type="date"
-                    value={expenseDate}
-                    onChange={(e) => setExpenseDate(e.target.value)}
-                    className="text-xs"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold text-gray-700 mb-1">
-                    {isRTL ? "رقم الإيصال / السند" : "Receipt / Voucher No"}
-                  </label>
-                  <Input
-                    value={expenseReceipt}
-                    onChange={(e) => setExpenseReceipt(e.target.value)}
-                    placeholder="REC-1002"
-                    className="text-xs font-mono"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  {isRTL ? "البيان وملاحظات الصرف" : "Notes & Details"}
-                </label>
-                <Input
-                  value={expenseNotes}
-                  onChange={(e) => setExpenseNotes(e.target.value)}
-                  placeholder={isRTL ? "تفاصيل إضافية عن سبب الصرف..." : "Additional details..."}
-                  className="text-xs"
-                />
-              </div>
-
-              <div className="pt-2 flex justify-end gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setIsAddExpenseOpen(false)}
-                >
-                  {isRTL ? "إلغاء" : "Cancel"}
-                </Button>
-                <Button type="submit" variant="brand" size="sm" className="font-bold">
-                  {isRTL ? "حفظ وتثبيت المصروف" : "Save Expense"}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
-      )}
 
       {/* ── RECORD INVOICE LOSS DIALOG ── */}
       <Dialog open={isAddLossOpen} onOpenChange={setIsAddLossOpen}>

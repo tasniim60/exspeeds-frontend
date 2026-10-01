@@ -75,7 +75,7 @@ export interface Shipment {
   receiverName: string;
   receiverCity: string;
   country: string;
-  carrier: "XSPEED Express" | "DHL Express" | "FedEx Priority" | "Aramex Air" | "UPS Worldwide" | "SMSA Express" | string;
+  carrier: "SMSA Express" | "Express" | "FedEx Express" | "Aramex" | "UPS" | "TNT Express" | "DB Schenker USA" | "Air Cargo" | "Post/EMS (with USPS)" | "Container Tracking" | "Bill Of Lading (B/L)" | string;
   broker?: string; // e.g. XSpeed, NOK
   weight: number; // Final Chargeable Weight in kg
   actualWeight?: number;
@@ -237,6 +237,28 @@ export interface Invoice {
   notes?: string;
 }
 
+/**
+ * Carrier Invoice Reconciliation Record (مراجعة وتدقيق فواتير شركات الشحن)
+ * Matches the Google Sheet "مراجعه الفواتير"
+ */
+export interface CarrierInvoiceItem {
+  id: string;
+  awb: string;                  // رقم البوليصة (AWB)
+  invoiceNumber: string;        // رقم الفاتورة (e.g. ACC-SINV-2026-03416)
+  invoiceDate?: string;         // تاريخ الفاتورة
+  carrier: string;              // الشركة الناقلة (SMSA, Aramex, etc.)
+  billedWeight: number;         // الوزن المفوتر
+  billedCost: number;           // التكلفة المفوترة
+  clientName: string;           // اسم العميل
+  systemWeight: number;         // وزن السيستم
+  systemCost: number;           // تكلفة السيستم
+  weightDiff: number;           // فرق الوزن (الوزن المفوتر - وزن السيستم)
+  costDiff: number;             // الفرق/الخسارة (التكلفة المفوترة - تكلفة السيستم)
+  shipmentStatus: string;       // حالة الشحنة (Delivered, Clearance Delay, RTO, In Transit, etc.)
+  notes?: string;               // ملاحظات
+  createdAt: string;            // تاريخ التسجيل
+}
+
 export interface NotificationItem {
   id: string;
   title: string;
@@ -387,6 +409,21 @@ export function calculateCustomerBalance(
 }
 
 /**
+ * ── Carrier Partner / Broker Entity (شركة شحن أو وسيط معتمد) ──
+ */
+export interface CarrierPartner {
+  id: string;
+  name: string;
+  type: "Carrier" | "Broker";
+  contactPerson?: string;
+  phone?: string;
+  email?: string;
+  defaultCurrency?: "EGP" | string;
+  notes?: string;
+  createdAt?: string;
+}
+
+/**
  * ── Carrier & Broker Transfer (سند سداد لشركة شحن أو وسيط) ──
  * Records payments made to linehaul carriers (FEDEX, Aramex, Express, SMSA, sonbola, Azab, NOK)
  * from company vaults/accounts. Crucial for Carrier Balance Ledger (Columns H:O in legacy sheets).
@@ -395,7 +432,7 @@ export interface CarrierTransfer {
   id: string;
   carrier: string; // e.g. "Express", "FEDEX", "Aramex", "SMSA Express", "sonbola", "Azab", "NOK"
   amount: number;
-  currency: "EGP" | "USD";
+  currency: "EGP" | string;
   date: string; // ISO date string e.g. "2026-08-18"
   payingAccount: string; // One of MASTER_FINANCIAL_ACCOUNTS: CIB account, speedex wallet, el rawy, hussein, dabash
   paymentMethod: string; // Bank Wire, Cash, Wallet, Check
@@ -417,25 +454,47 @@ export interface CarrierBalanceDetails {
 }
 
 /**
- * Calculates Carrier & Broker Balances according to legacy Excel sheet columns H:O:
+ * Calculates Carrier & Broker Balances dynamically from real shipments, recorded transfers, and registered partners:
  * Net Cost = Total Cost - RTO Cost
  * Due Balance = Net Cost - Total Paid (Carrier Transfers)
  */
 export function calculateCarrierBalances(
   shipments: Shipment[] = [],
-  transfers: CarrierTransfer[] = []
+  transfers: CarrierTransfer[] = [],
+  carrierPartners: CarrierPartner[] = []
 ): CarrierBalanceDetails[] {
-  // Aggregate all distinct carriers & brokers from MASTER lists and shipments
   const carrierNames = new Set<string>();
-  MASTER_CARRIERS.forEach((c) => carrierNames.add(c));
-  MASTER_BROKERS.forEach((b) => carrierNames.add(b));
+  const brokerSet = new Set<string>(MASTER_BROKERS.map((b) => b.toLowerCase().trim()));
 
-  for (const s of shipments) {
-    if (s.carrier && s.carrier.trim()) carrierNames.add(s.carrier.trim());
-    if (s.broker && s.broker.trim()) carrierNames.add(s.broker.trim());
+  // 1. Registered Carrier Partners
+  for (const cp of carrierPartners) {
+    if (cp.name && cp.name.trim()) {
+      const trimmed = cp.name.trim();
+      carrierNames.add(trimmed);
+      if (cp.type === "Broker") {
+        brokerSet.add(trimmed.toLowerCase());
+      }
+    }
   }
 
-  const brokerSet = new Set(MASTER_BROKERS.map((b) => b.toLowerCase().trim()));
+  // 2. Distinct carriers & brokers from actual shipments
+  for (const s of shipments) {
+    if (s.carrier && s.carrier.trim()) {
+      carrierNames.add(s.carrier.trim());
+    }
+    if (s.broker && s.broker.trim()) {
+      const bTrimmed = s.broker.trim();
+      carrierNames.add(bTrimmed);
+      brokerSet.add(bTrimmed.toLowerCase());
+    }
+  }
+
+  // 3. Distinct carriers from recorded transfers
+  for (const tr of transfers) {
+    if (tr.carrier && tr.carrier.trim()) {
+      carrierNames.add(tr.carrier.trim());
+    }
+  }
 
   const results: CarrierBalanceDetails[] = [];
 
@@ -478,6 +537,12 @@ export function calculateCarrierBalances(
       if ((tr.carrier || "").toLowerCase().trim() === nameNorm) {
         totalPaid += Number(tr.amount || 0);
       }
+    }
+
+    // Filter out inactive entries unless there are shipments, transfers, or explicit partner registrations
+    const isExplicitPartner = carrierPartners.some((p) => p.name.toLowerCase().trim() === nameNorm);
+    if (matchedShipments.length === 0 && totalPaid === 0 && !isExplicitPartner) {
+      continue;
     }
 
     const netCost = Math.round((totalCost - rtoCost) * 100) / 100;
@@ -3512,48 +3577,196 @@ export const initialCustomers: Customer[] = [
 ];
 export const initialOrders: Order[] = [];
 export const initialInvoices: Invoice[] = [];
+
+export const initialCarrierInvoices: CarrierInvoiceItem[] = [
+  {
+    id: "cinv-1",
+    awb: "215199055380",
+    invoiceNumber: "ACC-SINV-2026-03416",
+    billedWeight: 2.2,
+    billedCost: 1688.76,
+    clientName: "old sheet",
+    carrier: "SMSA",
+    systemWeight: 2.5,
+    systemCost: 2000,
+    weightDiff: -0.3,
+    costDiff: -311.24,
+    shipmentStatus: "Delivered",
+    createdAt: "2026-08-10T10:00:00.000Z",
+  },
+  {
+    id: "cinv-2",
+    awb: "215199140570",
+    invoiceNumber: "ACC-SINV-2026-03416",
+    billedWeight: 1.5,
+    billedCost: 1309.67,
+    clientName: "old sheet",
+    carrier: "SMSA",
+    systemWeight: 1.5,
+    systemCost: 1618,
+    weightDiff: 0,
+    costDiff: -308.33,
+    shipmentStatus: "Delivered",
+    createdAt: "2026-08-10T10:05:00.000Z",
+  },
+  {
+    id: "cinv-3",
+    awb: "215199298514",
+    invoiceNumber: "ACC-SINV-2026-03416",
+    billedWeight: 1.5,
+    billedCost: 1309.67,
+    clientName: "old sheet",
+    carrier: "SMSA",
+    systemWeight: 1.5,
+    systemCost: 1583,
+    weightDiff: 0,
+    costDiff: -273.33,
+    shipmentStatus: "Delivered",
+    createdAt: "2026-08-10T10:10:00.000Z",
+  },
+  {
+    id: "cinv-4",
+    awb: "215199359008",
+    invoiceNumber: "ACC-SINV-2026-03416",
+    billedWeight: 28,
+    billedCost: 10798.32,
+    clientName: "old sheet",
+    carrier: "SMSA",
+    systemWeight: 26,
+    systemCost: 13295,
+    weightDiff: 2,
+    costDiff: -2496.68,
+    shipmentStatus: "Delivered",
+    createdAt: "2026-08-10T10:15:00.000Z",
+  },
+  {
+    id: "cinv-5",
+    awb: "215199538850",
+    invoiceNumber: "ACC-SINV-2026-03416",
+    billedWeight: 1,
+    billedCost: 1193.35,
+    clientName: "old sheet",
+    carrier: "SMSA",
+    systemWeight: 1,
+    systemCost: 1492,
+    weightDiff: 0,
+    costDiff: -298.65,
+    shipmentStatus: "Delivered",
+    createdAt: "2026-08-10T10:20:00.000Z",
+  },
+  {
+    id: "cinv-6",
+    awb: "215199538191",
+    invoiceNumber: "ACC-SINV-2026-03416",
+    billedWeight: 0.5,
+    billedCost: 1078.07,
+    clientName: "old sheet",
+    carrier: "SMSA",
+    systemWeight: 0.5,
+    systemCost: 1397,
+    weightDiff: 0,
+    costDiff: -318.83,
+    shipmentStatus: "Delivered",
+    createdAt: "2026-08-10T10:25:00.000Z",
+  },
+  {
+    id: "cinv-7",
+    awb: "215199994576",
+    invoiceNumber: "ACC-SINV-2026-03416",
+    billedWeight: 6,
+    billedCost: 2809.41,
+    clientName: "old sheet",
+    carrier: "SMSA",
+    systemWeight: 6,
+    systemCost: 3616,
+    weightDiff: 0,
+    costDiff: -806.59,
+    shipmentStatus: "Clearance Delay",
+    createdAt: "2026-08-10T10:30:00.000Z",
+  },
+  {
+    id: "cinv-8",
+    awb: "215200113680",
+    invoiceNumber: "ACC-SINV-2026-03416",
+    billedWeight: 2.5,
+    billedCost: 1688.76,
+    clientName: "old sheet",
+    carrier: "SMSA",
+    systemWeight: 2.5,
+    systemCost: 2000,
+    weightDiff: 0,
+    costDiff: -311.24,
+    shipmentStatus: "Delivered",
+    createdAt: "2026-08-10T10:35:00.000Z",
+  },
+  {
+    id: "cinv-9",
+    awb: "215200211544",
+    invoiceNumber: "ACC-SINV-2026-03416",
+    billedWeight: 2,
+    billedCost: 1457.68,
+    clientName: "old sheet",
+    carrier: "SMSA",
+    systemWeight: 2.5,
+    systemCost: 2012,
+    weightDiff: -0.5,
+    costDiff: -554.32,
+    shipmentStatus: "Delivered",
+    createdAt: "2026-08-10T10:40:00.000Z",
+  },
+  {
+    id: "cinv-10",
+    awb: "215200272651",
+    invoiceNumber: "ACC-SINV-2026-03416",
+    billedWeight: 0.5,
+    billedCost: 1078.07,
+    clientName: "old sheet",
+    carrier: "SMSA",
+    systemWeight: 0.5,
+    systemCost: 1408,
+    weightDiff: 0,
+    costDiff: -329.93,
+    shipmentStatus: "Delivered",
+    createdAt: "2026-08-10T10:45:00.000Z",
+  },
+  {
+    id: "cinv-11",
+    awb: "215200350546",
+    invoiceNumber: "ACC-SINV-2026-03416",
+    billedWeight: 8.5,
+    billedCost: 0,
+    clientName: "old sheet",
+    carrier: "SMSA",
+    systemWeight: 8.5,
+    systemCost: 0,
+    weightDiff: 0,
+    costDiff: 0,
+    shipmentStatus: "RTO",
+    createdAt: "2026-08-10T10:50:00.000Z",
+  },
+  {
+    id: "cinv-12",
+    awb: "215202715816",
+    invoiceNumber: "ACC-SINV-2026-03958",
+    billedWeight: 0.5,
+    billedCost: 1023.05,
+    clientName: "old sheet",
+    carrier: "SMSA",
+    systemWeight: 0.5,
+    systemCost: 900,
+    weightDiff: 0,
+    costDiff: 123.05,
+    shipmentStatus: "Delivered",
+    createdAt: "2026-08-10T10:55:00.000Z",
+  },
+];
 export const initialWarehouseItems: WarehouseItem[] = [];
 export const initialNotifications: NotificationItem[] = [];
 export const initialShipmentRequests: ShipmentRequest[] = [];
 
-export const initialCarrierTransfers: CarrierTransfer[] = [
-  {
-    id: "ct-1",
-    carrier: "Express",
-    amount: 15000,
-    currency: "EGP",
-    date: "2026-08-10",
-    payingAccount: "CIB account",
-    paymentMethod: "تحويل بنكي CIB",
-    referenceNumber: "TR-EXP-801",
-    recordedBy: "ضبش",
-    notes: "سداد دفعة حساب بوالص خط إكسبريس لشهر أغسطس",
-  },
-  {
-    id: "ct-2",
-    carrier: "FEDEX",
-    amount: 8000,
-    currency: "EGP",
-    date: "2026-08-15",
-    payingAccount: "CIB account",
-    paymentMethod: "تحويل بنكي CIB",
-    referenceNumber: "TR-FDX-802",
-    recordedBy: "ضبش",
-    notes: "دفعة تحت الحساب لشحنات فيديكس الدولية",
-  },
-  {
-    id: "ct-3",
-    carrier: "sonbola",
-    amount: 6500,
-    currency: "EGP",
-    date: "2026-08-20",
-    payingAccount: "speedex wallet",
-    paymentMethod: "محفظة إلكترونية",
-    referenceNumber: "TR-SNB-803",
-    recordedBy: "مصطفي",
-    notes: "سداد مستحقات وسيط سنبلة",
-  },
-];
+export const initialCarrierPartners: CarrierPartner[] = [];
+
+export const initialCarrierTransfers: CarrierTransfer[] = [];
 
 export const initialInternalTransfers: InternalTransfer[] = [
   {
@@ -4022,6 +4235,43 @@ export class AdminStorage {
     this.save("xspeed_admin_invoices", data);
   }
 
+  // Carrier Invoices Reconciliation (مراجعة وتدقيق فواتير شركات الشحن)
+  static getCarrierInvoices(): CarrierInvoiceItem[] {
+    const list = this.get<CarrierInvoiceItem[]>("xspeed_admin_carrier_invoices", initialCarrierInvoices);
+    if (!list || list.length === 0 || !list.some((i) => i.awb === "215199055380")) {
+      this.saveCarrierInvoices(initialCarrierInvoices);
+      return initialCarrierInvoices;
+    }
+    return list;
+  }
+  static saveCarrierInvoices(data: CarrierInvoiceItem[]) {
+    this.save("xspeed_admin_carrier_invoices", data);
+  }
+  static addCarrierInvoice(item: CarrierInvoiceItem) {
+    const current = this.getCarrierInvoices();
+    const updated = [item, ...current];
+    this.saveCarrierInvoices(updated);
+    return item;
+  }
+  static addCarrierInvoices(items: CarrierInvoiceItem[]) {
+    const current = this.getCarrierInvoices();
+    const updated = [...items, ...current];
+    this.saveCarrierInvoices(updated);
+    return updated;
+  }
+  static updateCarrierInvoice(id: string, patch: Partial<CarrierInvoiceItem>) {
+    const current = this.getCarrierInvoices();
+    const updated = current.map((item) => (item.id === id ? { ...item, ...patch } : item));
+    this.saveCarrierInvoices(updated);
+    return updated;
+  }
+  static deleteCarrierInvoice(id: string) {
+    const current = this.getCarrierInvoices();
+    const updated = current.filter((i) => i.id !== id);
+    this.saveCarrierInvoices(updated);
+    return updated;
+  }
+
   static getNotifications(): NotificationItem[] {
     return this.get("xspeed_admin_notifications", initialNotifications);
   }
@@ -4059,6 +4309,25 @@ export class AdminStorage {
     const current = this.getExpenses();
     const updated = current.filter((e) => e.id !== id);
     this.saveExpenses(updated);
+  }
+
+  // Carrier Partners & Brokers (دليل شركات الشحن والوسطاء)
+  static getCarrierPartners(): CarrierPartner[] {
+    return this.get("xspeed_admin_carrier_partners", initialCarrierPartners);
+  }
+  static saveCarrierPartners(data: CarrierPartner[]) {
+    this.save("xspeed_admin_carrier_partners", data);
+  }
+  static addCarrierPartner(partner: CarrierPartner) {
+    const current = this.getCarrierPartners();
+    const updated = [partner, ...current.filter((p) => p.id !== partner.id)];
+    this.saveCarrierPartners(updated);
+    return partner;
+  }
+  static deleteCarrierPartner(id: string) {
+    const current = this.getCarrierPartners();
+    const updated = current.filter((p) => p.id !== id);
+    this.saveCarrierPartners(updated);
   }
 
   // Carrier Transfers (سندات سداد شركات الشحن والوسطاء)
@@ -4170,15 +4439,18 @@ export const MASTER_AGENTS = [
 ];
 
 export const MASTER_CARRIERS = [
-  "Express",
-  "FEDEX",
-  "Aramex",
   "SMSA Express",
-  "XSPEED Express",
-  "sonbola",
-  "NOK",
-  "Other",
-];
+  "Express",
+  "FedEx Express",
+  "Aramex",
+  "UPS",
+  "TNT Express",
+  "DB Schenker USA",
+  "Air Cargo",
+  "Post/EMS (with USPS)",
+  "Container Tracking",
+  "Bill Of Lading (B/L)",
+] as const;
 
 export const MASTER_BROKERS = [
   "sonbola",

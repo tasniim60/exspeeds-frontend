@@ -123,7 +123,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
           {/* Filters */}
           <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-3.5 rounded-xl border border-gray-200/90 shadow-2xs">
             <div className="flex flex-wrap items-center gap-1.5">
-              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mr-1">
+              <span className="text-[11px] font-bold text-gray-400 uppercase tracking-wider me-1">
                 {isRTL ? "مستوى الأهمية:" : "Severity:"}
               </span>
               {[
@@ -144,7 +144,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
                         : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                     }`}
                   >
-                    {IconComponent && <IconComponent className="w-3 h-3" />}
+                    {IconComponent && <IconComponent className="w-3 h-3 shrink-0" />}
                     <span>{pill.label}</span>
                   </button>
                 );
@@ -174,9 +174,9 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
                     <div className="flex items-center gap-2">
                       <h4 className="text-xs font-bold text-gray-900">{notif.title}</h4>
                       {!notif.isRead && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-[#C45B2A]" />
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#C45B2A] shrink-0" />
                       )}
-                      <span className="font-mono text-[10px] text-gray-400 ml-auto sm:ml-2 ltr-preserve">
+                      <span className="font-mono text-[10px] text-gray-400 ms-auto sm:ms-2 ltr-preserve">
                         {notif.timestamp}
                       </span>
                     </div>
@@ -202,11 +202,11 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
                   </Button>
                   <button
                     onClick={() => onDeleteNotification(notif.id)}
-                    className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+                    className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200/90 hover:border-rose-600 transition-all cursor-pointer shadow-2xs shrink-0"
                     title={t("common.delete")}
                     aria-label={t("common.delete")}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-4 w-4 shrink-0" />
                   </button>
                 </div>
               </div>

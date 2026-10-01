@@ -1,6 +1,6 @@
 "use client";
 import React, { useState, useEffect, useMemo } from "react";
-import { AdminStorage, ShipmentRequest, Shipment, MASTER_AGENTS } from "@/lib/adminData";
+import { AdminStorage, ShipmentRequest, Shipment, Customer, MASTER_AGENTS, MASTER_CARRIERS } from "@/lib/adminData";
 import { ShipmentRequestService, ShipmentService } from "@/lib/backendApi";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAdminStore } from "@/stores/useAdminStore";
@@ -21,6 +21,8 @@ import {
   FileText,
   DollarSign,
   User,
+  Users,
+  UserCheck,
   MapPin,
   ExternalLink,
   Plus,
@@ -326,8 +328,35 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
   const [convertNotesInput, setConvertNotesInput] = useState("");
   const [convertError, setConvertError] = useState<string | null>(null);
 
-  // Customers list from admin store for quick autocomplete
-  const customers = useAdminStore((s) => s.customers);
+  // Customers list from admin store and local storage cache
+  const storeCustomers = useAdminStore((s) => s.customers) || [];
+  const [allCustomers, setAllCustomers] = useState<Customer[]>([]);
+  const [customerSearchQuery, setCustomerSearchQuery] = useState("");
+
+  useEffect(() => {
+    const local = AdminStorage.getCustomers() || [];
+    const map = new Map<string, Customer>();
+    local.forEach((c) => {
+      if (c && c.id) map.set(c.id, c);
+    });
+    storeCustomers.forEach((c) => {
+      if (c && c.id) map.set(c.id, c);
+    });
+    setAllCustomers(Array.from(map.values()));
+  }, [storeCustomers]);
+
+  // Filter customers based on search query
+  const filteredCustomers = useMemo(() => {
+    const q = customerSearchQuery.trim().toLowerCase();
+    if (!q) return allCustomers;
+    return allCustomers.filter((c) => {
+      const name = (c.name || "").toLowerCase();
+      const comp = (c.company || "").toLowerCase();
+      const phone = (c.phone || "").toLowerCase();
+      const email = (c.email || "").toLowerCase();
+      return name.includes(q) || comp.includes(q) || phone.includes(q) || email.includes(q);
+    });
+  }, [allCustomers, customerSearchQuery]);
 
   // Create Shipment Request State (Admin-Initiated)
   const [createModalOpen, setCreateModalOpen] = useState(false);
@@ -335,20 +364,11 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
   const [createForm, setCreateForm] = useState<CreateShipmentRequestFormData>(initialCreateFormData);
   const [createIsSubmitting, setCreateIsSubmitting] = useState(false);
   const [createError, setCreateError] = useState<string | null>(null);
-  const [phoneCopiedNotice, setPhoneCopiedNotice] = useState(false);
-
-  // Dedicated Pickup Modal State (Matching legacy Google Apps Script "بيك أب")
-  const [pickupModalOpen, setPickupModalOpen] = useState(false);
-  const [pickupDate, setPickupDate] = useState<string>(new Date().toISOString().split("T")[0]);
-  const [pickupCustomerId, setPickupCustomerId] = useState<string>("");
-  const [pickupCustomerName, setPickupCustomerName] = useState<string>("");
-  const [pickupCustomerPhone, setPickupCustomerPhone] = useState<string>("");
-  const [pickupShipmentType, setPickupShipmentType] = useState<string>("طرد بضائع");
-  const [pickupAddress, setPickupAddress] = useState<string>("");
-  const [pickupDestination, setPickupDestination] = useState<string>("");
-  const [pickupCourierName, setPickupCourierName] = useState<string>("");
-  const [pickupAgentName, setPickupAgentName] = useState<string>(MASTER_AGENTS[0] || "مصطفي");
-  const [pickupSubmitting, setPickupSubmitting] = useState(false);
+  // Selected customer object
+  const selectedCustomerObj = useMemo(() => {
+    if (!createForm.selectedCustomerId) return null;
+    return allCustomers.find((c) => c.id === createForm.selectedCustomerId) || null;
+  }, [allCustomers, createForm.selectedCustomerId]);
 
   // Auto-calculate Volumetric & Chargeable weights
   const formLength = parseFloat(String(createForm.length)) || 0;
@@ -371,120 +391,32 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
       setCreateForm((prev) => ({
         ...prev,
         selectedCustomerId: "",
+        customerName: "",
+        companyName: "",
+        phone: "",
+        whatsapp: "",
+        email: "",
       }));
       return;
     }
-    const found = customers.find((c) => c.id === customerId);
+    const found = allCustomers.find((c) => c.id === customerId);
     if (found) {
       setCreateForm((prev) => ({
         ...prev,
         selectedCustomerId: found.id,
         customerName: found.name || prev.customerName,
-        companyName: found.company || prev.companyName,
+        companyName: found.company || found.name || prev.companyName,
         phone: found.phone || prev.phone,
         whatsapp: found.phone || prev.whatsapp,
         email: found.email || prev.email,
-        pickupAddress: (found as any).address || prev.pickupAddress,
-        pickupCity: found.city || prev.pickupCity,
-        pickupCountry: found.country || prev.pickupCountry,
+        pickupAddress: (found as any).address || prev.pickupAddress || `${found.city || "Cairo"}, ${found.country || "Egypt"}`,
+        pickupCity: found.city || prev.pickupCity || "Cairo",
+        pickupCountry: found.country || prev.pickupCountry || "Egypt",
         pickupContactName: found.name || prev.pickupContactName,
         pickupContactPhone: found.phone || prev.pickupContactPhone,
       }));
-    }
-  };
-
-  // Handler: Copy phone to WhatsApp
-  const handleCopyPhoneToWhatsapp = () => {
-    if (createForm.phone) {
-      setCreateForm((prev) => ({ ...prev, whatsapp: prev.phone }));
-      setPhoneCopiedNotice(true);
-      setTimeout(() => setPhoneCopiedNotice(false), 2000);
-    }
-  };
-
-  // Handler: Select registered customer for Pickup
-  const handleSelectPickupCustomer = (customerId: string) => {
-    setPickupCustomerId(customerId);
-    if (!customerId) return;
-    const found = customers.find((c) => c.id === customerId);
-    if (found) {
-      setPickupCustomerName(found.company || found.name);
-      setPickupCustomerPhone(found.phone || "");
-      if (found.city) {
-        setPickupAddress(found.city);
-      }
-    }
-  };
-
-  // Handler: Submit Direct Pickup Request (Matching Legacy Google Apps Script)
-  const handleSubmitPickup = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!pickupCustomerName.trim() || !pickupCustomerPhone.trim()) {
-      alert(isRTL ? "يرجى ملء اسم العميل ورقم هاتفه" : "Please fill customer name and phone");
-      return;
-    }
-
-    setPickupSubmitting(true);
-    try {
-      const newReq: ShipmentRequest = {
-        id: `req-pkp-${Date.now()}`,
-        requestNumber: `PKP-${Date.now().toString().slice(-6)}`,
-        customerName: pickupCustomerName.trim(),
-        companyName: pickupCustomerName.trim(),
-        phone: pickupCustomerPhone.trim(),
-        whatsapp: pickupCustomerPhone.trim(),
-        email: `${pickupCustomerPhone.trim()}@client.exspeeds.com`,
-        country: "Egypt",
-        city: "Cairo",
-        address: pickupAddress.trim() || "موقع العميل",
-        pickupCountry: "Egypt",
-        pickupCity: "Cairo",
-        pickupAddress: pickupAddress.trim() || "موقع العميل",
-        pickupContactName: pickupCustomerName.trim(),
-        pickupContactPhone: pickupCustomerPhone.trim(),
-        preferredPickupDate: pickupDate,
-        deliveryCountry: pickupDestination.trim() || "Egypt",
-        deliveryCity: pickupDestination.trim() || "Cairo",
-        deliveryAddress: pickupDestination.trim() || "Cairo, Egypt",
-        consigneeName: "Consignee",
-        consigneePhone: pickupCustomerPhone.trim(),
-        shipmentType: "Parcel",
-        contents: pickupShipmentType.trim() || "طرد بضائع",
-        packageCount: 1,
-        weight: 1.5,
-        status: "New",
-        internalNotes: `طلب بيك أب فوري | المسؤول عن البيك أب: ${pickupCourierName.trim() || "لم يحدد"} | مسجل الحركة: ${pickupAgentName}`,
-        createdAt: `${pickupDate}T10:00:00.000Z`,
-        updatedAt: new Date().toISOString(),
-      };
-
-      await ShipmentRequestService.createRequest(newReq);
-
-      if (onTriggerNotification) {
-        onTriggerNotification(
-          isRTL ? "تم حفظ طلب البيك أب بنجاح" : "Pickup Saved",
-          isRTL
-            ? `تم تسجيل طلب استلام جديد برقم ${newReq.requestNumber} للعميل ${newReq.customerName}`
-            : `Pickup request recorded for ${newReq.customerName}`,
-          "success"
-        );
-      }
-
-      await loadRequests();
-      setPickupModalOpen(false);
-
-      // Reset
-      setPickupCustomerId("");
-      setPickupCustomerName("");
-      setPickupCustomerPhone("");
-      setPickupShipmentType("طرد بضائع");
-      setPickupAddress("");
-      setPickupDestination("");
-      setPickupCourierName("");
-    } catch (err) {
-      console.error("Failed to save pickup:", err);
-    } finally {
-      setPickupSubmitting(false);
+      setCustomerSearchQuery("");
+      setCreateError(null);
     }
   };
 
@@ -494,8 +426,8 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
     setCreateError(null);
 
     // Validation
-    if (!createForm.customerName.trim()) {
-      setCreateError(isRTL ? "يرجى كتابة اسم العميل / الراسل" : "Please enter shipper / customer name");
+    if (!createForm.selectedCustomerId || !createForm.customerName.trim()) {
+      setCreateError(isRTL ? "يرجى اختيار عميل مسجل من القائمة أولاً للمتابعة" : "Please select a registered customer from the list first");
       setCreateTab("client");
       return;
     }
@@ -756,22 +688,27 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
 
     setInlineSavingId(req.id);
     try {
+      const nowIso = new Date().toISOString();
       const patch: Partial<ShipmentRequest> = {
         quotedPrice: trimmed,
         agreedPrice: trimmed,
         currency: selectedCurrency,
         status: "Approved",
-        approvedAt: new Date().toISOString(),
+        approvedAt: req.approvedAt || nowIso,
       };
 
       // Optimistic local state update
       setRequests((prev) =>
         prev.map((r) =>
           r.id === req.id || r.requestNumber === req.requestNumber
-            ? { ...r, ...patch, updatedAt: new Date().toISOString() }
+            ? { ...r, ...patch, updatedAt: nowIso }
             : r
         )
       );
+
+      if (selectedRequest && (selectedRequest.id === req.id || selectedRequest.requestNumber === req.requestNumber)) {
+        setSelectedRequest((prev) => (prev ? { ...prev, ...patch, updatedAt: nowIso } : null));
+      }
 
       await ShipmentRequestService.updateRequest(req.id, patch);
 
@@ -808,12 +745,32 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
   }, []);
 
   const openDetailsModal = (req: ShipmentRequest) => {
-    setSelectedRequest(req);
-    const existingPrice = req.agreedPrice ? String(req.agreedPrice) : (req.quotedPrice || "");
+    const isApprovedOrConverted =
+      req.status === "Approved" ||
+      req.status === "Converted to Shipment" ||
+      req.status === "Price Sent" ||
+      req.status === "Customer Confirmed" ||
+      Boolean(req.agreedPrice && parseFloat(String(req.agreedPrice)) > 0);
+
+    const effectiveApprovedAt =
+      req.approvedAt ||
+      req.customerConfirmedAt ||
+      req.priceSentAt ||
+      (isApprovedOrConverted
+        ? req.convertedAt || req.updatedAt || req.createdAt || new Date().toISOString()
+        : undefined);
+
+    const normalizedReq: ShipmentRequest = {
+      ...req,
+      approvedAt: effectiveApprovedAt,
+    };
+
+    setSelectedRequest(normalizedReq);
+    const existingPrice = normalizedReq.agreedPrice ? String(normalizedReq.agreedPrice) : (normalizedReq.quotedPrice || "");
     setQuotedPriceInput(existingPrice);
-    setCurrencyInput(req.currency || "EGP");
-    setInternalNotesInput(req.internalNotes || "");
-    setStatusInput(req.status === "Price Sent" || req.status === "Customer Confirmed" ? "Approved" : req.status);
+    setCurrencyInput(normalizedReq.currency || "EGP");
+    setInternalNotesInput(normalizedReq.internalNotes || "");
+    setStatusInput(normalizedReq.status === "Price Sent" || normalizedReq.status === "Customer Confirmed" ? "Approved" : normalizedReq.status);
   };
 
   const openConvertModal = (req: ShipmentRequest) => {
@@ -839,6 +796,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
     let targetStatus = statusInput;
     const trimmedPrice = quotedPriceInput.trim();
     const curr = currencyInput || selectedRequest.currency || "EGP";
+    const nowIso = new Date().toISOString();
 
     if (trimmedPrice && (statusInput === "New" || statusInput === "Contacted")) {
       targetStatus = "Approved";
@@ -850,17 +808,28 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
       currency: curr,
       internalNotes: internalNotesInput,
       status: targetStatus,
-      approvedAt: targetStatus === "Approved" ? (selectedRequest.approvedAt || new Date().toISOString()) : selectedRequest.approvedAt,
+      approvedAt:
+        targetStatus === "Approved" || targetStatus === "Converted to Shipment"
+          ? selectedRequest.approvedAt || nowIso
+          : selectedRequest.approvedAt,
+    };
+
+    const updatedReq: ShipmentRequest = {
+      ...selectedRequest,
+      ...patch,
+      updatedAt: nowIso,
     };
 
     // Optimistic local update
     setRequests((prev) =>
       prev.map((r) =>
         r.id === selectedRequest.id || r.requestNumber === selectedRequest.requestNumber
-          ? { ...r, ...patch, updatedAt: new Date().toISOString() }
+          ? updatedReq
           : r
       )
     );
+
+    setSelectedRequest(updatedReq);
 
     await ShipmentRequestService.updateRequest(selectedRequest.id, patch);
 
@@ -884,24 +853,38 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
 
     const trimmedPrice = quotedPriceInput.trim();
     const curr = currencyInput || selectedRequest.currency || "EGP";
+    const nowIso = new Date().toISOString();
 
     const patch: Partial<ShipmentRequest> = {
       status: newStatus,
       quotedPrice: trimmedPrice || selectedRequest.quotedPrice,
       agreedPrice: trimmedPrice || selectedRequest.agreedPrice || selectedRequest.quotedPrice,
       currency: curr,
-      approvedAt: newStatus === "Approved" ? new Date().toISOString() : selectedRequest.approvedAt,
-      internalNotes: customNote ? `${selectedRequest.internalNotes ? selectedRequest.internalNotes + " | " : ""}${customNote}` : internalNotesInput,
+      approvedAt:
+        newStatus === "Approved" || newStatus === "Converted to Shipment"
+          ? selectedRequest.approvedAt || nowIso
+          : selectedRequest.approvedAt,
+      internalNotes: customNote
+        ? `${selectedRequest.internalNotes ? selectedRequest.internalNotes + " | " : ""}${customNote}`
+        : internalNotesInput,
+    };
+
+    const updatedReq: ShipmentRequest = {
+      ...selectedRequest,
+      ...patch,
+      updatedAt: nowIso,
     };
 
     // Optimistic local update
     setRequests((prev) =>
       prev.map((r) =>
         r.id === selectedRequest.id || r.requestNumber === selectedRequest.requestNumber
-          ? { ...r, ...patch, updatedAt: new Date().toISOString() }
+          ? updatedReq
           : r
       )
     );
+
+    setSelectedRequest(updatedReq);
 
     await ShipmentRequestService.updateRequest(selectedRequest.id, patch);
 
@@ -1133,20 +1116,8 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
           </div>
         </div>
 
-        {/* Action button: Google Apps Script Rate Calculator */}
         {/* Action buttons */}
         <div className="flex items-center gap-2.5 flex-wrap w-full lg:w-auto">
-          {/* Action: Pickup Request Button (Matching Legacy Google Apps Script "بيك أب") */}
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => setPickupModalOpen(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black text-emerald-950 bg-emerald-50 hover:bg-emerald-100 border-2 border-emerald-500 shadow-xs transition-all cursor-pointer group"
-          >
-            <Truck className="w-4 h-4 text-emerald-800 group-hover:scale-110 transition-transform shrink-0" />
-            <span className="text-emerald-950 font-black">{isRTL ? "تسجيل طلب بيك أب" : "Book Pickup"}</span>
-          </Button>
-
           {/* Primary Action: New Shipment Request Button */}
           <Button
             type="button"
@@ -1191,13 +1162,13 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
               : "bg-white hover:bg-gray-50/80 border-gray-200/90 shadow-2xs"
           }`}
         >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-bold text-gray-500 truncate">
-              {isRTL ? "إجمالي الطلبات" : "Total Requests"}
-            </span>
+          <div className="flex items-center justify-start gap-2">
             <div className="w-8 h-8 rounded-xl bg-orange-50 text-[#C45B2A] flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
               <Package className="w-4 h-4" />
             </div>
+            <span className="text-[11px] font-bold text-gray-500 truncate">
+              {isRTL ? "إجمالي الطلبات" : "Total Requests"}
+            </span>
           </div>
           <div className="mt-2">
             <div className="text-2xl sm:text-3xl font-black font-mono text-[#251516]">
@@ -1221,13 +1192,13 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
               : "bg-white hover:bg-amber-50/20 border-gray-200/90 shadow-2xs"
           }`}
         >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-bold text-amber-900 truncate">
-              {isRTL ? "طلبات جديدة" : "New Inquiries"}
-            </span>
+          <div className="flex items-center justify-start gap-2">
             <div className="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
               <Sparkles className="w-4 h-4" />
             </div>
+            <span className="text-[11px] font-bold text-amber-900 truncate">
+              {isRTL ? "طلبات جديدة" : "New Inquiries"}
+            </span>
           </div>
           <div className="mt-2">
             <div className="text-2xl sm:text-3xl font-black font-mono text-amber-700">
@@ -1251,13 +1222,13 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
               : "bg-white hover:bg-cyan-50/20 border-gray-200/90 shadow-2xs"
           }`}
         >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-bold text-cyan-900 truncate">
-              {isRTL ? "تم التواصل" : "Contacted"}
-            </span>
+          <div className="flex items-center justify-start gap-2">
             <div className="w-8 h-8 rounded-xl bg-cyan-100 text-cyan-700 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
               <PhoneCall className="w-4 h-4" />
             </div>
+            <span className="text-[11px] font-bold text-cyan-900 truncate">
+              {isRTL ? "تم التواصل" : "Contacted"}
+            </span>
           </div>
           <div className="mt-2">
             <div className="text-2xl sm:text-3xl font-black font-mono text-cyan-700">
@@ -1281,13 +1252,13 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
               : "bg-white hover:bg-emerald-50/20 border-gray-200/90 shadow-2xs"
           }`}
         >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-bold text-emerald-900 truncate">
-              {isRTL ? "معتمد ومسعّر" : "Approved & Priced"}
-            </span>
+          <div className="flex items-center justify-start gap-2">
             <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
               <CheckCircle2 className="w-4 h-4" />
             </div>
+            <span className="text-[11px] font-bold text-emerald-900 truncate">
+              {isRTL ? "معتمد ومسعّر" : "Approved & Priced"}
+            </span>
           </div>
           <div className="mt-2">
             <div className="text-2xl sm:text-3xl font-black font-mono text-emerald-700">
@@ -1311,13 +1282,13 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
               : "bg-white hover:bg-purple-50/20 border-gray-200/90 shadow-2xs"
           }`}
         >
-          <div className="flex items-center justify-between gap-2">
-            <span className="text-[11px] font-bold text-purple-900 truncate">
-              {isRTL ? "تم التحويل لبوليصة" : "Converted AWB"}
-            </span>
+          <div className="flex items-center justify-start gap-2">
             <div className="w-8 h-8 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform">
               <Truck className="w-4 h-4" />
             </div>
+            <span className="text-[11px] font-bold text-purple-900 truncate">
+              {isRTL ? "تم التحويل لبوليصة" : "Converted AWB"}
+            </span>
           </div>
           <div className="mt-2">
             <div className="text-2xl sm:text-3xl font-black font-mono text-purple-700">
@@ -1342,15 +1313,15 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
               : "bg-white hover:bg-gray-50/80 border-gray-200/90 shadow-2xs"
           }`}
         >
-          <div className="flex items-center justify-between gap-2">
-            <span className={`text-[11px] font-bold truncate ${delayedCount > 0 ? "text-rose-700 font-black" : "text-gray-500"}`}>
-              {isRTL ? "تنبيه التأخير" : "SLA Delayed"}
-            </span>
+          <div className="flex items-center justify-start gap-2">
             <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 group-hover:scale-110 transition-transform ${
               delayedCount > 0 ? "bg-rose-100 text-rose-700 animate-pulse" : "bg-gray-100 text-gray-400"
             }`}>
               <AlertTriangle className="w-4 h-4" />
             </div>
+            <span className={`text-[11px] font-bold truncate ${delayedCount > 0 ? "text-rose-700 font-black" : "text-gray-500"}`}>
+              {isRTL ? "تنبيه التأخير" : "SLA Delayed"}
+            </span>
           </div>
           <div className="mt-2">
             <div className={`text-2xl sm:text-3xl font-black font-mono ${delayedCount > 0 ? "text-rose-700" : "text-gray-400"}`}>
@@ -1585,7 +1556,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                         onClick={handleResetFilters}
                         className="mt-3 text-xs font-bold rounded-xl"
                       >
-                        <RotateCcw className="w-3.5 h-3.5 mr-1" />
+                        <RotateCcw className="w-3.5 h-3.5 shrink-0 me-1.5" />
                         <span>{isRTL ? "إلغاء الفلاتر" : "Clear filters"}</span>
                       </Button>
                     )}
@@ -1714,9 +1685,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                             }}
                             className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200/90 text-[11px] font-extrabold transition-all hover:scale-102 cursor-pointer shadow-2xs"
                             title={t("admin.requests.table.whatsappTooltip") || (isRTL ? "اعتماد السعر بعد الاتفاق في واتساب" : "Set agreed price & approve")}
-                          >
-                            <DollarSign className="w-3.5 h-3.5 text-amber-700" />
-                            <span>{t("admin.requests.table.enterPrice") || (isRTL ? "اعتماد السعر" : "Set Agreed Price")}</span>
+                          > <span>{t("admin.requests.table.enterPrice") || (isRTL ? "اعتماد السعر" : "Set Agreed Price")}</span>
                           </button>
                         )}
                       </td>
@@ -1863,9 +1832,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
               <div className="flex items-center gap-2 self-start sm:self-auto">
                 {(selectedRequest.whatsapp || selectedRequest.phone) && (
                   <a
-                    href={`https://wa.me/${(selectedRequest.whatsapp || selectedRequest.phone).replace(/[^0-9]/g, "")}?text=${encodeURIComponent(
-                      `مرحباً ${selectedRequest.customerName}، بخصوص طلب الشحن رقم ${selectedRequest.requestNumber} من ${selectedRequest.pickupCity} إلى ${selectedRequest.deliveryCity}...`
-                    )}`}
+                    href={getWhatsAppUrlForRequest(selectedRequest) || `https://wa.me/${(selectedRequest.whatsapp || selectedRequest.phone).replace(/[^0-9]/g, "")}`}
                     target="_blank"
                     rel="noreferrer"
                     className="px-3.5 py-2 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-300 font-bold text-xs flex items-center gap-1.5 hover:bg-emerald-100 transition-colors shadow-2xs"
@@ -1912,14 +1879,15 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
               </div>
             </div>
 
-            {/* Audit Trail & Timestamps Card */}
+            {/* Audit Trail & Timestamps Card (سجل المتابعة) */}
             <div className="bg-amber-50/60 p-3.5 sm:p-4 rounded-xl border border-amber-200/80 space-y-2">
               <span className="text-[11px] font-bold uppercase text-amber-900 tracking-wider flex items-center gap-1.5">
                 <Clock className="w-4 h-4 text-amber-700 shrink-0" />
                 <span>{t("admin.requests.modal.auditTrailTitle")}</span>
               </span>
 
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-2.5 text-xs pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5 text-xs pt-1">
+                {/* 1. Created At (تاريخ التقديم) */}
                 <div className="bg-white p-2.5 rounded-lg border border-amber-100 shadow-2xs flex flex-col justify-between">
                   <span className="text-[10px] text-gray-500 font-bold uppercase block truncate">{t("admin.requests.modal.createdAt")}</span>
                   <div className="mt-1">
@@ -1934,46 +1902,41 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                   </div>
                 </div>
 
-                <div className="bg-white p-2.5 rounded-lg border border-amber-100 shadow-2xs flex flex-col justify-between">
-                  <span className="text-[10px] text-gray-500 font-bold uppercase block truncate">{t("admin.requests.modal.firstContacted")}</span>
-                  <div className="mt-1">
-                    {selectedRequest.contactedAt ? (
-                      <>
-                        <p className="font-bold text-cyan-700 text-xs leading-tight">
-                          {formatDate(selectedRequest.contactedAt)}
-                        </p>
-                        {formatTime(selectedRequest.contactedAt) && (
-                          <p className="text-[10px] text-cyan-600 mt-0.5">
-                            {formatTime(selectedRequest.contactedAt)}
-                          </p>
-                        )}
-                      </>
-                    ) : (
-                      <p className="font-mono font-bold text-gray-400 mt-0.5">—</p>
-                    )}
-                  </div>
-                </div>
-
+                {/* 2. Approved At (تاريخ الاعتماد) */}
                 <div className="bg-white p-2.5 rounded-lg border border-amber-100 shadow-2xs flex flex-col justify-between">
                   <span className="text-[10px] text-gray-500 font-bold uppercase block truncate">{isRTL ? "تاريخ الاعتماد" : "Approved At"}</span>
                   <div className="mt-1">
-                    {selectedRequest.approvedAt || selectedRequest.customerConfirmedAt || selectedRequest.priceSentAt ? (
-                      <>
-                        <p className="font-bold text-emerald-700 text-xs leading-tight">
-                          {formatDate(selectedRequest.approvedAt || selectedRequest.customerConfirmedAt || selectedRequest.priceSentAt)}
-                        </p>
-                        {formatTime(selectedRequest.approvedAt || selectedRequest.customerConfirmedAt || selectedRequest.priceSentAt) && (
-                          <p className="text-[10px] text-emerald-600 mt-0.5">
-                            {formatTime(selectedRequest.approvedAt || selectedRequest.customerConfirmedAt || selectedRequest.priceSentAt)}
+                    {(() => {
+                      const modalApprovedAt =
+                        selectedRequest.approvedAt ||
+                        selectedRequest.customerConfirmedAt ||
+                        selectedRequest.priceSentAt ||
+                        ((selectedRequest.status === "Approved" ||
+                          selectedRequest.status === "Converted to Shipment" ||
+                          selectedRequest.status === "Customer Confirmed" ||
+                          Boolean(selectedRequest.agreedPrice && parseFloat(String(selectedRequest.agreedPrice)) > 0))
+                          ? selectedRequest.convertedAt || selectedRequest.updatedAt || selectedRequest.createdAt
+                          : undefined);
+
+                      return modalApprovedAt ? (
+                        <>
+                          <p className="font-bold text-emerald-700 text-xs leading-tight">
+                            {formatDate(modalApprovedAt)}
                           </p>
-                        )}
-                      </>
-                    ) : (
-                      <p className="font-mono font-bold text-gray-400 mt-0.5">—</p>
-                    )}
+                          {formatTime(modalApprovedAt) && (
+                            <p className="text-[10px] text-emerald-600 mt-0.5">
+                              {formatTime(modalApprovedAt)}
+                            </p>
+                          )}
+                        </>
+                      ) : (
+                        <p className="font-mono font-bold text-gray-400 mt-0.5">{isRTL ? "قيد الانتظار" : "Pending"}</p>
+                      );
+                    })()}
                   </div>
                 </div>
 
+                {/* 3. Currency & Agreed Rate (العملة المعتمدة) */}
                 <div className="bg-white p-2.5 rounded-lg border border-amber-100 shadow-2xs flex flex-col justify-between">
                   <span className="text-[10px] text-gray-500 font-bold uppercase block truncate">{isRTL ? "العملة المعتمدة" : "Agreed Currency"}</span>
                   <div className="mt-1">
@@ -1987,122 +1950,338 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                 </div>
               </div>
 
-              {selectedRequest.convertedAt && (
-                <div className="text-xs text-emerald-800 font-bold bg-emerald-50 p-2.5 rounded-lg border border-emerald-200 flex items-center gap-2">
-                  <Truck className="w-4 h-4 text-emerald-700 shrink-0" />
-                  <span>
-                    {isRTL ? `تم التحويل لبوليصة شحن حية (${selectedRequest.linkedAwb}) في: ` : `Converted to Live AWB (${selectedRequest.linkedAwb}) at: `}
-                    <strong className="text-emerald-900">{formatDateTime(selectedRequest.convertedAt)}</strong>
-                  </span>
+              {/* Conversion to Live AWB Banner */}
+              {(selectedRequest.convertedAt || selectedRequest.linkedAwb) && (
+                <div className="text-xs text-emerald-800 font-bold bg-emerald-50 p-2.5 rounded-lg border border-emerald-200 flex items-center justify-between gap-2 flex-wrap">
+                  <div className="flex items-center gap-2">
+                    <Truck className="w-4 h-4 text-emerald-700 shrink-0" />
+                    <span>
+                      {isRTL ? "تم التحويل لبوليصة شحن مسجلة برقم: " : "Converted to Registered Live AWB: "}
+                      <strong className="font-mono text-emerald-950 bg-emerald-100/90 px-2 py-0.5 rounded border border-emerald-300" dir="ltr">
+                        {selectedRequest.linkedAwb}
+                      </strong>
+                    </span>
+                  </div>
+                  {selectedRequest.convertedAt && (
+                    <span className="text-[11px] text-emerald-700 font-medium">
+                      {formatDateTime(selectedRequest.convertedAt)}
+                    </span>
+                  )}
                 </div>
               )}
             </div>
 
             {/* Request Summary Cards */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 text-xs">
-              {/* Customer Info */}
-              <div className="bg-gray-50 p-3.5 sm:p-4 rounded-xl border border-gray-200/80 space-y-2 shadow-2xs">
-                <span className="font-bold text-gray-400 uppercase text-[10px]">{t("admin.requests.modal.customerDetails")}</span>
-                <p className="font-bold text-gray-900 text-sm">{selectedRequest.customerName}</p>
-                <p className="text-gray-600">{t("admin.requests.modal.company")} <strong>{selectedRequest.companyName || "N/A"}</strong></p>
-                <p className="text-gray-600 flex items-center gap-1.5 flex-wrap">
-                  <span>{t("admin.requests.modal.phone")}</span>
-                  <bdi dir="ltr" className="font-mono font-bold text-gray-800">{selectedRequest.phone}</bdi>
-                </p>
-                <p className="text-gray-600 flex items-center gap-1.5 flex-wrap">
-                  <span>{t("admin.requests.modal.whatsapp")}</span>
-                  <bdi dir="ltr" className="font-mono font-bold text-gray-800">{selectedRequest.whatsapp || selectedRequest.phone}</bdi>
-                </p>
-                <p className="text-gray-600 flex items-center gap-1.5 flex-wrap">
-                  <span>{t("admin.requests.modal.email")}</span>
-                  <bdi dir="ltr" className="font-mono text-gray-800">{selectedRequest.email}</bdi>
-                </p>
+              {/* 1. Customer Info */}
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/90 space-y-3 shadow-2xs text-start">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
+                  <span className="font-bold text-gray-400 uppercase text-[10px] tracking-wider flex items-center gap-1.5">
+                    <User className="w-3.5 h-3.5 text-[#C45B2A] shrink-0" />
+                    <span>{t("admin.requests.modal.customerDetails")}</span>
+                  </span>
+                  <Badge variant="outline" className="text-[10px] font-bold text-gray-600 bg-gray-50 border-gray-200">
+                    {isRTL ? "المرسل / الحساب" : "Sender Account"}
+                  </Badge>
+                </div>
+
+                <div className="space-y-1">
+                  <p className="font-black text-gray-950 text-base">{selectedRequest.customerName}</p>
+                  {selectedRequest.companyName && selectedRequest.companyName.trim() !== selectedRequest.customerName.trim() && (
+                    <div className="flex items-center gap-1.5 text-xs text-gray-600 font-medium pt-0.5">
+                      <Building2 className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                      <span>{selectedRequest.companyName}</span>
+                    </div>
+                  )}
+                  {selectedRequest.customerId && (
+                    <div className="text-[10px] font-mono text-gray-400 pt-0.5">
+                      <span>ID: #{selectedRequest.customerId}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2 pt-1 border-t border-gray-100">
+                  {/* Unified Contact Line (Single Phone Number with Call and WhatsApp shortcuts) */}
+                  {(() => {
+                    const contactNum = selectedRequest.whatsapp || selectedRequest.phone;
+                    if (!contactNum) return null;
+                    const cleanNum = contactNum.replace(/[^0-9+]/g, "");
+
+                    return (
+                      <div className="text-xs text-gray-600 flex items-center justify-between gap-2">
+                        <span className="text-gray-500 font-medium flex items-center gap-1.5">
+                          <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                          <span>{isRTL ? "رقم التواصل" : "Contact Phone"}</span>
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <a
+                            href={`tel:${cleanNum}`}
+                            className="font-mono font-bold text-gray-900 hover:text-blue-700 bg-gray-50 hover:bg-blue-50 transition-colors px-2 py-0.5 rounded-lg border border-gray-200 flex items-center gap-1 cursor-pointer"
+                            title={isRTL ? "اتصال هاتفي" : "Call"}
+                            dir="ltr"
+                          >
+                            <bdi>{contactNum}</bdi>
+                          </a>
+                          <a
+                            href={getWhatsAppUrlForRequest(selectedRequest) || `https://wa.me/${cleanNum.replace(/[^0-9]/g, "")}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="h-6 px-2 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-200 text-[10px] font-bold flex items-center gap-1 transition-colors cursor-pointer"
+                            title={isRTL ? "مراسلة واتساب" : "WhatsApp"}
+                          >
+                            <MessageSquare className="w-3 h-3 text-emerald-600 shrink-0" />
+                            <span>{isRTL ? "واتساب" : "WhatsApp"}</span>
+                          </a>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {selectedRequest.email && (
+                    <div className="text-xs text-gray-600 flex items-center justify-between gap-2">
+                      <span className="text-gray-500 font-medium flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
+                        <span>{t("admin.requests.modal.email")}</span>
+                      </span>
+                      <a
+                        href={`mailto:${selectedRequest.email}`}
+                        className="font-mono font-semibold text-indigo-700 hover:text-indigo-900 text-[11px] truncate max-w-[210px] hover:underline"
+                        title={selectedRequest.email}
+                        dir="ltr"
+                      >
+                        {selectedRequest.email}
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
 
-              {/* Route & Cargo */}
-              <div className="bg-gray-50 p-3.5 sm:p-4 rounded-xl border border-gray-200/80 space-y-2 shadow-2xs">
-                <span className="font-bold text-gray-400 uppercase text-[10px]">{t("admin.requests.modal.cargoRoute")}</span>
-                <div className="font-bold text-gray-900 flex items-center gap-1.5 flex-wrap">
+              {/* 2. Route & Cargo */}
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/90 space-y-3 shadow-2xs text-start">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
+                  <span className="font-bold text-gray-400 uppercase text-[10px] tracking-wider flex items-center gap-1.5">
+                    <Package className="w-3.5 h-3.5 text-[#C45B2A] shrink-0" />
+                    <span>{t("admin.requests.modal.cargoRoute")}</span>
+                  </span>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    {selectedRequest.serviceTitle && (
+                      <Badge variant="outline" className="text-[10px] font-bold text-amber-800 bg-amber-50 border-amber-200">
+                        {selectedRequest.serviceTitle}
+                      </Badge>
+                    )}
+                    <Badge variant="outline" className="text-[10px] font-bold text-orange-700 bg-orange-50 border-orange-200">
+                      {getLocalizedShipmentType(selectedRequest.shipmentType, isRTL)}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="font-black text-gray-900 flex items-center gap-2 flex-wrap text-sm">
                   <span>{selectedRequest.pickupCity}, {selectedRequest.pickupCountry}</span>
-                  <ArrowRight className={`w-3.5 h-3.5 text-[#C45B2A] shrink-0 ${isRTL ? "rotate-180" : ""}`} />
+                  <ArrowRight className={`w-4 h-4 text-[#C45B2A] shrink-0 ${isRTL ? "rotate-180" : ""}`} />
                   <span>{selectedRequest.deliveryCity}, {selectedRequest.deliveryCountry}</span>
                 </div>
-                <p className="text-gray-600">{t("admin.requests.modal.type")} <strong>{getLocalizedShipmentType(selectedRequest.shipmentType, isRTL)}</strong></p>
-                <p className="text-gray-600">{t("admin.requests.modal.contents")} {selectedRequest.contents}</p>
-                <p className="text-gray-600">
-                  {t("admin.requests.modal.weight")} <strong>{selectedRequest.weight} {isRTL ? "كجم" : "KG"}</strong> ({selectedRequest.packageCount} {isRTL ? "طرد" : "pkgs"})
-                </p>
-                {selectedRequest.length && selectedRequest.width && selectedRequest.height ? (
-                  <p className="text-gray-600 flex items-center gap-1.5 flex-wrap text-xs">
-                    <span className="font-semibold text-gray-700">{isRTL ? "الأبعاد والوزن الحجمي:" : "Dim & Vol. Weight:"}</span>
-                    <span className="font-mono font-bold text-gray-900" dir="ltr">{selectedRequest.length} × {selectedRequest.width} × {selectedRequest.height} cm</span>
-                    <span className="font-mono text-[#C45B2A] font-bold bg-orange-50 px-1.5 py-0.2 rounded border border-orange-200 text-[11px]" dir="ltr">
-                      {((Number(selectedRequest.length) * Number(selectedRequest.width) * Number(selectedRequest.height)) / 5000).toFixed(2)} KG IATA
-                    </span>
-                  </p>
-                ) : null}
-                {selectedRequest.declaredValue ? (
-                  <p className="text-gray-600">
-                    <span className="font-semibold text-gray-700">{isRTL ? "القيمة المعلنة:" : "Declared Value:"}</span>{" "}
-                    <strong className="text-emerald-700 font-mono">${selectedRequest.declaredValue} USD</strong>
-                  </p>
-                ) : null}
-                <p className="text-gray-600">
-                  {t("admin.requests.modal.special")} {selectedRequest.isFragile ? t("admin.requests.modal.fragile") : t("admin.requests.modal.standard")} {selectedRequest.isTemperatureControlled ? `• ${t("admin.requests.modal.coldChain")}` : ""}
-                </p>
-                {selectedRequest.specialInstructions && (
-                  <p className="text-xs text-gray-700 bg-white p-1.5 rounded border border-gray-200/60">
-                    <span className="font-bold text-gray-900">{isRTL ? "تعليمات خاصة: " : "Special Notes: "}</span>{selectedRequest.specialInstructions}
-                  </p>
-                )}
-              </div>
 
-              {/* Pickup Address */}
-              <div className="bg-gray-50 p-3.5 sm:p-4 rounded-xl border border-gray-200/80 space-y-2 shadow-2xs">
-                <span className="font-bold text-gray-400 uppercase text-[10px]">{t("admin.requests.modal.pickupHandoff")}</span>
-                <p className="font-semibold text-gray-900">{selectedRequest.pickupAddress}</p>
-                <p className="text-gray-600 flex items-center gap-1.5 flex-wrap">
-                  <span>{t("admin.requests.modal.contact")}</span>
-                  <span className="font-semibold text-gray-900">{selectedRequest.pickupContactName}</span>
-                  {selectedRequest.pickupContactPhone && (
-                    <bdi dir="ltr" className="font-mono text-gray-600">({selectedRequest.pickupContactPhone})</bdi>
-                  )}
-                </p>
-                <p className="text-gray-600 flex items-center gap-1.5 flex-wrap">
-                  <span>{t("admin.requests.modal.date")}</span>
-                  <strong className="text-gray-900">{formatDate(selectedRequest.preferredPickupDate) || selectedRequest.preferredPickupDate}</strong>
-                </p>
-                {selectedRequest.pickupNotes && (
-                  <p className="text-xs text-gray-500 bg-white p-1.5 rounded border border-gray-200/60">
-                    <span className="font-bold">{isRTL ? "ملاحظات الاستلام: " : "Notes: "}</span>{selectedRequest.pickupNotes}
-                  </p>
-                )}
-              </div>
-
-              {/* Delivery Address */}
-              <div className="bg-gray-50 p-3.5 sm:p-4 rounded-xl border border-gray-200/80 space-y-2 shadow-2xs">
-                <span className="font-bold text-gray-400 uppercase text-[10px]">{t("admin.requests.modal.deliveryDestination")}</span>
-                <p className="font-semibold text-gray-900">{selectedRequest.deliveryAddress}</p>
-                {selectedRequest.deliveryShortAddress && (
-                  <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-orange-100/70 border border-orange-200 text-[#C45B2A] text-xs font-mono font-bold" dir="ltr">
-                    <span className="font-sans text-[11px] font-bold text-gray-700">{isRTL ? "العنوان المختصر:" : "Short Address:"}</span>
-                    <span>{selectedRequest.deliveryShortAddress}</span>
+                <div className="space-y-1.5 text-xs text-gray-700">
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">{t("admin.requests.modal.contents")}:</span>
+                    <strong className="text-gray-900">{selectedRequest.contents || (isRTL ? "طرد عام" : "General Parcel")}</strong>
                   </div>
-                )}
-                <p className="text-gray-600 flex items-center gap-1.5 flex-wrap">
-                  <span>{t("admin.requests.modal.consignee")}</span>
-                  <span className="font-semibold text-gray-900">{selectedRequest.consigneeName}</span>
-                  {selectedRequest.consigneePhone && (
-                    <bdi dir="ltr" className="font-mono text-gray-600">({selectedRequest.consigneePhone})</bdi>
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">{t("admin.requests.modal.weight")}:</span>
+                    <strong className="font-mono text-gray-900">{selectedRequest.weight || 0} {isRTL ? "كجم" : "KG"} ({selectedRequest.packageCount || 1} {isRTL ? "طرد" : "pkgs"})</strong>
+                  </div>
+
+                  {(() => {
+                    const len = Number(selectedRequest.length) || 0;
+                    const wid = Number(selectedRequest.width) || 0;
+                    const hei = Number(selectedRequest.height) || 0;
+                    const actWt = Number(selectedRequest.weight) || 0;
+                    const volWt = (len > 0 && wid > 0 && hei > 0) ? Math.round(((len * wid * hei) / 5000) * 10) / 10 : 0;
+                    const chgWt = Math.max(actWt, volWt);
+
+                    return (
+                      <>
+                        {len > 0 && wid > 0 && hei > 0 ? (
+                          <div className="flex items-center justify-between flex-wrap gap-1">
+                            <span className="text-gray-500">{isRTL ? "الأبعاد والوزن الحجمي:" : "Dim & Vol. Weight:"}</span>
+                            <span className="font-mono text-gray-900 font-bold" dir="ltr">
+                              {len} × {wid} × {hei} cm (
+                              <span className="text-[#C45B2A] font-extrabold">{volWt} KG</span>)
+                            </span>
+                          </div>
+                        ) : null}
+                        {volWt > 0 && (
+                          <div className="flex items-center justify-between bg-orange-50/60 px-2.5 py-1 rounded-lg border border-orange-200/80">
+                            <span className="text-gray-700 font-bold text-[11px]">{isRTL ? "الوزن المعتمد للشحن (Chargeable):" : "Chargeable Weight:"}</span>
+                            <span className="font-mono font-black text-xs text-[#C45B2A]" dir="ltr">
+                              {chgWt} KG
+                            </span>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+
+                  {selectedRequest.declaredValue ? (
+                    <div className="flex items-center justify-between">
+                      <span className="text-gray-500">{isRTL ? "القيمة المعلنة:" : "Declared Value:"}</span>
+                      <strong className="text-emerald-700 font-mono font-bold" dir="ltr">
+                        {selectedRequest.declaredValue} {selectedRequest.currency || "USD"}
+                      </strong>
+                    </div>
+                  ) : null}
+
+                  <div className="flex items-center justify-between">
+                    <span className="text-gray-500">{t("admin.requests.modal.special")}:</span>
+                    <span className="font-semibold text-gray-800">
+                      {selectedRequest.isFragile ? t("admin.requests.modal.fragile") : t("admin.requests.modal.standard")}
+                      {selectedRequest.isTemperatureControlled ? ` • ${t("admin.requests.modal.coldChain")}` : ""}
+                    </span>
+                  </div>
+
+                  {selectedRequest.specialInstructions && (
+                    <p className="text-xs text-gray-700 bg-orange-50/50 p-2 rounded-lg border border-orange-200/60 mt-1">
+                      <span className="font-bold text-gray-900">{isRTL ? "تعليمات خاصة: " : "Special Notes: "}</span>
+                      {selectedRequest.specialInstructions}
+                    </p>
                   )}
-                </p>
-                {selectedRequest.deliveryNotes && (
-                  <p className="text-xs text-gray-500 bg-white p-1.5 rounded border border-gray-200/60">
-                    <span className="font-bold">{isRTL ? "ملاحظات التسليم: " : "Notes: "}</span>{selectedRequest.deliveryNotes}
-                  </p>
-                )}
+                </div>
+              </div>
+
+              {/* 3. Pickup Address */}
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/90 space-y-3 shadow-2xs text-start">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
+                  <span className="font-bold text-gray-400 uppercase text-[10px] tracking-wider flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>{t("admin.requests.modal.pickupHandoff")}</span>
+                  </span>
+                  <Badge variant="outline" className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border-emerald-200">
+                    {isRTL ? "نقطة الانطلاق" : "Origin"}
+                  </Badge>
+                </div>
+                <p className="font-bold text-gray-900 text-xs leading-relaxed">{selectedRequest.pickupAddress}</p>
+                <div className="space-y-1.5 text-xs text-gray-700 pt-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-gray-500">{t("admin.requests.modal.contact")}:</span>
+                    <div className="flex items-center gap-1.5">
+                      <strong className="text-gray-900">{selectedRequest.pickupContactName || selectedRequest.customerName}</strong>
+                      {(selectedRequest.pickupContactPhone || selectedRequest.phone) && (
+                        <a
+                          href={`tel:${(selectedRequest.pickupContactPhone || selectedRequest.phone).replace(/[^0-9+]/g, "")}`}
+                          className="font-mono text-blue-600 hover:underline text-[11px]"
+                          dir="ltr"
+                        >
+                          ({selectedRequest.pickupContactPhone || selectedRequest.phone})
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-gray-500">{t("admin.requests.modal.date")}:</span>
+                    <strong className="text-gray-900 font-mono">{formatDate(selectedRequest.preferredPickupDate) || selectedRequest.preferredPickupDate}</strong>
+                  </div>
+                  {selectedRequest.pickupNotes && (
+                    <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-200 mt-1">
+                      <span className="font-bold text-gray-800">{isRTL ? "ملاحظات الاستلام: " : "Notes: "}</span>
+                      {selectedRequest.pickupNotes}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              {/* 4. Delivery Address */}
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/90 space-y-3 shadow-2xs text-start">
+                <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
+                  <span className="font-bold text-gray-400 uppercase text-[10px] tracking-wider flex items-center gap-1.5">
+                    <Building2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                    <span>{t("admin.requests.modal.deliveryDestination")}</span>
+                  </span>
+                  <Badge variant="outline" className="text-[10px] font-bold text-blue-700 bg-blue-50 border-blue-200">
+                    {isRTL ? "نقطة الوصول" : "Destination"}
+                  </Badge>
+                </div>
+                <div>
+                  <p className="font-bold text-gray-900 text-xs leading-relaxed">{selectedRequest.deliveryAddress}</p>
+                  {selectedRequest.deliveryShortAddress && (
+                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-orange-50 border border-orange-200 text-[#C45B2A] text-xs font-mono font-bold mt-1.5" dir="ltr">
+                      <span className="font-sans text-[11px] font-bold text-gray-700">{isRTL ? "العنوان المختصر:" : "Short Address:"}</span>
+                      <span>{selectedRequest.deliveryShortAddress}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="space-y-1.5 text-xs text-gray-700 pt-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-gray-500">{t("admin.requests.modal.consignee")}:</span>
+                    <div className="flex items-center gap-1.5">
+                      <strong className="text-gray-900">{selectedRequest.consigneeName}</strong>
+                      {selectedRequest.consigneePhone && (
+                        <a
+                          href={`tel:${selectedRequest.consigneePhone.replace(/[^0-9+]/g, "")}`}
+                          className="font-mono text-blue-600 hover:underline text-[11px]"
+                          dir="ltr"
+                        >
+                          ({selectedRequest.consigneePhone})
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                  {selectedRequest.deliveryNotes && (
+                    <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-200 mt-1">
+                      <span className="font-bold text-gray-800">{isRTL ? "ملاحظات التسليم: " : "Notes: "}</span>
+                      {selectedRequest.deliveryNotes}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
+
+            {/* Financial Metrics & Profitability Breakdown Card */}
+            {(() => {
+              const agreedVal = parseFloat(String(selectedRequest.agreedPrice || selectedRequest.quotedPrice || 0)) || 0;
+              const costVal = selectedRequest.costPrice !== undefined ? Number(selectedRequest.costPrice) : 0;
+              const transVal = selectedRequest.transExpense !== undefined ? Number(selectedRequest.transExpense) : 0;
+              const curr = selectedRequest.currency || "EGP";
+
+              if (agreedVal > 0 || costVal > 0) {
+                const netProfit = agreedVal - costVal - transVal;
+                return (
+                  <div className="bg-gray-50 p-3.5 sm:p-4 rounded-xl border border-gray-200 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold uppercase text-gray-700 tracking-wider flex items-center gap-1.5">
+                        <DollarSign className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span>{isRTL ? "البيانات المالية والأرباح المتوقعة" : "Financial & Profit Breakdown"}</span>
+                      </span>
+                      <span className="font-mono text-xs font-black text-[#C45B2A] bg-orange-100/70 px-2 py-0.5 rounded border border-orange-200">
+                        {curr}
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-1">
+                      <div className="bg-white p-2.5 rounded-lg border border-gray-200 shadow-2xs">
+                        <span className="text-[10px] text-gray-500 font-bold block">{isRTL ? "سعر البيع المعتمد" : "Agreed Price"}</span>
+                        <p className="font-mono font-black text-gray-900 text-sm mt-0.5" dir="ltr">{agreedVal} {curr}</p>
+                      </div>
+                      <div className="bg-white p-2.5 rounded-lg border border-gray-200 shadow-2xs">
+                        <span className="text-[10px] text-gray-500 font-bold block">{isRTL ? "تكلفة الشحن الناقل" : "Carrier Cost"}</span>
+                        <p className="font-mono font-bold text-gray-700 text-sm mt-0.5" dir="ltr">{costVal} {curr}</p>
+                      </div>
+                      <div className="bg-white p-2.5 rounded-lg border border-gray-200 shadow-2xs">
+                        <span className="text-[10px] text-gray-500 font-bold block">{isRTL ? "مصاريف النقل والتحميل" : "Trans Expense"}</span>
+                        <p className="font-mono font-bold text-gray-700 text-sm mt-0.5" dir="ltr">{transVal} {curr}</p>
+                      </div>
+                      <div className={`p-2.5 rounded-lg border shadow-2xs ${netProfit >= 0 ? "bg-emerald-50 border-emerald-200" : "bg-rose-50 border-rose-200"}`}>
+                        <span className={`text-[10px] font-bold block ${netProfit >= 0 ? "text-emerald-700" : "text-rose-700"}`}>{isRTL ? "صافي الربح المتوقع" : "Est. Net Profit"}</span>
+                        <p className={`font-mono font-black text-sm mt-0.5 ${netProfit >= 0 ? "text-emerald-800" : "text-rose-800"}`} dir="ltr">
+                          {netProfit > 0 ? `+${netProfit}` : netProfit} {curr}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
 
             {/* Admin Action Form */}
             <form onSubmit={handleUpdateStatusAndQuote} className="space-y-4 pt-2 border-t border-gray-100">
@@ -2242,7 +2421,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
             {/* Request Summary Context Box */}
             <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 text-xs space-y-1.5 shadow-2xs">
               <div className="flex justify-between items-center font-bold text-gray-900">
-                <span>{requestToConvert.customerName} ({requestToConvert.companyName || (isRTL ? "عميل فردي" : "Individual Client")})</span>
+                <span>{requestToConvert.customerName}</span>
                 <span className="font-mono text-[#C45B2A] bg-orange-50 px-2 py-0.5 rounded border border-orange-200" dir="ltr">{requestToConvert.requestNumber}</span>
               </div>
               <div className="text-gray-700 flex items-center gap-1.5 font-medium">
@@ -2291,6 +2470,11 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     <option value="Post/EMS (with USPS)">Post/EMS (with USPS)</option>
                     <option value="Air Cargo">Air Cargo</option>
                     <option value="Other">{isRTL ? "شركة شحن أخرى (Other Carrier)" : "Other Carrier"}</option>
+                    {MASTER_CARRIERS.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
                   </select>
                   <ChevronDown className={`w-4 h-4 text-gray-500 absolute ${isRTL ? "left-3" : "right-3"} pointer-events-none`} />
                 </div>
@@ -2478,29 +2662,18 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                 </DialogTitle>
                 <DialogDescription className="text-xs text-gray-500 mt-0.5">
                   {isRTL
-                    ? "تسجيل بيانات الراسل، مسار الشحنة، مواصفات الطرود والأبعاد، والقيمة الجمركية وخيارات التسعير"
-                    : "Record shipper info, route, cargo specs, dimensions, volumetric weight, and agreed pricing"}
+                    ? "تسجيل بيانات الراسل، مسار الشحنة، مواصفات الطرود والأبعاد، والربط بحسابات العملاء"
+                    : "Record shipper info, route, cargo specs, dimensions, volumetric weight, and client account"}
                 </DialogDescription>
               </div>
             </div>
 
-            {/* Quick Customer Autocomplete Picker */}
+            {/* Customer count indicator */}
             <div className="flex items-center gap-2">
-              <label className="text-[11px] font-bold text-gray-600 whitespace-nowrap">
-                {isRTL ? "عميل مسجل:" : "Client:"}
-              </label>
-              <select
-                value={createForm.selectedCustomerId}
-                onChange={(e) => handleSelectCustomer(e.target.value)}
-                className="h-9 text-xs rounded-xl border border-gray-200 bg-gray-50 px-2.5 font-semibold text-gray-800 outline-none focus:border-[#C45B2A] cursor-pointer max-w-[180px] sm:max-w-[220px]"
-              >
-                <option value="">{isRTL ? "-- عميل جديد / حر --" : "-- New / Manual Client --"}</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.company ? `${c.company} (${c.name})` : c.name}
-                  </option>
-                ))}
-              </select>
+              <Badge variant="outline" className="text-xs font-bold bg-orange-50 text-[#C45B2A] border-orange-200 py-1 px-2.5">
+                <Users className="w-3.5 h-3.5 mr-1" />
+                <span>{allCustomers.length} {isRTL ? "عميل مسجل في الموقع" : "Registered Clients"}</span>
+              </Badge>
             </div>
           </div>
 
@@ -2565,107 +2738,201 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
           </div>
 
           <form onSubmit={handleCreateRequest} className="space-y-4 pt-1">
-            {/* ─── TAB 1: SHIPPER & CLIENT INFO ─── */}
+            {/* ─── TAB 1: REGISTERED CLIENT INFO ─── */}
             {createTab === "client" && (
               <div className="space-y-4 animate-in fade-in duration-150">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">
-                      {isRTL ? "اسم العميل / الراسل" : "Customer / Shipper Name"} <span className="text-rose-500">*</span>
-                    </label>
-                    <Input
-                      required
-                      value={createForm.customerName}
-                      onChange={(e) => setCreateForm({ ...createForm, customerName: e.target.value })}
-                      placeholder={isRTL ? "مثال: تسنيم أحمد" : "e.g. Tasneem Ahmed"}
-                      className="text-xs"
-                    />
+                {/* Information Header */}
+                <div className="p-3 bg-orange-50/70 border border-orange-200/80 rounded-2xl flex items-center justify-between gap-3 text-xs">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-[#C45B2A] text-white flex items-center justify-center shrink-0">
+                      <UserCheck className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="font-extrabold text-[#251516] text-xs">
+                        {isRTL ? "اختيار عميل مسجل في الموقع" : "Select Registered Customer"}
+                      </h4>
+                      <p className="text-[11px] text-gray-500 font-medium">
+                        {isRTL
+                          ? "يتم قيد الشحنة الجديدة مباشرة تحت حساب العميل دون إنشاء أي حساب مستخدم جديد"
+                          : "Shipment will be linked directly to the registered customer account without creating duplicate accounts"}
+                      </p>
+                    </div>
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">
-                      {isRTL ? "اسم الشركة / المؤسسة" : "Company / Organization"}
-                    </label>
-                    <Input
-                      value={createForm.companyName}
-                      onChange={(e) => setCreateForm({ ...createForm, companyName: e.target.value })}
-                      placeholder={isRTL ? "مثال: شركة تبارك للصادرات" : "e.g. Tabarak Exports Co."}
-                      className="text-xs"
-                    />
-                  </div>
+                  <Badge variant="outline" className="bg-white text-[#C45B2A] border-orange-300 font-mono text-[11px] font-black shrink-0 px-2.5 py-1 hidden sm:inline-flex">
+                    {allCustomers.length} {isRTL ? "عميل مسجل" : "Registered Clients"}
+                  </Badge>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">
-                      {isRTL ? "رقم الهاتف الأساسي" : "Primary Phone"} <span className="text-rose-500">*</span>
-                    </label>
-                    <Input
-                      required
-                      type="tel"
-                      value={createForm.phone}
-                      onChange={(e) => setCreateForm({ ...createForm, phone: e.target.value })}
-                      placeholder="01012345678"
-                      className="text-xs font-mono"
-                      dir="ltr"
-                    />
-                  </div>
+                {/* If a customer is already selected, display executive profile card */}
+                {createForm.selectedCustomerId && selectedCustomerObj ? (
+                  <div className="p-4 sm:p-5 rounded-2xl border-2 border-emerald-300 bg-emerald-50/60 space-y-3.5 shadow-2xs">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-emerald-200/80 pb-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black text-sm shrink-0 shadow-xs">
+                          <UserCheck className="w-5 h-5" />
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h4 className="font-black text-emerald-950 text-sm sm:text-base">{selectedCustomerObj.name}</h4>
+                            <Badge variant="outline" className="bg-emerald-100 text-emerald-800 border-emerald-300 text-[10px] font-bold font-mono">
+                              ID: #{selectedCustomerObj.id}
+                            </Badge>
+                          </div>
+                          {selectedCustomerObj.company && selectedCustomerObj.company !== selectedCustomerObj.name && (
+                            <p className="text-xs text-emerald-800 font-semibold">{selectedCustomerObj.company}</p>
+                          )}
+                        </div>
+                      </div>
 
-                  <div>
-                    <div className="flex items-center justify-between mb-1">
-                      <label className="text-xs font-bold text-gray-700">
-                        {isRTL ? "رقم الواتساب" : "WhatsApp Number"}
+                      <Button
+                        type="button"
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setCreateForm((prev) => ({
+                            ...prev,
+                            selectedCustomerId: "",
+                            customerName: "",
+                            companyName: "",
+                            phone: "",
+                            whatsapp: "",
+                            email: "",
+                          }));
+                          setCustomerSearchQuery("");
+                        }}
+                        className="text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 border-gray-300 rounded-xl h-8.5 px-3 cursor-pointer shrink-0"
+                      >
+                        <X className="w-3.5 h-3.5 mr-1" />
+                        <span>{isRTL ? "تغيير العميل" : "Change Client"}</span>
+                      </Button>
+                    </div>
+
+                    {/* Customer Info Grid */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs">
+                      <div className="p-3 rounded-xl bg-white border border-emerald-100 shadow-2xs">
+                        <span className="text-[10px] text-gray-400 font-bold block mb-0.5">{isRTL ? "رقم الهاتف والتواصل" : "Phone"}</span>
+                        <span className="font-mono font-bold text-gray-900 text-xs" dir="ltr">{selectedCustomerObj.phone || "—"}</span>
+                      </div>
+                      <div className="p-3 rounded-xl bg-white border border-emerald-100 shadow-2xs">
+                        <span className="text-[10px] text-gray-400 font-bold block mb-0.5">{isRTL ? "البريد الإلكتروني" : "Email"}</span>
+                        <span className="font-mono font-bold text-gray-900 truncate block text-xs" dir="ltr">{selectedCustomerObj.email || "—"}</span>
+                      </div>
+                      <div className="p-3 rounded-xl bg-white border border-emerald-100 shadow-2xs">
+                        <span className="text-[10px] text-gray-400 font-bold block mb-0.5">{isRTL ? "المدينة والدولة" : "Location"}</span>
+                        <span className="font-bold text-gray-900 text-xs">{selectedCustomerObj.city || "Cairo"}, {selectedCustomerObj.country || "Egypt"}</span>
+                      </div>
+                    </div>
+
+                    {/* Direct Reassurance Note */}
+                    <div className="p-3 bg-emerald-100/70 border border-emerald-300 rounded-xl text-xs text-emerald-900 font-bold flex items-center gap-2.5">
+                      <Check className="w-4 h-4 text-emerald-700 shrink-0 stroke-[2.5]" />
+                      <span>
+                        {isRTL
+                          ? "سيتم قيد الشحنة فوراً تحت حساب هذا العميل الحالي بدون إنشاء حساب جديد أو تكرار بياناته."
+                          : "This shipment will be linked to this existing customer account. No new account will be created."}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  /* Customer Search & Select Box */
+                  <div className="p-4 sm:p-5 rounded-2xl border border-gray-200 bg-gray-50/70 space-y-3.5 shadow-2xs">
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                        <Users className="w-4 h-4 text-[#C45B2A]" />
+                        <span>{isRTL ? "اختر العميل من قائمة عملاء الموقع:" : "Select Registered Customer:"}</span>
                       </label>
-                      {createForm.phone && (
-                        <button
-                          type="button"
-                          onClick={handleCopyPhoneToWhatsapp}
-                          className="text-[10px] font-bold text-[#C45B2A] hover:underline cursor-pointer flex items-center gap-1"
-                        >
-                          <Copy className="w-2.5 h-2.5" />
-                          <span>{phoneCopiedNotice ? (isRTL ? "تم النسخ!" : "Copied!") : (isRTL ? "نسخ الهاتف" : "Copy Phone")}</span>
-                        </button>
+                      <span className="text-[11px] font-mono text-gray-500 font-bold">
+                        {allCustomers.length} {isRTL ? "عميل مسجل" : "clients"}
+                      </span>
+                    </div>
+
+                    {/* Search Filter Input */}
+                    <div className="relative">
+                      <Search className={`w-4 h-4 text-gray-400 absolute top-3 ${isRTL ? "right-3.5" : "left-3.5"}`} />
+                      <Input
+                        type="text"
+                        value={customerSearchQuery}
+                        onChange={(e) => setCustomerSearchQuery(e.target.value)}
+                        placeholder={isRTL ? "ابحث بالاسم، اسم الشركة، رقم الهاتف، أو البريد الإلكتروني..." : "Search by name, company, phone, or email..."}
+                        className={`h-10 text-xs bg-white rounded-xl border-gray-300 focus:border-[#C45B2A] ${isRTL ? "pr-10 pl-3.5" : "pl-10 pr-3.5"}`}
+                      />
+                    </div>
+
+                    {/* Scrollable Customer List */}
+                    <div className="max-h-64 overflow-y-auto rounded-xl border border-gray-200 bg-white divide-y divide-gray-100 shadow-2xs">
+                      {filteredCustomers.length === 0 ? (
+                        <div className="p-6 text-center text-xs text-gray-400 space-y-1">
+                          <Users className="w-8 h-8 text-gray-300 mx-auto" />
+                          <p className="font-bold text-gray-500">
+                            {isRTL ? "لم يتم العثور على عملاء مطابقين للبحث." : "No matching customers found."}
+                          </p>
+                          <p className="text-[11px] text-gray-400">
+                            {isRTL ? "يرجى تجربة كلمة بحث أخرى بالاسم أو رقم الهاتف." : "Try searching with a different name or phone number."}
+                          </p>
+                        </div>
+                      ) : (
+                        filteredCustomers.map((c) => (
+                          <div
+                            key={c.id}
+                            onClick={() => handleSelectCustomer(c.id)}
+                            className="p-3 hover:bg-orange-50/70 transition-colors flex items-center justify-between gap-3 cursor-pointer text-xs group"
+                          >
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className="w-8 h-8 rounded-xl bg-orange-100 text-[#C45B2A] flex items-center justify-center font-black text-xs shrink-0 group-hover:bg-[#C45B2A] group-hover:text-white transition-colors">
+                                {(c.name || "C").charAt(0).toUpperCase()}
+                              </div>
+                              <div className="min-w-0">
+                                <p className="font-bold text-gray-900 text-xs truncate group-hover:text-[#C45B2A] transition-colors">{c.name}</p>
+                                {c.company && (
+                                  <p className="text-[11px] text-gray-500 font-medium truncate">{c.company}</p>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="flex items-center gap-2.5 shrink-0" dir="ltr">
+                              {c.phone && (
+                                <span className="font-mono text-[11px] text-gray-700 bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-200">
+                                  {c.phone}
+                                </span>
+                              )}
+                              <Badge variant="outline" className="text-[10px] font-bold text-gray-500 border-gray-200 hidden sm:inline-flex">
+                                {c.city || "Cairo"}
+                              </Badge>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="brand"
+                                className="h-7 text-[11px] px-2.5 rounded-lg bg-orange-50 text-[#C45B2A] hover:bg-[#C45B2A] hover:text-white border border-orange-200 group-hover:bg-[#C45B2A] group-hover:text-white cursor-pointer font-bold"
+                              >
+                                {isRTL ? "اختيار" : "Select"}
+                              </Button>
+                            </div>
+                          </div>
+                        ))
                       )}
                     </div>
-                    <Input
-                      type="tel"
-                      value={createForm.whatsapp}
-                      onChange={(e) => setCreateForm({ ...createForm, whatsapp: e.target.value })}
-                      placeholder="201012345678"
-                      className="text-xs font-mono"
-                      dir="ltr"
-                    />
                   </div>
+                )}
 
-                  <div>
-                    <label className="block text-xs font-bold text-gray-700 mb-1">
-                      {isRTL ? "البريد الإلكتروني" : "Email Address"}
-                    </label>
-                    <Input
-                      type="email"
-                      value={createForm.email}
-                      onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
-                      placeholder="client@company.com"
-                      className="text-xs"
-                      dir="ltr"
-                    />
-                  </div>
-                </div>
-
-                <div className="p-3 rounded-xl bg-orange-50/60 border border-orange-100 flex items-center justify-between gap-3 text-xs">
-                  <div className="flex items-center gap-2 text-orange-900 font-medium">
-                    <User className="w-4 h-4 text-[#C45B2A] shrink-0" />
-                    <span>{isRTL ? "يمكنك اختيار عميل مسجل من الأعلى لملء كامل البيانات فورياً." : "You can select an existing customer from the top dropdown."}</span>
-                  </div>
+                {/* Bottom Navigation Step Button */}
+                <div className="flex justify-end pt-2">
                   <Button
                     type="button"
                     size="sm"
-                    variant="ghost"
-                    onClick={() => setCreateTab("route")}
-                    className="text-xs font-bold text-[#C45B2A] hover:bg-orange-100/50"
+                    variant="brand"
+                    onClick={() => {
+                      if (!createForm.selectedCustomerId) {
+                        setCreateError(isRTL ? "يرجى اختيار عميل مسجل من القائمة أولاً للمتابعة" : "Please select a registered customer from the list first");
+                        return;
+                      }
+                      setCreateError(null);
+                      setCreateTab("route");
+                    }}
+                    className="text-xs font-bold bg-[#C45B2A] hover:bg-[#A8481B] text-white rounded-xl h-9.5 px-4 cursor-pointer"
                   >
                     <span>{isRTL ? "التالي: مسار الشحنة" : "Next: Route"}</span>
-                    <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
+                    <ArrowRight className={`w-3.5 h-3.5 ml-1.5 ${isRTL ? "rotate-180 mr-1.5 ml-0" : ""}`} />
                   </Button>
                 </div>
               </div>
@@ -3317,6 +3584,11 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                             <option value="Post/EMS (with USPS)">Post/EMS (with USPS)</option>
                             <option value="Air Cargo">Air Cargo</option>
                             <option value="Other">{isRTL ? "شركة شحن أخرى (Other Carrier)" : "Other Carrier"}</option>
+                            {MASTER_CARRIERS.map((c) => (
+                              <option key={c} value={c}>
+                                {c}
+                              </option>
+                            ))}
                           </select>
                         </div>
 
@@ -3427,198 +3699,6 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
         </DialogContent>
       </Dialog>
 
-      {/* ─── 7. DIRECT CLIENT PICKUP REQUEST MODAL (MATCHING LEGACY GOOGLE APPS SCRIPT) ─── */}
-      <Dialog open={pickupModalOpen} onOpenChange={setPickupModalOpen}>
-        <DialogContent
-          className="max-w-xl w-[95vw] sm:w-full space-y-4 text-start p-4 sm:p-6 bg-white max-h-[90vh] overflow-y-auto"
-          onClose={() => setPickupModalOpen(false)}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between gap-3 border-b border-gray-100 pb-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-800 flex items-center justify-center shrink-0 shadow-2xs">
-                <Truck className="w-5 h-5" />
-              </div>
-              <div>
-                <DialogTitle className="text-lg font-black text-gray-900 tracking-tight flex items-center gap-2">
-                  <span>{isRTL ? "تسجيل طلب بيك أب" : "Client Pickup Request"}</span>
-                  <Badge variant="success" size="sm" className="font-mono text-[10px]">
-                    {isRTL ? "استلام شحنة" : "Pickup"}
-                  </Badge>
-                </DialogTitle>
-                <DialogDescription className="text-xs text-gray-500 mt-0.5">
-                  {isRTL
-                    ? "تسجيل بيانات استلام الشحنة من مقر العميل وتعيين المندوب المسؤول"
-                    : "Consignment pickup registration form matching operational dispatch"}
-                </DialogDescription>
-              </div>
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmitPickup} className="space-y-3.5 pt-1 text-xs">
-            {/* 1. Operation Date */}
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">
-                {isRTL ? "تاريخ العملية" : "Operation Date"} <span className="text-rose-500">*</span>
-              </label>
-              <Input
-                type="date"
-                required
-                value={pickupDate}
-                onChange={(e) => setPickupDate(e.target.value)}
-                className="h-10 text-xs font-mono"
-              />
-            </div>
-
-            {/* 2. Customer Name (Dropdown + manual) */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  {isRTL ? "اسم العميل" : "Customer Name"} <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative flex items-center">
-                  <select
-                    value={pickupCustomerId}
-                    onChange={(e) => handleSelectPickupCustomer(e.target.value)}
-                    className="w-full h-10 rounded-xl border border-gray-300 bg-white text-xs font-bold text-gray-800 cursor-pointer appearance-none px-3"
-                  >
-                    <option value="">{isRTL ? "-- اختر عميل البيك أب --" : "-- Select Pickup Client --"}</option>
-                    {customers.map((c) => (
-                      <option key={c.id} value={c.id}>
-                        {c.company ? `${c.company} (${c.name})` : c.name}
-                      </option>
-                    ))}
-                    <option value="__other__">{isRTL ? "✍️ + كتابة اسم يدوي..." : "✍️ + Custom Name..."}</option>
-                  </select>
-                  <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
-                </div>
-                {pickupCustomerId === "__other__" && (
-                  <Input
-                    required
-                    value={pickupCustomerName}
-                    onChange={(e) => setPickupCustomerName(e.target.value)}
-                    placeholder={isRTL ? "اكتب اسم العميل يدوياً..." : "Enter customer name..."}
-                    className="h-9 text-xs mt-1.5"
-                  />
-                )}
-              </div>
-
-              {/* 3. Customer Phone */}
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  {isRTL ? "رقم تليفون العميل" : "Customer Phone"} <span className="text-rose-500">*</span>
-                </label>
-                <Input
-                  type="tel"
-                  required
-                  value={pickupCustomerPhone}
-                  onChange={(e) => setPickupCustomerPhone(e.target.value)}
-                  placeholder="010xxxxxxxx"
-                  className="h-10 text-xs font-mono"
-                  dir="ltr"
-                />
-              </div>
-            </div>
-
-            {/* 4. Shipment Type */}
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">
-                {isRTL ? "نوع الشحنة" : "Shipment Type / Cargo"} <span className="text-rose-500">*</span>
-              </label>
-              <Input
-                required
-                value={pickupShipmentType}
-                onChange={(e) => setPickupShipmentType(e.target.value)}
-                placeholder={isRTL ? "مثال: طرد ملابس، أجهزة إلكترونية، مستندات..." : "e.g. Garments, Electronics, Documents..."}
-                className="h-10 text-xs"
-              />
-            </div>
-
-            {/* 5. Pickup Address (منين) */}
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">
-                {isRTL ? "عنوان الاستلام (منين)" : "Pickup Address (Origin)"} <span className="text-rose-500">*</span>
-              </label>
-              <textarea
-                required
-                rows={2}
-                value={pickupAddress}
-                onChange={(e) => setPickupAddress(e.target.value)}
-                placeholder={isRTL ? "الشارع، المنطقة، رقم العقار، المعلم المميز..." : "Street, area, building, landmarks..."}
-                className="w-full p-2.5 rounded-xl border border-gray-300 bg-white text-xs text-gray-800 outline-none focus:border-emerald-600 focus:ring-1 focus:ring-emerald-500"
-              />
-            </div>
-
-            {/* 6. Destination (رايحة فين) */}
-            <div>
-              <label className="block text-xs font-bold text-gray-700 mb-1">
-                {isRTL ? "الوجهة (رايحة فين)" : "Delivery Destination"} <span className="text-rose-500">*</span>
-              </label>
-              <Input
-                required
-                value={pickupDestination}
-                onChange={(e) => setPickupDestination(e.target.value)}
-                placeholder={isRTL ? "مثال: الرياض - السعودية، دبي، الإسكندرية، القاهرة..." : "e.g. Riyadh, Dubai, Alexandria..."}
-                className="h-10 text-xs"
-              />
-            </div>
-
-            {/* 7. Courier & 8. Agent Name */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  {isRTL ? "المسؤول عن البيك أب (المندوب)" : "Pickup Courier / Responsible"}
-                </label>
-                <Input
-                  value={pickupCourierName}
-                  onChange={(e) => setPickupCourierName(e.target.value)}
-                  placeholder={isRTL ? "اسم المندوب أو السائق..." : "Courier or driver name..."}
-                  className="h-10 text-xs"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  {isRTL ? "اسم المسجل" : "Recorded By (Agent)"} <span className="text-rose-500">*</span>
-                </label>
-                <div className="relative flex items-center">
-                  <select
-                    value={pickupAgentName}
-                    onChange={(e) => setPickupAgentName(e.target.value)}
-                    className="w-full h-10 rounded-xl border border-gray-300 bg-white text-xs font-bold text-gray-800 cursor-pointer appearance-none px-3"
-                  >
-                    {MASTER_AGENTS.map((ag) => (
-                      <option key={ag} value={ag}>{ag}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
-                </div>
-              </div>
-            </div>
-
-            {/* Submit Button */}
-            <div className="pt-3 border-t border-gray-100 flex flex-col gap-2">
-              <Button
-                type="submit"
-                disabled={pickupSubmitting}
-                className="w-full h-12 rounded-xl text-sm font-black bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-2 shadow-md cursor-pointer transition-all active:scale-[0.99]"
-              >
-                {pickupSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>{isRTL ? "جارٍ حفظ طلب البيك أب..." : "Saving..."}</span>
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle2 className="w-4 h-4" />
-                    <span>{isRTL ? "حفظ طلب البيك أب" : "Save Pickup Request"}</span>
-                  </>
-                )}
-              </Button>
-            </div>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
