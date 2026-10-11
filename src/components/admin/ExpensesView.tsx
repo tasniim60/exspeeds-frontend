@@ -74,7 +74,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
   const [payingAccount, setPayingAccount] = useState<string>(
     MASTER_FINANCIAL_ACCOUNTS[0] || "CIB account"
   );
-  const [recorder, setRecorder] = useState<string>(MASTER_AGENTS[0] || "مصطفي");
+  const [recorder, setRecorder] = useState<string>(MASTER_AGENTS[0] || "Admin");
   const [paymentDate, setPaymentDate] = useState<string>(
     new Date().toISOString().split("T")[0]
   );
@@ -307,7 +307,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   {isRTL ? "إجمالي المصروفات العامة" : "Total Operating Outflow"}
                 </p>
-                <h3 className="text-2xl font-black text-slate-900 mt-1 font-mono">
+                <h3 className="text-start text-2xl font-black text-slate-900 mt-1 font-mono" dir="ltr">
                   {formatCurrency(summary.totalEgp, "EGP")}
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
@@ -328,7 +328,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   {isRTL ? "عدد حركات الصرف" : "Disbursement Vouchers"}
                 </p>
-                <h3 className="text-2xl font-black text-slate-900 mt-1 font-mono">
+                <h3 className="text-start text-2xl font-black text-slate-900 mt-1 font-mono" dir="ltr">
                   {summary.count}
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
@@ -349,7 +349,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   {isRTL ? "متوسط قيمة السند" : "Average Voucher Value"}
                 </p>
-                <h3 className="text-2xl font-black text-[#C45B2A] mt-1 font-mono">
+                <h3 className="text-start text-2xl font-black text-[#C45B2A] mt-1 font-mono" dir="ltr">
                   {formatCurrency(summary.avg, "EGP")}
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
@@ -370,7 +370,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   {isRTL ? "المصروفات بالدولار" : "USD Expenses"}
                 </p>
-                <h3 className="text-2xl font-black text-emerald-700 mt-1 font-mono">
+                <h3 className="text-start text-2xl font-black text-emerald-700 mt-1 font-mono" dir="ltr">
                   ${summary.totalUsd.toLocaleString()}
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
@@ -393,11 +393,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
             <div className="flex flex-1 flex-wrap items-center gap-2.5">
               {/* Search Box */}
               <div className="relative flex-1 min-w-[240px] sm:min-w-[280px] lg:max-w-md">
-                <Search
-                  className={`absolute top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none ${
-                    isRTL ? "right-3.5" : "left-3.5"
-                  }`}
-                />
+                <Search className="absolute top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none start-3.5" />
                 <Input
                   type="text"
                   value={searchQuery}
@@ -407,17 +403,13 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
                       ? "بحث في البنود، السند، الخزينة، المسؤول، أو الملاحظات..."
                       : "Search expense item, receipt, vault, recorder, notes..."
                   }
-                  className={`h-10 text-xs sm:text-sm bg-slate-50/70 hover:bg-slate-50 focus:bg-white border-slate-200 focus:border-[#C45B2A] rounded-xl transition-all shadow-2xs ${
-                    isRTL ? "pr-10 pl-9 text-right" : "pl-10 pr-9 text-left"
-                  }`}
+                  className="h-10 text-xs sm:text-sm bg-slate-50/70 hover:bg-slate-50 focus:bg-white border-slate-200 focus:border-[#C45B2A] rounded-xl transition-all shadow-2xs ps-10 pe-9 text-start"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery("")}
-                    className={`absolute top-1/2 -translate-y-1/2 p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer ${
-                      isRTL ? "left-2.5" : "right-2.5"
-                    }`}
+                    className="absolute top-1/2 -translate-y-1/2 p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 transition-colors cursor-pointer end-2.5"
                     title={isRTL ? "مسح البحث" : "Clear search"}
                   >
                     <X className="h-3.5 w-3.5" />
@@ -583,7 +575,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
                 filteredExpenses.map((e) => (
                   <TableRow key={e.id} className="hover:bg-slate-50/80 transition-colors">
                     <TableCell className="text-xs font-mono text-slate-600">
-                      {e.date}
+                      <span dir="ltr">{e.date}</span>
                     </TableCell>
 
                     <TableCell className="text-xs font-bold text-slate-900">
@@ -600,7 +592,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
 
                     <TableCell className="text-xs font-semibold text-slate-800">
                       <Badge variant="outline" className="text-[11px] font-mono bg-slate-50 text-slate-700 border-slate-200">
-                        {e.payingAccount || "CIB account"}
+                        <span dir="ltr">{e.payingAccount || "CIB account"}</span>
                       </Badge>
                     </TableCell>
 
@@ -609,15 +601,15 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
                     </TableCell>
 
                     <TableCell className="text-xs font-mono text-slate-500">
-                      {e.receiptNumber || "-"}
+                      <span dir="ltr">{e.receiptNumber || "-"}</span>
                     </TableCell>
 
                     <TableCell className="text-xs text-slate-600">
-                      {e.paymentMethod || isRTL ? "نقدي (كاش)" : "Cash"}
+                      {e.paymentMethod || (isRTL ? "نقدي (كاش)" : "Cash")}
                     </TableCell>
 
                     <TableCell className="text-end font-mono font-bold text-xs text-rose-600">
-                      {formatCurrency(e.amount, e.currency || "EGP")}
+                      <span dir="ltr">{formatCurrency(e.amount, e.currency || "EGP")}</span>
                     </TableCell>
 
                     <TableCell className="text-center py-2.5">
@@ -643,7 +635,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
 
       {/* Add Expense Modal */}
       <Dialog open={addExpenseModalOpen} onOpenChange={setAddExpenseModalOpen}>
-        <DialogContent className="sm:max-w-lg bg-white rounded-2xl p-6">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto bg-white rounded-3xl p-6 text-start">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
               <div className="p-2 rounded-xl bg-orange-100 text-[#C45B2A]">
@@ -651,7 +643,7 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
               </div>
               <span>{isRTL ? "تسجيل مصروف عام جديد" : "Record General Operating Expense"}</span>
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-500">
+            <DialogDescription className="text-xs text-slate-500 text-start">
               {isRTL
                 ? "توثيق مصروف تشغيلي وخصم قيمته تلقائيًا من الخزينة المحددة"
                 : "Record operational expense and disburse from the selected vault"}
@@ -716,8 +708,8 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
                   onChange={(e) => setCurrency(e.target.value as "EGP" | "USD")}
                   className="w-full h-10 px-3 rounded-xl border border-slate-300 text-xs bg-white font-medium focus:outline-none focus:ring-1 focus:ring-[#C45B2A]"
                 >
-                  <option value="EGP">EGP (جنيه مصري)</option>
-                  <option value="USD">USD (دولار أمريكي)</option>
+                  <option value="EGP">EGP</option>
+                  <option value="USD">USD</option>
                 </select>
               </div>
             </div>
@@ -834,16 +826,24 @@ export const ExpensesView: React.FC<ExpensesViewProps> = ({
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={Boolean(deleteTarget)} onOpenChange={(open) => !open && setDeleteTarget(null)}>
-        <DialogContent className="max-w-md bg-white rounded-2xl p-6 text-start">
+        <DialogContent className="max-w-md bg-white rounded-3xl p-6 text-start">
           <DialogHeader>
             <DialogTitle className="text-base font-black text-rose-600 flex items-center gap-2">
               <Trash2 className="w-5 h-5" />
               <span>{isRTL ? "تأكيد حذف المصروف" : "Confirm Delete Expense"}</span>
             </DialogTitle>
             <DialogDescription className="text-xs text-slate-600 pt-2 leading-relaxed">
-              {isRTL
-                ? `هل أنت متأكد من حذف سند المصروف "${deleteTarget?.title}" بمبلغ ${deleteTarget?.amount} ${deleteTarget?.currency}؟`
-                : `Are you sure you want to delete expense "${deleteTarget?.title}" for ${deleteTarget?.amount} ${deleteTarget?.currency}?`}
+              {isRTL ? (
+                <>
+                  هل أنت متأكد من حذف سند المصروف &quot;{deleteTarget?.title}&quot; بمبلغ{" "}
+                  <span dir="ltr" className="font-mono font-bold text-slate-800">
+                    {deleteTarget?.amount} {deleteTarget?.currency}
+                  </span>
+                  ؟
+                </>
+              ) : (
+                `Are you sure you want to delete expense "${deleteTarget?.title}" for ${deleteTarget?.amount} ${deleteTarget?.currency}?`
+              )}
             </DialogDescription>
           </DialogHeader>
 

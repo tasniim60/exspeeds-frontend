@@ -86,9 +86,21 @@ export async function GET() {
     if (user.role !== "admin") {
       const userEmail = (user.email || "").toLowerCase().trim();
       const userName = (user.name || "").toLowerCase().trim();
+      const userCompany = ((user as any).company || "").toLowerCase().trim();
+
       const filtered = shipments.filter((s) => {
-        const comp = (s.company || s.senderName || "").toLowerCase().trim();
-        return comp.includes(userName) || comp.includes(userEmail);
+        const account = (s.account || "").toLowerCase();
+        const comp = (s.company || "").toLowerCase();
+        const sender = (s.senderName || "").toLowerCase();
+        const receiver = (s.receiverName || "").toLowerCase();
+
+        const matchesAccount = userName && account.includes(userName);
+        const matchesCompany = userCompany && (account.includes(userCompany) || comp.includes(userCompany));
+        const matchesEmail = userEmail && (account.includes(userEmail) || comp.includes(userEmail));
+        const matchesSenderReceiver = (userName && (sender.includes(userName) || receiver.includes(userName))) ||
+                                      (userEmail && (sender.includes(userEmail) || receiver.includes(userEmail)));
+
+        return matchesAccount || matchesCompany || matchesEmail || matchesSenderReceiver;
       });
       return NextResponse.json({ success: true, data: filtered });
     }

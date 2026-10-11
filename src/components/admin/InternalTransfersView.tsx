@@ -5,20 +5,16 @@ import {
   ArrowRightLeft,
   Plus,
   Search,
-  Filter,
   Calendar,
   User,
-  CreditCard,
   Receipt,
   Trash2,
   AlertCircle,
-  Wallet,
-  Landmark,
   ArrowRight,
   TrendingUp,
   CheckCircle2,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -66,7 +62,7 @@ export const InternalTransfersView: React.FC<InternalTransfersViewProps> = ({
   // Modal State: Record Internal Transfer
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [date, setDate] = useState<string>(new Date().toISOString().split("T")[0]);
-  const [transferOfficer, setTransferOfficer] = useState<string>(MASTER_AGENTS[0] || "مصطفي");
+  const [transferOfficer, setTransferOfficer] = useState<string>(MASTER_AGENTS[0] || "Admin");
   const [fromAccount, setFromAccount] = useState<string>(
     MASTER_FINANCIAL_ACCOUNTS[0] || "CIB account"
   );
@@ -78,7 +74,7 @@ export const InternalTransfersView: React.FC<InternalTransfersViewProps> = ({
   const [fee, setFee] = useState<string>("0");
   const [paymentMethod, setPaymentMethod] = useState<string>("تحويل بنكي فوري / إنستاباي");
   const [referenceNumber, setReferenceNumber] = useState<string>("");
-  const [recorder, setRecorder] = useState<string>(MASTER_AGENTS[0] || "مصطفي");
+  const [recorder, setRecorder] = useState<string>(MASTER_AGENTS[0] || "Admin");
   const [notes, setNotes] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -205,7 +201,7 @@ export const InternalTransfersView: React.FC<InternalTransfersViewProps> = ({
           <CardContent className="p-4 sm:p-5 flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold text-gray-500 uppercase">{isRTL ? "إجمالي حجم المناقلات" : "Total Transfers Volume"}</p>
-              <p className="text-xl sm:text-2xl font-black text-cyan-800">{formatCurrency(kpis.totalVolumeEgp, "EGP")}</p>
+              <p className="text-start text-xl sm:text-2xl font-black text-cyan-800 font-mono" dir="ltr">{formatCurrency(kpis.totalVolumeEgp, "EGP")}</p>
             </div>
             <div className="w-11 h-11 rounded-xl bg-cyan-50 text-cyan-800 flex items-center justify-center border border-cyan-200">
               <ArrowRightLeft className="w-5 h-5" />
@@ -217,7 +213,7 @@ export const InternalTransfersView: React.FC<InternalTransfersViewProps> = ({
           <CardContent className="p-4 sm:p-5 flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold text-gray-500 uppercase">{isRTL ? "مناقلات الشهر الحالي" : "This Month"}</p>
-              <p className="text-xl sm:text-2xl font-black text-gray-900">{formatCurrency(kpis.thisMonthTotal, "EGP")}</p>
+              <p className="text-start text-xl sm:text-2xl font-black text-gray-900 font-mono" dir="ltr">{formatCurrency(kpis.thisMonthTotal, "EGP")}</p>
             </div>
             <div className="w-11 h-11 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center border border-teal-200">
               <TrendingUp className="w-5 h-5" />
@@ -229,7 +225,7 @@ export const InternalTransfersView: React.FC<InternalTransfersViewProps> = ({
           <CardContent className="p-4 sm:p-5 flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold text-gray-500 uppercase">{isRTL ? "عدد عمليات المناقلة" : "Transfers Count"}</p>
-              <p className="text-2xl font-black text-gray-900">{kpis.count}</p>
+              <p className="text-start text-2xl font-black text-gray-900 font-mono" dir="ltr">{kpis.count}</p>
             </div>
             <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center border border-blue-200">
               <Receipt className="w-5 h-5" />
@@ -243,12 +239,12 @@ export const InternalTransfersView: React.FC<InternalTransfersViewProps> = ({
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <div className="relative flex-1 w-full">
-              <Search className={`w-4 h-4 text-gray-400 absolute top-1/2 -translate-y-1/2 ${isRTL ? "right-3" : "left-3"}`} />
+              <Search className="w-4 h-4 text-gray-400 absolute top-1/2 -translate-y-1/2 start-3" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={isRTL ? "بحث باسم الحساب، المسؤول، رقم المرجع، أو الملاحظات..." : "Search account, officer, ref..."}
-                className={`h-10 rounded-xl bg-gray-50/60 border-gray-200 text-xs sm:text-sm ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+                className="h-10 rounded-xl bg-gray-50/60 border-gray-200 text-xs sm:text-sm ps-9 pe-3 text-start"
               />
             </div>
 
@@ -289,22 +285,22 @@ export const InternalTransfersView: React.FC<InternalTransfersViewProps> = ({
           <Table>
             <TableHeader className="bg-gray-50/90 border-b border-gray-200">
               <TableRow>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "التاريخ / المرجع" : "Date / Ref"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "مسار المناقلة (من ⬅ إلى)" : "Transfer Route"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "المبلغ المحول" : "Amount"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "المسؤول المحول" : "Transfer Officer"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "طريقة التحويل / البيان" : "Method & Notes"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "المسجل" : "Agent"}
                 </TableHead>
                 <TableHead className="text-center text-xs font-bold text-gray-700">
@@ -329,33 +325,33 @@ export const InternalTransfersView: React.FC<InternalTransfersViewProps> = ({
                 filteredList.map((t) => (
                   <TableRow key={t.id} className="hover:bg-cyan-50/20 transition-colors">
                     <TableCell className="text-xs text-gray-700 font-mono">
-                      <div className="font-bold text-gray-900">{t.referenceNumber || t.id}</div>
-                      <div className="flex items-center gap-1 text-[11px] text-gray-500 mt-0.5">
+                      <div className="font-bold text-gray-900" dir="ltr">{t.referenceNumber || t.id}</div>
+                      <div className="flex rtl:justify-end ltr:justify-start items-center gap-1 text-[11px] text-gray-500 mt-0.5">
                         <Calendar className="w-3 h-3 text-gray-400" />
-                        <span>{t.date}</span>
+                        <span dir="ltr">{t.date}</span>
                       </div>
                     </TableCell>
 
                     <TableCell>
                       <div className="flex items-center gap-2 text-xs">
-                        <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                        <span className="font-bold text-slate-800 bg-slate-100 px-2 py-0.5 rounded border border-slate-200" dir="ltr">
                           {t.fromAccount}
                         </span>
-                        <ArrowRight className={`w-3.5 h-3.5 text-cyan-700 shrink-0 ${isRTL ? "rotate-180" : ""}`} />
-                        <span className="font-bold text-cyan-900 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
+                        <ArrowRight className="w-3.5 h-3.5 text-cyan-700 shrink-0 rtl:rotate-180" />
+                        <span className="font-bold text-cyan-900 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200" dir="ltr">
                           {t.toAccount}
                         </span>
                       </div>
                     </TableCell>
 
                     <TableCell>
-                      <span className="text-sm font-black text-cyan-900 font-mono">
+                      <span className="text-sm font-black text-cyan-900 font-mono inline-block" dir="ltr">
                         {formatCurrency(t.amount, t.currency || "EGP")}
                       </span>
                       {t.fee && t.fee > 0 ? (
                         <div className="text-[10px] text-red-600 font-semibold mt-0.5">
-                          {isRTL ? "رسوم: " : "Fee: "}
-                          {formatCurrency(t.fee, t.currency || "EGP")}
+                          <span>{isRTL ? "رسوم: " : "Fee: "}</span>
+                          <span dir="ltr" className="font-mono">{formatCurrency(t.fee, t.currency || "EGP")}</span>
                         </div>
                       ) : null}
                     </TableCell>
@@ -363,7 +359,7 @@ export const InternalTransfersView: React.FC<InternalTransfersViewProps> = ({
                     <TableCell>
                       <div className="font-bold text-gray-900 text-xs sm:text-sm flex items-center gap-1">
                         <User className="w-3.5 h-3.5 text-cyan-700" />
-                        <span>{t.transferOfficer || "مصطفي"}</span>
+                        <span>{t.transferOfficer || "Admin"}</span>
                       </div>
                     </TableCell>
 
@@ -374,7 +370,7 @@ export const InternalTransfersView: React.FC<InternalTransfersViewProps> = ({
 
                     <TableCell>
                       <span className="text-xs font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
-                        {t.recordedBy || "مصطفي"}
+                        {t.recordedBy || "Admin"}
                       </span>
                     </TableCell>
 
@@ -400,7 +396,7 @@ export const InternalTransfersView: React.FC<InternalTransfersViewProps> = ({
 
       {/* Modal: Add Internal Transfer */}
       <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
-        <DialogContent className="sm:max-w-lg rounded-3xl p-6">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl p-6 text-start">
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-gray-900 flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-cyan-100 text-cyan-900 flex items-center justify-center">
@@ -508,8 +504,8 @@ export const InternalTransfersView: React.FC<InternalTransfersViewProps> = ({
                   onChange={(e) => setCurrency(e.target.value as "EGP" | "USD")}
                   className="w-full h-9 px-2.5 bg-white border border-gray-300 rounded-lg text-xs font-bold outline-none"
                 >
-                  <option value="EGP">EGP (جنيه مصري)</option>
-                  <option value="USD">USD (دولار)</option>
+                  <option value="EGP">EGP</option>
+                  <option value="USD">USD</option>
                 </select>
               </div>
             </div>
@@ -575,9 +571,17 @@ export const InternalTransfersView: React.FC<InternalTransfersViewProps> = ({
             {isRTL ? "تأكيد حذف التحويل الداخلي" : "Confirm Delete"}
           </DialogTitle>
           <DialogDescription className="text-xs text-gray-500">
-            {isRTL
-              ? `هل أنت متأكد من حذف التحويل الداخلي بمبلغ ${deleteTarget?.amount} ${deleteTarget?.currency} من ${deleteTarget?.fromAccount} إلى ${deleteTarget?.toAccount}؟`
-              : `Delete transfer ${deleteTarget?.referenceNumber}?`}
+            {isRTL ? (
+              <>
+                هل أنت متأكد من حذف التحويل الداخلي بمبلغ{" "}
+                <span dir="ltr" className="font-mono font-bold text-gray-800">
+                  {deleteTarget?.amount} {deleteTarget?.currency || "EGP"}
+                </span>{" "}
+                من <span dir="ltr">{deleteTarget?.fromAccount}</span> إلى <span dir="ltr">{deleteTarget?.toAccount}</span>؟
+              </>
+            ) : (
+              `Delete transfer ${deleteTarget?.referenceNumber}?`
+            )}
           </DialogDescription>
           <DialogFooter className="mt-4 flex gap-2 sm:justify-center">
             <Button variant="outline" onClick={() => setDeleteTarget(null)} className="h-10 rounded-xl">

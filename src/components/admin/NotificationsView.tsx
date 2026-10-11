@@ -151,7 +151,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
               })}
             </div>
 
-            <div className="flex items-center gap-2 text-xs text-gray-500">
+            <div className="flex items-center gap-2 text-xs text-gray-500 font-bold" dir="ltr">
               <span>{isRTL ? "غير مقروءة:" : "Unread:"} {notifications.filter((n) => !n.isRead).length}</span>
             </div>
           </div>
@@ -161,13 +161,13 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
             {filteredNotifications.map((notif) => (
               <div
                 key={notif.id}
-                className={`p-4 rounded-xl border shadow-2xs transition-all flex items-start justify-between gap-4 ${getSeverityBg(
+                className={`p-4 rounded-2xl border shadow-2xs transition-all flex items-start justify-between gap-4 ${getSeverityBg(
                   notif.severity,
                   notif.isRead
                 )}`}
               >
                 <div className="flex items-start gap-3 flex-1 text-start">
-                  <div className="mt-0.5 shrink-0 p-1.5 rounded-lg bg-white shadow-2xs border border-gray-100">
+                  <div className="mt-0.5 shrink-0 p-1.5 rounded-xl bg-white shadow-2xs border border-gray-100">
                     {getSeverityIcon(notif.severity)}
                   </div>
                   <div className="space-y-1 text-start">
@@ -176,7 +176,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
                       {!notif.isRead && (
                         <span className="w-1.5 h-1.5 rounded-full bg-[#C45B2A] shrink-0" />
                       )}
-                      <span className="font-mono text-[10px] text-gray-400 ms-auto sm:ms-2 ltr-preserve">
+                      <span className="font-mono text-[10px] text-gray-400 ms-auto sm:ms-2 ltr-preserve" dir="ltr">
                         {notif.timestamp}
                       </span>
                     </div>
@@ -195,14 +195,14 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
                       onMarkRead(notif.id);
                       onNavigateTab(notif.targetTab, notif.referenceId);
                     }}
-                    className="text-xs font-bold cursor-pointer"
+                    className="text-xs font-bold cursor-pointer rounded-xl h-8 px-3"
                   >
                     <span>{isRTL ? "معالجة" : "Resolve"}</span>
-                    <ArrowRight className={`h-3 w-3 ${isRTL ? "rotate-180" : ""}`} />
+                    <ArrowRight className="h-3 w-3 rtl:rotate-180" />
                   </Button>
                   <button
                     onClick={() => onDeleteNotification(notif.id)}
-                    className="h-8 w-8 inline-flex items-center justify-center rounded-lg text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200/90 hover:border-rose-600 transition-all cursor-pointer shadow-2xs shrink-0"
+                    className="h-8 w-8 inline-flex items-center justify-center rounded-xl text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 border border-rose-200/90 hover:border-rose-600 transition-all cursor-pointer shadow-2xs shrink-0"
                     title={t("common.delete")}
                     aria-label={t("common.delete")}
                   >
@@ -213,7 +213,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
             ))}
 
             {filteredNotifications.length === 0 && (
-              <div className="text-center py-12 bg-white rounded-xl border border-gray-200 text-gray-500 text-sm">
+              <div className="text-center py-12 bg-white rounded-2xl border border-gray-200 text-gray-500 text-sm">
                 {isRTL ? "لا توجد إشعارات أو تنبيهات مطابقة لهذا الفلتر." : "No active notifications matching this filter."}
               </div>
             )}
@@ -222,7 +222,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
 
         {/* Right 1 Col: Alert Channel Preferences */}
         <div className="space-y-4 text-start">
-          <Card className="shadow-2xs">
+          <Card className="shadow-2xs rounded-2xl">
             <CardHeader className="p-5 pb-3 text-start">
               <CardTitle className="text-base font-bold text-gray-900 flex items-center gap-2">
                 <Sliders className="h-4 w-4 text-[#C45B2A]" />
@@ -234,7 +234,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
             </CardHeader>
             <CardContent className="p-5 pt-0 space-y-4 text-xs">
               {/* Toggle 1: SMS */}
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
                 <div>
                   <p className="font-bold text-gray-900">{isRTL ? "رسائل SMS للسائقين والعمليات" : "SMS Driver & Ops Alerts"}</p>
                   <p className="text-[11px] text-gray-500">{isRTL ? "إشعارات فورية عند توقف الجمارك أو التأخير" : "Instant SMS on customs hold / delay"}</p>
@@ -243,7 +243,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
               </div>
 
               {/* Toggle 2: Email Digest */}
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
                 <div>
                   <p className="font-bold text-gray-900">{isRTL ? "تقرير البريد الإلكتروني اليومي" : "Daily Executive Email Digest"}</p>
                   <p className="text-[11px] text-gray-500">{isRTL ? "يُرسل في الساعة 08:00 صباحاً مع ملخص الأرباح" : "Sent at 08:00 AM with P&L summary"}</p>
@@ -252,7 +252,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
               </div>
 
               {/* Toggle 3: Webhook API */}
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
                 <div>
                   <p className="font-bold text-gray-900">{isRTL ? "إرسال Webhook فوري" : "Real-Time Webhook Dispatch"}</p>
                   <p className="text-[11px] text-gray-500">{isRTL ? "إرسال JSON فوري عند مسح الباركود" : "JSON push payload on AWB scan"}</p>
@@ -261,7 +261,7 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
               </div>
 
               {/* Toggle 4: Telegram */}
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
                 <div>
                   <p className="font-bold text-gray-900">{isRTL ? "إشعارات بوت تليجرام" : "Telegram Bot Notifications"}</p>
                   <p className="text-[11px] text-gray-500">{isRTL ? "إرسال إلى @XSPEED_Ops_Bot" : "Push to @XSPEED_Ops_Bot"}</p>
@@ -278,12 +278,13 @@ export const NotificationsView: React.FC<NotificationsViewProps> = ({
                   value={webhookUrl}
                   onChange={(e) => setWebhookUrl(e.target.value)}
                   className="font-mono text-xs ltr-preserve"
+                  dir="ltr"
                 />
                 <Button
                   size="xs"
                   variant="outline"
                   onClick={() => alert(isRTL ? "تم إرسال اختبار تجريبي بنجاح: 200 OK" : "Test ping sent to webhook endpoint: 200 OK")}
-                  className="w-full text-xs font-semibold mt-1 cursor-pointer"
+                  className="w-full text-xs font-semibold mt-1 cursor-pointer rounded-xl h-9"
                 >
                   <Send className="h-3 w-3" />
                   <span>{isRTL ? "إرسال حزمة تجريبية للـ Webhook" : "Send Test Webhook Payload"}</span>

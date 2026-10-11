@@ -37,7 +37,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Sheet, SheetHeader, SheetTitle, SheetDescription, SheetContent, SheetFooter } from "@/components/ui/sheet";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { BlogPost } from "@/lib/adminData";
 import { useLanguage } from "@/context/LanguageContext";
@@ -506,7 +506,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
   return (
     <div className="space-y-6 text-start">
       {/* ── Top Knowledge Hub Stats ── */}
-      <div className=" grid grid-cols-2 lg:grid-cols-4 gap-3.5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3.5">
         <Card className="text-start p-4 bg-white border border-gray-200/90 shadow-2xs hover:shadow-xs transition-shadow space-y-1.5">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
@@ -516,17 +516,17 @@ export const PostsView: React.FC<PostsViewProps> = ({
               <FileCode2 className="w-4 h-4" />
             </div>
           </div>
-          <div className="text-start flex items-baseline gap-1.5" >
+          <div className="text-start flex ltr:justify-start rtl:justify-end items-baseline gap-1.5" dir="ltr">
             <span className="text-2xl font-black font-mono text-gray-900">{posts.length}</span>
             <span className="text-xs font-bold text-gray-500">{isRTL ? "مقال" : "Posts"}</span>
           </div>
-          <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500 font-medium">
+          <div className="pt-2 border-t border-gray-100 flex items-baseline gap-2 justify-start text-[11px] text-gray-500 font-medium">
             <span>{isRTL ? "الحالة:" : "Status:"}</span>
             <span className="text-emerald-700 font-bold">{isRTL ? "منشور ومفهرس" : "Indexed"}</span>
           </div>
         </Card>
 
-        <Card className="p-4 bg-emerald-50/60 border border-emerald-200 shadow-2xs hover:shadow-xs transition-shadow space-y-1.5">
+        <Card className="p-4 bg-emerald-50/60 border border-emerald-200 shadow-2xs hover:shadow-xs transition-shadow space-y-1.5 text-start">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-emerald-900 uppercase tracking-wider">
               {isRTL ? "متوسط نتيجة SEO" : "Average SEO Score"}
@@ -535,7 +535,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
-          <div className="flex items-baseline gap-1.5" >
+          <div className="flex items-baseline rtl:justify-end ltr:justify-start gap-1.5" dir="ltr">
             <span className="text-2xl font-black font-mono text-emerald-800">
               {posts.length > 0
                 ? Math.round(posts.reduce((acc, p) => acc + (p?.seoScore || 0), 0) / posts.length)
@@ -551,7 +551,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
           </div>
         </Card>
 
-        <Card className="p-4 bg-white border border-gray-200/90 shadow-2xs hover:shadow-xs transition-shadow space-y-1.5">
+        <Card className="p-4 bg-white border border-gray-200/90 shadow-2xs hover:shadow-xs transition-shadow space-y-1.5 text-start">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
               {isRTL ? "إجمالي قراء المقالات" : "Total Readers"}
@@ -560,19 +560,21 @@ export const PostsView: React.FC<PostsViewProps> = ({
               <Eye className="w-4 h-4" />
             </div>
           </div>
-          <div className="flex items-baseline gap-1.5" >
+          <div className="flex items-baseline ltr:justify-start rtl:justify-end gap-1.5" dir="ltr">
             <span className="text-2xl font-black font-mono text-gray-900">
-              {posts.reduce((acc, p) => acc + (p?.views || 0), 0).toLocaleString()}
+              {posts.reduce((acc, p) => acc + (p?.views || 0), 0).toLocaleString("en-US")}
             </span>
             <span className="text-xs font-bold text-gray-500">{isRTL ? "قارئ" : "Views"}</span>
           </div>
-          <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500 font-medium">
+          <div className="pt-2 border-t border-gray-100 flex items-center gap-2 justify-start text-[11px] text-gray-500 font-medium">
             <span>{isRTL ? "معدل الزيارات:" : "Traffic Rate:"}</span>
-            <span className="text-indigo-600 font-bold">+{Math.round(posts.reduce((acc, p) => acc + (p?.views || 0), 0) / (posts.length || 1))} / مقال</span>
+            <span className="text-indigo-600 font-bold" dir="ltr">
+              +{Math.round(posts.reduce((acc, p) => acc + (p?.views || 0), 0) / (posts.length || 1))} / {isRTL ? "مقال" : "post"}
+            </span>
           </div>
         </Card>
 
-        <Card className="p-4 bg-white border border-gray-200/90 shadow-2xs hover:shadow-xs transition-shadow space-y-1.5">
+        <Card className="p-4 bg-white border border-gray-200/90 shadow-2xs hover:shadow-xs transition-shadow space-y-1.5 text-start">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
               {isRTL ? "حالة المزامنة" : "Sync Status"}
@@ -587,8 +589,8 @@ export const PostsView: React.FC<PostsViewProps> = ({
               {isRTL ? "متصل ونشط" : "Live & Connected"}
             </span>
           </div>
-          <div className="pt-2 border-t border-gray-100 flex items-center justify-between text-[11px] text-gray-500 font-medium">
-            <span>{isRTL ? "النظام:" : "Engine:"}</span>
+          <div className="pt-2 border-t border-gray-100 flex items-center justify-start gap-2 text-[11px] text-gray-500 font-medium">
+            <span>{isRTL ? "النظام: " : "Engine: "}</span>
             <span className="font-mono text-gray-700 font-bold">Next.js + WP DB</span>
           </div>
         </Card>
@@ -624,7 +626,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
                   </span>
                 </span>
                 <span className="font-mono text-[10px] text-indigo-700" dir="ltr">
-                  {deeplUsage.character_count.toLocaleString()} / {deeplUsage.character_limit.toLocaleString()} chars
+                  {deeplUsage.character_count.toLocaleString("en-US")} / {deeplUsage.character_limit.toLocaleString("en-US")} chars
                 </span>
               </div>
             </div>
@@ -664,14 +666,12 @@ export const PostsView: React.FC<PostsViewProps> = ({
           </div>
 
           <div className="relative">
-            <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400`} />
+            <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
             <Input
               placeholder={isRTL ? "بحث في المقالات، الكاتب، الكلمات..." : "Search posts, author, keywords..."}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className={`text-xs w-56 sm:w-64 h-9.5 rounded-xl border-gray-200 bg-gray-50/70 focus:bg-white transition-all ${
-                isRTL ? "pr-8 pl-3 text-right" : "pl-8 pr-3 text-left"
-              }`}
+              className="text-xs w-56 sm:w-64 h-9.5 rounded-xl border-gray-200 bg-gray-50/70 focus:bg-white transition-all ps-8.5 pe-3 text-start"
             />
           </div>
 
@@ -714,7 +714,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
                 <TableHead className="text-xs font-bold text-gray-600 text-start py-3.5 px-4">
                   {isRTL ? "تاريخ النشر" : "Date"}
                 </TableHead>
-                <TableHead className="text-end text-xs font-bold text-gray-600 py-3.5 px-4">
+                <TableHead className="text-center text-xs font-bold text-gray-600 py-3.5 px-4">
                   {isRTL ? "الإجراءات" : "Actions"}
                 </TableHead>
               </TableRow>
@@ -818,7 +818,7 @@ export const PostsView: React.FC<PostsViewProps> = ({
                     </TableCell>
 
                     <TableCell className="py-3 px-4">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5" dir="ltr">
                         <span
                           className={`font-mono text-xs font-bold px-2 py-0.5 rounded-lg ${
                             (post.seoScore || 0) >= 80
@@ -833,8 +833,8 @@ export const PostsView: React.FC<PostsViewProps> = ({
                       </div>
                     </TableCell>
 
-                    <TableCell className="font-mono text-xs text-gray-700 font-semibold py-3 px-4">
-                      {(post.views || 0).toLocaleString()}
+                    <TableCell className="font-mono text-xs text-gray-700 font-semibold py-3 px-4" dir="ltr">
+                      {(post.views || 0).toLocaleString("en-US")}
                     </TableCell>
 
                     <TableCell className="text-xs text-gray-500 font-medium py-3 px-4 whitespace-nowrap">
@@ -842,17 +842,17 @@ export const PostsView: React.FC<PostsViewProps> = ({
                         const d = new Date(post.date);
                         if (!isNaN(d.getTime())) {
                           return (
-                            <div className="flex flex-col">
+                            <div className="flex flex-col items-start">
                               <span className="font-semibold text-gray-800">
-                                {d.toLocaleDateString(isRTL ? "ar-EG" : "en-US", {
+                                {d.toLocaleDateString(isRTL ? "ar-EG-u-nu-latn" : "en-US", {
                                   year: "numeric",
                                   month: "short",
                                   day: "numeric",
                                 })}
                               </span>
-                              <span className="text-[10px] text-gray-500 font-mono flex items-center gap-1">
-                                <Clock className="w-2.5 h-2.5 text-orange-400" />
-                                {d.toLocaleTimeString(isRTL ? "ar-EG" : "en-US", {
+                              <span className="text-[10px] text-gray-500 font-mono flex items-center gap-1" dir="ltr">
+                                <Clock className="w-2.5 h-2.5 text-orange-400 shrink-0" />
+                                {d.toLocaleTimeString(isRTL ? "ar-EG-u-nu-latn" : "en-US", {
                                   hour: "2-digit",
                                   minute: "2-digit",
                                 })}
@@ -905,30 +905,32 @@ export const PostsView: React.FC<PostsViewProps> = ({
         </div>
       </Card>
 
-      {/* ── CREATE POST MODAL (Sleek, Compact & Ergonomic) ── */}
-      <Dialog open={newModalOpen} onOpenChange={setNewModalOpen}>
-        <DialogContent
-          className="max-w-4xl w-[95vw] h-[88vh] max-h-[850px] p-0 flex flex-col overflow-hidden"
-          onClose={() => setNewModalOpen(false)}
-        >
-          {/* Fixed Sticky Header */}
-          <div className="px-6 py-4 border-b border-gray-100 bg-white flex items-center justify-between gap-3 shrink-0">
-            <div className="flex items-center gap-3">
-              <div className="p-2 rounded-xl bg-orange-50 text-[#C45B2A]">
+      {/* ── CREATE POST DRAWER (Sleek, Responsive & Ergonomic) ── */}
+      <Sheet
+        open={newModalOpen}
+        onOpenChange={setNewModalOpen}
+        side={isRTL ? "left" : "right"}
+        className="w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl text-start"
+      >
+        {/* Pinned Sticky Header */}
+        <SheetHeader onClose={() => setNewModalOpen(false)} className="border-b border-gray-100 bg-white">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="p-2 rounded-xl bg-orange-50 text-[#C45B2A] shrink-0">
                 <Sparkles className="h-5 w-5" />
               </div>
-              <div>
-                <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
+              <div className="min-w-0">
+                <SheetTitle className="text-sm sm:text-base font-bold text-gray-900 leading-tight truncate">
                   {t("admin.posts.modal.writePostTitle")}
-                </DialogTitle>
-                <DialogDescription className="text-xs text-gray-500">
+                </SheetTitle>
+                <SheetDescription className="text-xs text-gray-500 truncate">
                   {t("admin.posts.modal.writePostSubtitle")}
-                </DialogDescription>
+                </SheetDescription>
               </div>
             </div>
 
-            <div className="flex items-center gap-2.5">
-              {/* Article Language Selector (Stage 4 requirement 1) */}
+            <div className="flex items-center flex-wrap gap-2 shrink-0">
+              {/* Article Language Selector */}
               <div className="flex items-center gap-1 bg-gray-100 p-1 rounded-xl border border-gray-200">
                 <span className="text-[11px] font-bold text-gray-500 px-1">
                   {isRTL ? "لغة المقال:" : "Lang:"}
@@ -960,10 +962,10 @@ export const PostsView: React.FC<PostsViewProps> = ({
               </div>
 
               {/* Live SEO Score Gauge */}
-              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-xl me-2">
+              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-xl">
                 <span className="text-[11px] font-bold text-gray-500">{t("admin.posts.modal.seoScoreLabel")}</span>
                 <span
-                  className={`font-mono text-xs font-extrabold px-2 py-0.5 rounded-md ${
+                  className={`font-mono text-xs font-extrabold px-1.5 py-0.5 rounded-md ${
                     seoAudit.score >= 80
                       ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                       : seoAudit.score >= 50
@@ -976,75 +978,76 @@ export const PostsView: React.FC<PostsViewProps> = ({
               </div>
             </div>
           </div>
+        </SheetHeader>
 
-          {/* Sub-Header Navigation Tabs */}
-          <div className="flex items-center justify-between border-b border-gray-100 bg-gray-50/80 px-6 py-2 gap-2 shrink-0">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => setCreateModalTab("content")}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                  createModalTab === "content"
-                    ? "bg-white text-[#C45B2A] shadow-xs border border-gray-200"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-              >
-                <FileText className="w-3.5 h-3.5 shrink-0" />
-                <span>{t("admin.posts.modal.tabContent")}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setCreateModalTab("seo")}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                  createModalTab === "seo"
-                    ? "bg-white text-[#C45B2A] shadow-xs border border-gray-200"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-              >
-                <Globe className="w-3.5 h-3.5 shrink-0" />
-                <span>{t("admin.posts.modal.tabSeo")}</span>
-                <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-gray-200 text-gray-700 ms-1">
-                  {seoAudit.score}%
-                </span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setCreateModalTab("translation")}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                  createModalTab === "translation"
-                    ? "bg-white text-indigo-700 shadow-xs border border-indigo-200"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-              >
-                <Languages className="w-3.5 h-3.5 shrink-0 text-indigo-600" />
-                <span>{isRTL ? "مراجعة ترجمة DeepL" : "DeepL Translation Review"}</span>
-                {hasGeneratedTranslation && (
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                )}
-              </button>
-            </div>
-
-            <Button
+        {/* Sub-Header Navigation Tabs */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-gray-100 bg-gray-50/90 px-3.5 sm:px-6 py-2 gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+            <button
               type="button"
-              size="sm"
-              onClick={handleTranslateWithDeepL}
-              disabled={isTranslating}
-              className="h-8 px-3 text-[11px] font-bold bg-indigo-600 hover:bg-indigo-700 text-white flex items-center gap-1.5 rounded-lg shadow-2xs cursor-pointer"
+              onClick={() => setCreateModalTab("content")}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                createModalTab === "content"
+                  ? "bg-white text-[#C45B2A] shadow-xs border border-gray-200"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              }`}
             >
-              <Sparkles className={`w-3.5 h-3.5 ${isTranslating ? "animate-spin" : ""}`} />
-              <span>
-                {isTranslating
-                  ? (isRTL ? "جاري استدعاء DeepL..." : "Translating with DeepL...")
-                  : (isRTL ? "⚡ ترجمة فورية ومعاينة" : "⚡ Instant DeepL Translate")}
+              <FileText className="w-3.5 h-3.5 shrink-0" />
+              <span>{t("admin.posts.modal.tabContent")}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCreateModalTab("seo")}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                createModalTab === "seo"
+                  ? "bg-white text-[#C45B2A] shadow-xs border border-gray-200"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5 shrink-0" />
+              <span>{t("admin.posts.modal.tabSeo")}</span>
+              <span className="font-mono text-[10px] font-bold px-1.5 py-0.2 rounded bg-gray-200 text-gray-700 ms-1">
+                {seoAudit.score}%
               </span>
-            </Button>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setCreateModalTab("translation")}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                createModalTab === "translation"
+                  ? "bg-white text-indigo-700 shadow-xs border border-indigo-200"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              }`}
+            >
+              <Languages className="w-3.5 h-3.5 shrink-0 text-indigo-600" />
+              <span className="truncate">{isRTL ? "مراجعة ترجمة DeepL" : "DeepL Translation Review"}</span>
+              {hasGeneratedTranslation && (
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shrink-0" />
+              )}
+            </button>
           </div>
 
-          {/* Modal Form Body */}
-          <form onSubmit={handleCreatePost} className="flex flex-col flex-1 overflow-hidden">
-            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+          <Button
+            type="button"
+            size="sm"
+            onClick={handleTranslateWithDeepL}
+            disabled={isTranslating}
+            className="h-8 px-3 text-[11px] font-bold bg-indigo-600 hover:bg-indigo-700 text-white flex items-center justify-center gap-1.5 rounded-lg shadow-2xs shrink-0 cursor-pointer w-full sm:w-auto"
+          >
+            <Sparkles className={`w-3.5 h-3.5 ${isTranslating ? "animate-spin" : ""}`} />
+            <span>
+              {isTranslating
+                ? (isRTL ? "جاري استدعاء DeepL..." : "Translating with DeepL...")
+                : (isRTL ? "⚡ ترجمة فورية ومعاينة" : "⚡ Instant DeepL Translate")}
+            </span>
+          </Button>
+        </div>
+
+        {/* Drawer Form Body */}
+        <form onSubmit={handleCreatePost} className="flex flex-col flex-1 overflow-hidden">
+          <SheetContent className="space-y-4 sm:space-y-5 p-3.5 sm:p-6">
               {createModalTab === "content" ? (
                 <div className="space-y-5">
                   {/* Title & Slug Row */}
@@ -1570,11 +1573,46 @@ export const PostsView: React.FC<PostsViewProps> = ({
                   </div>
                 </div>
               )}
-            </div>
+          </SheetContent>
 
-            {/* Fixed Sticky Footer */}
-            <div className="px-4 sm:px-6 py-3 border-t border-gray-100 bg-gray-50/80 backdrop-blur-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 shrink-0">
-              <div className="hidden sm:flex items-center gap-4 text-xs text-gray-500">
+          {/* Sticky Drawer Footer with Actions */}
+          <SheetFooter className="border-t border-gray-100 bg-gray-50/95 backdrop-blur-xs p-3 sm:p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+            <div className="flex items-center justify-between sm:justify-start gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setNewModalOpen(false)}
+                className="w-full sm:w-auto h-9 sm:h-10 text-xs font-semibold cursor-pointer justify-center"
+              >
+                {isRTL ? "إلغاء" : "Cancel"}
+              </Button>
+
+              {createModalTab === "content" && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setCreateModalTab("seo")}
+                  className="hidden sm:inline-flex h-9 sm:h-10 text-xs font-semibold items-center justify-center gap-1 cursor-pointer"
+                >
+                  <span>{isRTL ? "SEO والمعاينة" : "SEO & Preview"}</span>
+                  <ChevronRight className="w-3.5 h-3.5 shrink-0 rtl:rotate-180" />
+                </Button>
+              )}
+
+              {createModalTab === "seo" && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setCreateModalTab("translation")}
+                  className="hidden sm:inline-flex h-9 sm:h-10 text-xs font-semibold items-center justify-center gap-1 cursor-pointer text-indigo-700 border-indigo-200 hover:bg-indigo-50"
+                >
+                  <Languages className="w-3.5 h-3.5 shrink-0 text-indigo-600" />
+                  <span>{isRTL ? "مراجعة الترجمة" : "Translation Review"}</span>
+                  <ChevronRight className="w-3.5 h-3.5 shrink-0 rtl:rotate-180" />
+                </Button>
+              )}
+
+              <div className="hidden lg:flex items-center gap-2 text-xs text-gray-500 ms-2">
                 <span className="flex items-center gap-1">
                   <Clock className="w-3.5 h-3.5 text-gray-400" />
                   <span>{Math.max(1, Math.ceil(seoAudit.words / 200))} {isRTL ? "دقيقة قراءة" : "min read"}</span>
@@ -1582,156 +1620,125 @@ export const PostsView: React.FC<PostsViewProps> = ({
                 <span className="text-gray-300">|</span>
                 <span>{seoAudit.words} {isRTL ? "كلمة" : "words"}</span>
               </div>
-
-              <div className="grid grid-cols-2 gap-2 sm:flex sm:items-center sm:gap-2 w-full sm:w-auto">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setNewModalOpen(false)}
-                  className="w-full sm:w-auto h-10 text-xs cursor-pointer justify-center"
-                >
-                  {isRTL ? "إلغاء" : "Cancel"}
-                </Button>
-
-                {createModalTab === "content" && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setCreateModalTab("seo")}
-                    className="w-full sm:w-auto h-10 text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer"
-                  >
-                    <span>{isRTL ? "SEO والمعاينة" : "SEO & Preview"}</span>
-                    <ChevronRight className={`w-3.5 h-3.5 shrink-0 ${isRTL ? "rotate-180" : ""}`} />
-                  </Button>
-                )}
-
-                {createModalTab === "seo" && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setCreateModalTab("translation")}
-                    className="w-full sm:w-auto h-10 text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer text-indigo-700 border-indigo-200 hover:bg-indigo-50"
-                  >
-                    <Languages className="w-3.5 h-3.5 shrink-0 text-indigo-600" />
-                    <span>{isRTL ? "مراجعة الترجمة" : "Translation Review"}</span>
-                    <ChevronRight className={`w-3.5 h-3.5 shrink-0 ${isRTL ? "rotate-180" : ""}`} />
-                  </Button>
-                )}
-
-                <Button
-                  type="button"
-                  variant="outline"
-                  disabled={isPublishing}
-                  onClick={() => handleCreatePost(undefined, "draft")}
-                  className="w-full sm:w-auto h-10 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer text-gray-700 hover:bg-gray-100"
-                >
-                  <span>{isRTL ? "حفظ كمسودة" : "Save as Draft"}</span>
-                </Button>
-
-                <Button
-                  type="submit"
-                  variant="brand"
-                  disabled={isPublishing}
-                  onClick={() => setPostStatus("published")}
-                  className="w-full sm:w-auto h-10 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  {isPublishing ? (
-                    <>
-                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                      <span className="truncate">{isRTL ? "جاري النشر..." : "Publishing..."}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="h-3.5 w-3.5 shrink-0" />
-                      <span className="truncate">
-                        {autoTranslateEnabled
-                          ? (isRTL ? "نشر وتزامن ثنائي (Polylang)" : "Publish Dual-Language")
-                          : (isRTL ? "نشر ومزامنة" : "Publish & Sync")}
-                      </span>
-                    </>
-                  )}
-                </Button>
-              </div>
             </div>
-          </form>
-        </DialogContent>
-      </Dialog>
 
-      {/* ── EDIT POST MODAL (Sleek, Compact & Full Control) ── */}
+            <div className="flex items-center gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isPublishing}
+                onClick={() => handleCreatePost(undefined, "draft")}
+                className="flex-1 sm:flex-none h-9 sm:h-10 text-xs font-bold items-center justify-center gap-1.5 cursor-pointer text-gray-700 hover:bg-gray-100"
+              >
+                <span>{isRTL ? "حفظ كمسودة" : "Save as Draft"}</span>
+              </Button>
+
+              <Button
+                type="submit"
+                variant="brand"
+                disabled={isPublishing}
+                onClick={() => setPostStatus("published")}
+                className="flex-1 sm:flex-none h-9 sm:h-10 text-xs font-bold items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+              >
+                {isPublishing ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                    <span className="truncate">{isRTL ? "جاري النشر..." : "Publishing..."}</span>
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="h-3.5 w-3.5 shrink-0" />
+                    <span className="truncate">
+                      {autoTranslateEnabled
+                        ? (isRTL ? "نشر وتزامن ثنائي (Polylang)" : "Publish Dual-Language")
+                        : (isRTL ? "نشر ومزامنة" : "Publish & Sync")}
+                    </span>
+                  </>
+                )}
+              </Button>
+            </div>
+          </SheetFooter>
+        </form>
+      </Sheet>
+
+      {/* ── EDIT POST DRAWER (Sleek, Responsive & Full Control) ── */}
       {editingPost && (
-        <Dialog open={!!editingPost} onOpenChange={(open) => !open && setEditingPost(null)}>
-          <DialogContent
-            className="max-w-4xl w-[95vw] h-[88vh] max-h-[850px] p-0 flex flex-col overflow-hidden"
-            onClose={() => setEditingPost(null)}
-          >
-            {/* Fixed Top Header */}
-            <div className="px-6 py-4 border-b border-gray-100 bg-white flex items-center justify-between gap-3 shrink-0">
-              <div className="flex items-center gap-3">
-                <div className="p-2 rounded-xl bg-orange-50 text-[#C45B2A]">
+        <Sheet
+          open={!!editingPost}
+          onOpenChange={(open) => !open && setEditingPost(null)}
+          side={isRTL ? "left" : "right"}
+          className="w-full sm:max-w-2xl md:max-w-3xl lg:max-w-4xl xl:max-w-5xl text-start"
+        >
+          {/* Pinned Sticky Top Header */}
+          <SheetHeader onClose={() => setEditingPost(null)} className="border-b border-gray-100 bg-white">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 w-full">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="p-2 rounded-xl bg-orange-50 text-[#C45B2A] shrink-0">
                   <Edit2 className="h-5 w-5" />
                 </div>
-                <div>
-                  <DialogTitle className="text-base font-bold text-gray-900 leading-tight">
+                <div className="min-w-0">
+                  <SheetTitle className="text-sm sm:text-base font-bold text-gray-900 leading-tight truncate">
                     {isRTL ? "تعديل المقال وتفاصيل المحتوى" : "Edit Post & Full Content Details"}
-                  </DialogTitle>
-                  <DialogDescription className="text-xs text-gray-500">
+                  </SheetTitle>
+                  <SheetDescription className="text-xs text-gray-500 truncate">
                     {isRTL ? "تحديث محتوى المقال، تغيير الصورة البارزة، وضبط إعدادات Rank Math SEO." : "Update article content, change featured image, and adjust Rank Math SEO."}
-                  </DialogDescription>
+                  </SheetDescription>
                 </div>
               </div>
 
-              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-3 py-1.5 rounded-xl me-8">
+              <div className="flex items-center gap-2 bg-gray-50 border border-gray-200 px-2.5 py-1 rounded-xl shrink-0 self-start sm:self-auto">
                 <span className="text-[11px] font-bold text-gray-500">{isRTL ? "نتيجة SEO:" : "SEO Score:"}</span>
                 <span className="font-mono text-xs font-bold text-emerald-600 ltr-preserve" dir="ltr">
                   {editingPost.seoScore}/100
                 </span>
               </div>
             </div>
+          </SheetHeader>
 
-            {/* Sub-Header Navigation Tabs */}
-            <div className="flex border-b border-gray-100 bg-gray-50/80 px-6 py-2 gap-2 shrink-0">
-              <button
-                type="button"
-                onClick={() => setEditModalTab("content")}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                  editModalTab === "content"
-                    ? "bg-white text-[#C45B2A] shadow-xs border border-gray-200"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-              >
-                <FileText className="w-3.5 h-3.5 shrink-0" />
-                <span>{isRTL ? "١. محتوى المقال والصورة" : "1. Article Content & Image"}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setEditModalTab("seo")}
-                className={`px-3.5 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ${
-                  editModalTab === "seo"
-                    ? "bg-white text-[#C45B2A] shadow-xs border border-gray-200"
-                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
-                }`}
-              >
-                <Globe className="w-3.5 h-3.5 shrink-0" />
-                <span>{isRTL ? "٢. الكلمات المفتاحية وإعدادات SEO" : "2. Keywords & SEO Settings"}</span>
-              </button>
-            </div>
-
-            {/* Edit Form Body */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                if (onUpdatePost && editingPost) {
-                  onUpdatePost({
-                    ...editingPost,
-                    seoScore: Math.min(100, Math.max(85, editingPost.seoScore)),
-                  });
-                }
-                setEditingPost(null);
-              }}
-              className="flex flex-col flex-1 overflow-hidden"
+          {/* Sub-Header Navigation Tabs */}
+          <div className="flex items-center border-b border-gray-100 bg-gray-50/90 px-3.5 sm:px-6 py-2 gap-2 shrink-0 overflow-x-auto scrollbar-none">
+            <button
+              type="button"
+              onClick={() => setEditModalTab("content")}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                editModalTab === "content"
+                  ? "bg-white text-[#C45B2A] shadow-xs border border-gray-200"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              }`}
             >
-              <div className="flex-1 overflow-y-auto p-6 space-y-5">
+              <FileText className="w-3.5 h-3.5 shrink-0" />
+              <span>{isRTL ? "١. محتوى المقال والصورة" : "1. Article Content & Image"}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setEditModalTab("seo")}
+              className={`px-3 py-1.5 text-xs font-bold rounded-lg transition-all flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                editModalTab === "seo"
+                  ? "bg-white text-[#C45B2A] shadow-xs border border-gray-200"
+                  : "text-gray-600 hover:text-gray-900 hover:bg-gray-100"
+              }`}
+            >
+              <Globe className="w-3.5 h-3.5 shrink-0" />
+              <span>{isRTL ? "٢. الكلمات المفتاحية وإعدادات SEO" : "2. Keywords & SEO Settings"}</span>
+            </button>
+          </div>
+
+          {/* Edit Form Body */}
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (onUpdatePost && editingPost) {
+                onUpdatePost({
+                  ...editingPost,
+                  seoScore: Math.min(100, Math.max(85, editingPost.seoScore)),
+                });
+              }
+              setEditingPost(null);
+            }}
+            className="flex flex-col flex-1 overflow-hidden"
+          >
+            <SheetContent className="space-y-4 sm:space-y-5 p-3.5 sm:p-6">
                 {editModalTab === "content" ? (
                   <div className="space-y-4">
                     <div>
@@ -1956,30 +1963,29 @@ export const PostsView: React.FC<PostsViewProps> = ({
                     </div>
                   </div>
                 )}
-              </div>
+          </SheetContent>
 
-              {/* Sticky Edit Footer */}
-              <div className="px-4 sm:px-6 py-3 border-t border-gray-100 bg-gray-50/80 backdrop-blur-xs grid grid-cols-2 gap-2 sm:flex sm:items-center sm:justify-end shrink-0">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setEditingPost(null)}
-                  className="w-full sm:w-auto h-10 text-xs cursor-pointer justify-center"
-                >
-                  {isRTL ? "إلغاء" : "Cancel"}
-                </Button>
-                <Button
-                  type="submit"
-                  variant="brand"
-                  className="w-full sm:w-auto h-10 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer"
-                >
-                  <Check className="h-3.5 w-3.5" />
-                  <span>{isRTL ? "حفظ التغييرات" : "Save Changes"}</span>
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+          {/* Sticky Edit Footer */}
+          <SheetFooter className="border-t border-gray-100 bg-gray-50/95 backdrop-blur-xs p-3 sm:p-4 flex items-center justify-end gap-2.5">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setEditingPost(null)}
+              className="flex-1 sm:flex-none w-auto h-9 sm:h-10 text-xs font-semibold cursor-pointer justify-center"
+            >
+              {isRTL ? "إلغاء" : "Cancel"}
+            </Button>
+            <Button
+              type="submit"
+              variant="brand"
+              className="flex-1 sm:flex-none w-auto h-9 sm:h-10 text-xs font-bold flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <Check className="h-3.5 w-3.5" />
+              <span>{isRTL ? "حفظ التغييرات" : "Save Changes"}</span>
+            </Button>
+          </SheetFooter>
+        </form>
+      </Sheet>
       )}
     </div>
   );

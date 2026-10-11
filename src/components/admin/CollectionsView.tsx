@@ -5,25 +5,18 @@ import {
   HandCoins,
   Plus,
   Search,
-  Filter,
   Calendar,
-  Building,
-  User,
-  CreditCard,
   Receipt,
   Trash2,
   AlertCircle,
-  Wallet,
   Landmark,
   ArrowDownLeft,
   CheckCircle2,
-  FileSpreadsheet,
   RefreshCw,
   TrendingUp,
 } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Dialog,
@@ -81,7 +74,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
   );
   const [colPaymentMethod, setColPaymentMethod] = useState<string>("تحويل بنكي CIB");
   const [colReceiptNumber, setColReceiptNumber] = useState<string>("");
-  const [colRecordedBy, setColRecordedBy] = useState<string>(MASTER_AGENTS[0] || "مصطفي");
+  const [colRecordedBy, setColRecordedBy] = useState<string>(MASTER_AGENTS[0] || "Admin");
   const [colNotes, setColNotes] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -224,7 +217,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
           <CardContent className="p-4 sm:p-5 flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold text-gray-500 uppercase">{isRTL ? "إجمالي المقبوضات" : "Total Collections"}</p>
-              <p className="text-xl sm:text-2xl font-black text-emerald-700">{formatCurrency(kpis.totalEgp, "EGP")}</p>
+              <p className="text-xl sm:text-2xl font-black text-emerald-700 font-mono" dir="ltr">{formatCurrency(kpis.totalEgp, "EGP")}</p>
             </div>
             <div className="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200">
               <ArrowDownLeft className="w-5 h-5" />
@@ -236,7 +229,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
           <CardContent className="p-4 sm:p-5 flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold text-gray-500 uppercase">{isRTL ? "تحصيلات الشهر الحالي" : "This Month"}</p>
-              <p className="text-xl sm:text-2xl font-black text-gray-900">{formatCurrency(kpis.currentMonthEgp, "EGP")}</p>
+              <p className="text-start text-xl sm:text-2xl font-black text-gray-900 font-mono" dir="ltr">{formatCurrency(kpis.currentMonthEgp, "EGP")}</p>
             </div>
             <div className="w-11 h-11 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center border border-teal-200">
               <TrendingUp className="w-5 h-5" />
@@ -248,7 +241,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
           <CardContent className="p-4 sm:p-5 flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold text-gray-500 uppercase">{isRTL ? "عدد السندات" : "Receipts Count"}</p>
-              <p className="text-2xl font-black text-gray-900">{kpis.count}</p>
+              <p className="text-start text-2xl font-black text-gray-900 font-mono" dir="ltr">{kpis.count}</p>
             </div>
             <div className="w-11 h-11 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center border border-blue-200">
               <Receipt className="w-5 h-5" />
@@ -260,7 +253,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
           <CardContent className="p-4 sm:p-5 flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold text-gray-500 uppercase">{isRTL ? "مقبوضات بالدولار" : "USD Volume"}</p>
-              <p className="text-2xl font-black text-gray-900">${kpis.totalUsd.toLocaleString()}</p>
+              <p className=" text-start text-2xl font-black text-gray-900 font-mono" dir="ltr">${kpis.totalUsd.toLocaleString()}</p>
             </div>
             <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-200">
               <Landmark className="w-5 h-5" />
@@ -274,12 +267,12 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <div className="relative flex-1 w-full">
-              <Search className={`w-4 h-4 text-gray-400 absolute top-1/2 -translate-y-1/2 ${isRTL ? "right-3" : "left-3"}`} />
+              <Search className="w-4 h-4 text-gray-400 absolute top-1/2 -translate-y-1/2 start-3" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={isRTL ? "بحث باسم العميل، رقم السند، الحساب، أو الملاحظات..." : "Search customer, receipt #, account..."}
-                className={`h-10 rounded-xl bg-gray-50/60 border-gray-200 text-xs sm:text-sm ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+                className="h-10 rounded-xl bg-gray-50/60 border-gray-200 text-xs sm:text-sm ps-9 pe-3 text-start"
               />
             </div>
 
@@ -320,22 +313,22 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
           <Table>
             <TableHeader className="bg-gray-50/90 border-b border-gray-200">
               <TableRow>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "رقم السند / التاريخ" : "Receipt # / Date"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "اسم العميل" : "Customer"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "المبلغ المحصل" : "Amount"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "الحساب المستلم (الخزينة)" : "Receiving Vault"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "طريقة الدفع / البيان" : "Payment Method & Notes"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "المسجل" : "Agent"}
                 </TableHead>
                 <TableHead className="text-center text-xs font-bold text-gray-700">
@@ -360,26 +353,26 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
                 filteredCollections.map((c) => (
                   <TableRow key={c.id} className="hover:bg-emerald-50/20 transition-colors">
                     <TableCell className="font-mono text-xs font-bold text-gray-900">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex rtl:justify-end ltr:justify-start items-center gap-1.5">
                         <span className="bg-emerald-50 text-emerald-800 px-2 py-0.5 rounded-md border border-emerald-200">
                           {c.receiptNumber || c.id}
                         </span>
                       </div>
-                      <div className="text-[11px] font-normal text-gray-500 mt-0.5 flex items-center gap-1">
+                      <div className="rtl:justify-end ltr:justify-start text-[11px] font-normal text-gray-500 mt-0.5 flex items-center gap-1">
                         <Calendar className="w-3 h-3" />
-                        <span>{c.date}</span>
+                        <span dir="ltr">{c.date}</span>
                       </div>
                     </TableCell>
 
                     <TableCell>
                       <div className="font-bold text-gray-900 text-xs sm:text-sm">{c.clientName}</div>
                       {c.customerId && (
-                        <div className="text-[10px] text-gray-400 font-mono mt-0.5">ID: {c.customerId}</div>
+                        <div className="text-[10px] text-gray-400 font-mono mt-0.5" dir="ltr">ID: {c.customerId}</div>
                       )}
                     </TableCell>
 
                     <TableCell>
-                      <span className="text-sm font-black text-emerald-700 font-mono">
+                      <span className="text-sm font-black text-emerald-700 font-mono inline-block" dir="ltr">
                         {formatCurrency(c.amount, c.currency || "EGP")}
                       </span>
                     </TableCell>
@@ -398,7 +391,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
 
                     <TableCell>
                       <span className="text-xs font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
-                        {c.recordedBy || "مصطفي"}
+                        {c.recordedBy || "Admin"}
                       </span>
                     </TableCell>
 
@@ -424,7 +417,7 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
 
       {/* Modal: Record Collection */}
       <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
-        <DialogContent className="sm:max-w-lg rounded-3xl p-6">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl p-6 text-start">
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-gray-900 flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-800 flex items-center justify-center">
@@ -514,8 +507,8 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
                   onChange={(e) => setColCurrency(e.target.value as "EGP" | "USD")}
                   className="w-full h-9 px-2.5 bg-white border border-gray-300 rounded-lg text-xs font-bold outline-none"
                 >
-                  <option value="EGP">EGP (جنيه مصري)</option>
-                  <option value="USD">USD (دولار)</option>
+                  <option value="EGP">EGP</option>
+                  <option value="USD">USD</option>
                 </select>
               </div>
             </div>
@@ -594,9 +587,17 @@ export const CollectionsView: React.FC<CollectionsViewProps> = ({
             {isRTL ? "تأكيد حذف سند التحصيل" : "Confirm Delete"}
           </DialogTitle>
           <DialogDescription className="text-xs text-gray-500">
-            {isRTL
-              ? `هل أنت متأكد من حذف سند التحصيل بمبلغ ${deleteTarget?.amount} ${deleteTarget?.currency} للعميل ${deleteTarget?.clientName}؟`
-              : `Delete collection ${deleteTarget?.receiptNumber}?`}
+            {isRTL ? (
+              <>
+                هل أنت متأكد من حذف سند التحصيل بمبلغ{" "}
+                <span dir="ltr" className="font-mono font-bold text-gray-800">
+                  {deleteTarget?.amount} {deleteTarget?.currency}
+                </span>{" "}
+                للعميل {deleteTarget?.clientName}؟
+              </>
+            ) : (
+              `Delete collection ${deleteTarget?.receiptNumber}?`
+            )}
           </DialogDescription>
           <DialogFooter className="mt-4 flex gap-2 sm:justify-center">
             <Button variant="outline" onClick={() => setDeleteTarget(null)} className="h-10 rounded-xl">

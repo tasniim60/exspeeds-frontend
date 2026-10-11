@@ -93,7 +93,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     },
     {
       id: "pickups",
-      label: isRTL ? "استلام وبك أب" : "Pickup Orders",
+      label: t("admin.sidebar.pickups") || (isRTL ? "استلام وبك أب" : "Pickup Orders"),
       description: isRTL ? "إدارة طلبات استلام الشحنات وتنسيق المناديب والواتساب" : "Pickup dispatch & courier coordination",
       icon: Package,
       keywords: ["pickup", "courier", "dispatch", "بيك", "بيك اب", "استلام", "مندوب", "طلب استلام"],
@@ -107,56 +107,56 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
     },
     {
       id: "customers",
-      label: isRTL ? "العملاء ومراقبة الحسابات" : "Customers & Accounts",
+      label: t("admin.sidebar.customers") || (isRTL ? "العملاء ومراقبة الحسابات" : "Customers & Accounts"),
       description: isRTL ? "إدارة حسابات العملاء، الأرصدة التراكمية، وكشوف الحساب" : "Customer Accounts, Dynamic Balances & Statements",
       icon: Users,
       keywords: ["customers", "clients", "balance", "عملاء", "حسابات", "رصيد", "كشف حساب", "مديونية"],
     },
     {
       id: "carriers",
-      label: isRTL ? "شركات الشحن والوسطاء" : "Carriers & Brokers",
+      label: t("admin.sidebar.carriers") || (isRTL ? "شركات الشحن والوسطاء" : "Carriers & Brokers"),
       description: isRTL ? "حسابات شركات الشحن (DHL, Aramex, etc.)، تكاليف البوالص والمسدّد" : "Carrier Accounts, Consignment Costs & Settlements",
       icon: Truck,
       keywords: ["carriers", "brokers", "dhl", "fedex", "aramex", "smsa", "شركات", "شحن", "ناقل", "وسطاء", "تكلفة", "سداد"],
     },
     {
       id: "collections",
-      label: isRTL ? "التحصيل وسندات القبض" : "Customer Collections",
+      label: t("admin.sidebar.collections") || (isRTL ? "التحصيل وسندات القبض" : "Customer Collections"),
       description: isRTL ? "سندات ومقبوضات العملاء وتغذية الخزائن" : "Customer Payment Receipts & Vault Inflows",
       icon: Receipt,
       keywords: ["collections", "receipts", "cash", "wire", "تحصيل", "سند", "مقبوضات", "قبض", "سندات"],
     },
     {
       id: "expenses",
-      label: isRTL ? "المصروفات العامة" : "General Expenses",
+      label: t("admin.sidebar.expenses") || (isRTL ? "المصروفات العامة" : "General Expenses"),
       description: isRTL ? "تسجيل المصروفات التشغيلية والإدارية وتقسيمها" : "Operating & Administrative Expenses Ledger",
       icon: WalletCards,
       keywords: ["expenses", "general", "مصروفات", "مصاريف", "عامة", "ايجار", "بنزين", "تشغيل"],
     },
     {
       id: "extra-expenses",
-      label: isRTL ? "إضافي شحنة (AWB)" : "Shipment Extra Expenses",
+      label: t("admin.sidebar.extra-expenses") || (isRTL ? "إضافي شحنة (AWB)" : "Shipment Extra Expenses"),
       description: isRTL ? "تسجيل المصاريف الإضافية والأرضيات المرتبطة ببوالص الشحن" : "AWB Extra Surcharges & Demurrage Fees",
       icon: Package,
       keywords: ["extra", "surcharge", "demurrage", "اضافي", "اضافي شحنة", "ارضيات", "جمارك", "تغليف"],
     },
     {
       id: "salaries",
-      label: isRTL ? "المرتبات والسلف" : "Salaries & Advances",
+      label: t("admin.sidebar.salaries") || (isRTL ? "المرتبات والسلف" : "Salaries & Advances"),
       description: isRTL ? "مسحوبات المرتبات الشهرية وسلف وبدلات العاملين" : "Staff Payroll, Monthly Salaries & Advance Ledger",
       icon: Users,
       keywords: ["salaries", "advance", "payroll", "مرتبات", "رواتب", "سلف", "سلفة", "موظفين", "عاملين"],
     },
     {
       id: "treasury",
-      label: isRTL ? "الخزينة ومراقبة السيولة" : "Treasury & Multi-Vault",
+      label: t("admin.sidebar.treasury") || (isRTL ? "الخزينة ومراقبة السيولة" : "Treasury & Multi-Vault"),
       description: isRTL ? "أرصدة الحسابات الخمسة، السيولة النقدية والعهد" : "5 Vault Balances, Real-time Cash Flow & Liquidity",
       icon: Landmark,
       keywords: ["treasury", "vault", "cash", "cib", "speedex", "wallet", "خزينة", "سيولة", "حسابات", "بنك", "نقدية"],
     },
     {
       id: "internal-transfers",
-      label: isRTL ? "التحويلات والمناقلات الداخلية" : "Internal Transfers",
+      label: t("admin.sidebar.internal-transfers") || (isRTL ? "التحويلات والمناقلات الداخلية" : "Internal Transfers"),
       description: isRTL ? "المناقلات والتحويلات المالية بين الخزائن والعهد" : "Inter-vault fund transfers and custody movements",
       icon: Landmark,
       keywords: ["transfer", "internal", "vault", "مناقلة", "تحويل داخلي", "تحويلات", "نقل سيولة"],
@@ -226,7 +226,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
   const hasAnyResults = filteredNavItems.length > 0 || filteredShipments.length > 0 || showScriptTool;
 
   return (
-    <div className={`fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-20 p-3 sm:p-4 ${isRTL ? "text-right" : "text-left"}`}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-16 sm:pt-20 p-3 sm:p-4 text-start">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity"
@@ -243,7 +243,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             autoFocus
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder={isRTL ? "ابحث عن بوليصة، قسم، عميل، أو أداة..." : "Search AWB, section, customer, or tool..."}
+            placeholder={t("admin.commandPalette.searchPlaceholder") || (isRTL ? "ابحث عن بوليصة، قسم، عميل، أو أداة..." : "Search AWB, section, customer, or tool...")}
             className="w-full py-3.5 sm:py-4 px-3 text-sm sm:text-base text-gray-900 bg-transparent border-0 focus:outline-none focus:ring-0 placeholder:text-gray-400 font-medium"
           />
           {search && (
@@ -264,8 +264,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           {/* Smart Tool: Google Apps Script Calculator */}
           {showScriptTool && (
             <div>
-              <div className="px-2 py-1 text-[11px] font-extrabold uppercase tracking-wider text-amber-700/80">
-                {isRTL ? "الأدوات الذكية المباشرة" : "Live Smart Tools"}
+              <div className="px-2 py-1 text-[11px] font-extrabold uppercase tracking-wider text-amber-700/80 text-start">
+                {t("admin.commandPalette.smartTools") || (isRTL ? "الأدوات الذكية المباشرة" : "Live Smart Tools")}
               </div>
               <div className="mt-1">
                 <a
@@ -284,13 +284,13 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                         {t("admin.sidebar.googleScript") || (isRTL ? "حاسبة الشحنات (الاسكريبت)" : "Rates Calculator (Script)")}
                       </p>
                       <p className="text-[11px] text-gray-600 font-normal">
-                        {isRTL ? "فتح تطبيق Google Apps Script لحساب أسعار الشحن المعتمدة" : "Open Google Apps Script to compute shipping rates"}
+                        {t("admin.commandPalette.ratesCalcDesc") || (isRTL ? "فتح تطبيق Google Apps Script لحساب أسعار الشحن المعتمدة" : "Open Google Apps Script to compute shipping rates")}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-amber-500/20 text-amber-800 text-[11px] font-bold group-hover:bg-amber-500 group-hover:text-white transition-colors">
-                    <span>{isRTL ? "فتح التطبيق" : "Open"}</span>
-                    <ExternalLink className="h-3.5 w-3.5" />
+                    <span>{t("admin.commandPalette.openApp") || (isRTL ? "فتح التطبيق" : "Open")}</span>
+                    <ExternalLink className="h-3.5 w-3.5 rtl:rotate-180" />
                   </div>
                 </a>
               </div>
@@ -300,8 +300,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           {/* Quick Actions (Shown when no search term) */}
           {!query && (
             <div>
-              <div className="px-2 py-1 text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
-                {t("admin.topbar.quickCreate") || (isRTL ? "الإجراءات والإنشاء السريع" : "Quick Actions")}
+              <div className="px-2 py-1 text-[11px] font-extrabold uppercase tracking-wider text-gray-400 text-start">
+                {t("admin.commandPalette.quickActions") || t("admin.topbar.quickCreate") || (isRTL ? "الإجراءات والإنشاء السريع" : "Quick Actions")}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-1">
                 <button
@@ -351,8 +351,8 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           {/* Navigation Shortcuts */}
           {filteredNavItems.length > 0 && (
             <div>
-              <div className="px-2 py-1 text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
-                {isRTL ? "أقسام لوحة التحكم" : "Dashboard Sections"}
+              <div className="px-2 py-1 text-[11px] font-extrabold uppercase tracking-wider text-gray-400 text-start">
+                {t("admin.commandPalette.sections") || (isRTL ? "أقسام لوحة التحكم" : "Dashboard Sections")}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mt-1">
                 {filteredNavItems.map((item) => {
@@ -372,7 +372,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                           <p className="text-[11px] text-gray-500 font-normal truncate">{item.description}</p>
                         </div>
                       </div>
-                      <ArrowRight className={`h-3.5 w-3.5 text-gray-400 group-hover:text-[#C45B2A] shrink-0 transition-transform ${isRTL ? "rotate-180" : ""}`} />
+                      <ArrowRight className="h-3.5 w-3.5 text-gray-400 group-hover:text-[#C45B2A] shrink-0 transition-transform rtl:rotate-180" />
                     </button>
                   );
                 })}
@@ -383,7 +383,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
           {/* Dynamic Search Results: Shipments */}
           {query && filteredShipments.length > 0 && (
             <div>
-              <div className="px-2 py-1 text-[11px] font-extrabold uppercase tracking-wider text-gray-400">
+              <div className="px-2 py-1 text-[11px] font-extrabold uppercase tracking-wider text-gray-400 text-start">
                 {t("admin.sidebar.shipments") || (isRTL ? "سجل الشحنات" : "Shipments")} ({filteredShipments.length})
               </div>
               <div className="space-y-1 mt-1">
@@ -408,7 +408,7 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
                       <span className="font-bold text-[10px] uppercase px-2 py-0.5 rounded-full bg-orange-50 text-[#C45B2A] border border-orange-200/50">
                         {s.status}
                       </span>
-                      <ArrowRight className={`h-3.5 w-3.5 text-gray-400 ${isRTL ? "rotate-180" : ""}`} />
+                      <ArrowRight className="h-3.5 w-3.5 text-gray-400 rtl:rotate-180" />
                     </div>
                   </div>
                 ))}
@@ -421,10 +421,10 @@ export const CommandPalette: React.FC<CommandPaletteProps> = ({
             <div className="py-8 text-center text-gray-500">
               <Search className="h-8 w-8 mx-auto text-gray-300 mb-2" />
               <p className="font-semibold text-sm text-gray-700">
-                {isRTL ? "لا توجد نتائج مطابقة لبحثك" : "No matching results found"}
+                {t("admin.commandPalette.noResults") || (isRTL ? "لا توجد نتائج مطابقة لبحثك" : "No matching results found")}
               </p>
               <p className="text-xs text-gray-400 mt-1">
-                {isRTL ? "جرب البحث برقم البوليصة، اسم القسم، أو أداة معينة" : "Try searching by AWB #, section name, or a tool"}
+                {t("admin.commandPalette.noResultsSub") || (isRTL ? "جرب البحث برقم البوليصة، اسم القسم، أو أداة معينة" : "Try searching by AWB #, section name, or a tool")}
               </p>
             </div>
           )}

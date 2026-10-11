@@ -112,12 +112,11 @@ export function HomeHeroSection() {
               {/* Card Header with Official Website Logo */}
               <div className="text-center space-y-2">
                 <div className="h-16 flex items-center justify-center mx-auto max-w-[220px]">
-                  <img
+                  <Image
                     src="/assets/xspeed_logo_earth_light.jpg"
-                    alt="XSPEED Logo"
+                    alt="XSPEED Express Logistics"
                     width={220}
                     height={48}
-                    style={{ aspectRatio: "220 / 48" }}
                     className="h-12 w-auto object-contain mix-blend-multiply"
                   />
                 </div>

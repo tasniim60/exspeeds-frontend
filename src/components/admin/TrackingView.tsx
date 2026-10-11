@@ -99,12 +99,12 @@ export const TrackingView: React.FC<TrackingViewProps> = ({
 
         <form onSubmit={handleSearch} className="flex gap-2 w-full sm:w-auto">
           <div className="relative flex-1 sm:w-64">
-            <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-2.5 h-4 w-4 text-gray-400`} />
+            <Search className="absolute start-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
             <Input
               value={searchAwb}
               onChange={(e) => setSearchAwb(e.target.value)}
               placeholder={t("admin.tracking.searchPlaceholder") || (isRTL ? "بحث برقم البوليصة AWB..." : "Search AWB...")}
-              className={`font-mono text-xs uppercase font-bold ltr-preserve ${isRTL ? "pr-9 pl-3 text-right" : "pl-9 pr-3 text-left"}`}
+              className="font-mono text-xs uppercase font-bold ltr-preserve ps-9 pe-3 text-start"
             />
           </div>
           <Button type="submit" size="sm" variant="brand" className="text-xs font-bold cursor-pointer">
@@ -197,7 +197,7 @@ export const TrackingView: React.FC<TrackingViewProps> = ({
                   </div>
                   <div className="p-3 bg-white rounded-lg border border-gray-200 shadow-2xs space-y-1 text-start">
                     <span className="text-[10px] font-bold text-gray-400 uppercase block">{isRTL ? "مسؤول التسجيل" : "Registered By"}</span>
-                    <p className="font-bold text-emerald-700">{activeShipment.agentName || "مصطفي"}</p>
+                    <p className="font-bold text-emerald-700">{activeShipment.agentName || "Admin"}</p>
                   </div>
                 </div>
               </div>

@@ -58,7 +58,7 @@ export const AdminTopbar: React.FC<AdminTopbarProps> = ({
           <Menu className="h-5 w-5" />
         </button>
 
-        <div className={`flex flex-col min-w-0 ${isRTL ? "text-right" : "text-left"}`}>
+        <div className="flex flex-col min-w-0 text-start">
           <div className="flex items-center gap-2 min-w-0">
             <h1 className="text-xs sm:text-base md:text-lg font-bold text-brand-dark tracking-tight leading-tight truncate max-w-[120px] xs:max-w-[170px] sm:max-w-xs md:max-w-md">
               {currentTitle}
@@ -101,7 +101,7 @@ export const AdminTopbar: React.FC<AdminTopbarProps> = ({
           >
             <Bell className="h-4 w-4" />
             {unreadNotifs.length > 0 && (
-              <span className={`absolute top-1.5 ${isRTL ? "left-1.5" : "right-1.5"} flex h-2 w-2`}>
+              <span className="absolute top-1.5 end-1.5 flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75" />
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-red-500" />
               </span>
@@ -114,7 +114,7 @@ export const AdminTopbar: React.FC<AdminTopbarProps> = ({
                 className="fixed inset-0 z-40"
                 onClick={() => setNotifDropdownOpen(false)}
               />
-              <div className={`absolute ${isRTL ? "left-0 text-right" : "right-0 text-left"} mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-96 rounded-2xl bg-[#FAF8F5] shadow-2xl border border-[#E2DDD1] z-50 overflow-hidden animate-fade-up`}>
+              <div className={`absolute ${isRTL ? "left-0" : "right-0"} mt-2 w-[calc(100vw-2rem)] max-w-sm sm:w-96 rounded-2xl bg-[#FAF8F5] shadow-2xl border border-[#E2DDD1] z-50 overflow-hidden animate-fade-up text-start`}>
                 <div className="p-3.5 border-b border-[#EAE5DA] flex items-center justify-between bg-[#EFEBE2]/70">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-gray-900">{t("admin.topbar.notifications")}</span>
@@ -186,8 +186,8 @@ export const AdminTopbar: React.FC<AdminTopbarProps> = ({
                     }}
                     className="text-xs font-semibold text-gray-600 hover:text-brand-orange transition-colors cursor-pointer inline-flex items-center gap-1.5"
                   >
-                    <span>{t("admin.topbar.viewAllAlerts")}</span>
-                    <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
+                    <span>{t("admin.topbar.viewAllAlerts") || t("admin.topbar.viewAllNotifs")}</span>
+                    <ArrowRight className="w-3.5 h-3.5 rtl:rotate-180" />
                   </button>
                 </div>
               </div>

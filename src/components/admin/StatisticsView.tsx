@@ -49,9 +49,11 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
   invoices,
   onNavigateTab,
 }) => {
-  const { isRTL, formatDate } = useLanguage();
+  const { t, isRTL, formatDate } = useLanguage();
   const [timeframe, setTimeframe] = useState<"today" | "7d" | "30d" | "ytd">("ytd");
   const [activeTab, setActiveTab] = useState<string>("overview");
+
+  const currencyUnit = "EGP";
 
   // Read actual ledger data from store
   const expenses = useAdminStore((s) => s.expenses) || [];
@@ -179,8 +181,9 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
   // 3. Destinations
   const countryDistribution = useMemo(() => {
     const map: Record<string, { count: number; sales: number; weight: number; delivered: number }> = {};
+    const defaultCountry = t("admin.statistics.destinationsSection.unspecified") || (isRTL ? "غير محدد" : "Unspecified");
     filteredShipments.forEach((s) => {
-      const c = (s.country || (isRTL ? "غير محدد" : "Unspecified")).trim();
+      const c = (s.country || defaultCountry).trim();
       if (!map[c]) map[c] = { count: 0, sales: 0, weight: 0, delivered: 0 };
       map[c].count += 1;
       map[c].sales += s.sellingPrice || s.priceEgp || 0;
@@ -198,7 +201,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
         share: totalVolume > 0 ? Math.round((map[country].count / totalVolume) * 100) : 0,
       }))
       .sort((a, b) => b.count - a.count);
-  }, [filteredShipments, totalVolume, isRTL]);
+  }, [filteredShipments, totalVolume, isRTL, t]);
 
   // 4. Carriers
   const carrierDistribution = useMemo(() => {
@@ -224,8 +227,9 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
   // 5. Top Accounts
   const topAccounts = useMemo(() => {
     const map: Record<string, { count: number; sales: number; netProf: number; lastDate?: string }> = {};
+    const defaultCashClient = t("admin.statistics.topAccountsSection.cashClient") || (isRTL ? "عميل نقدي" : "Cash Client");
     filteredShipments.forEach((s) => {
-      const acc = (s.account || s.company || s.senderName || (isRTL ? "عميل نقدي" : "Cash Client")).trim();
+      const acc = (s.account || s.company || s.senderName || defaultCashClient).trim();
       if (!map[acc]) map[acc] = { count: 0, sales: 0, netProf: 0, lastDate: s.date };
       const selling = s.sellingPrice || s.priceEgp || 0;
       const netP = s.netProfit !== undefined ? s.netProfit : (selling - (s.costPrice || 0) - (s.transExpense || 0));
@@ -246,7 +250,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
         lastDate: map[name].lastDate,
       }))
       .sort((a, b) => b.count - a.count);
-  }, [filteredShipments, isRTL]);
+  }, [filteredShipments, isRTL, t]);
 
   // 6. Liquidity & Invoices
   const totalBilledInvoices = useMemo(() => {
@@ -267,22 +271,28 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/80 shadow-2xs">
         <div>
           <h1 className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
-            {isRTL ? "الإحصائيات والتقارير" : "Statistics & Reports"}
+            {t("admin.statistics.title") || (isRTL ? "الإحصائيات والمؤشرات التنفيذية" : "Statistics & Reports")}
           </h1>
           <p className="text-xs text-gray-500 mt-0.5 font-medium">
-            {isRTL
-              ? `ملخص العمليات الحالية (${totalVolume} شحنة مسجلة)`
-              : `Operational summary based on ${totalVolume} shipments`}
+            {t("admin.statistics.subtitle", { count: totalVolume }) ||
+              (isRTL
+                ? `ملخص العمليات الحالية (${totalVolume} شحنة مسجلة)`
+                : `Operational summary based on ${totalVolume} shipments`)}
           </p>
         </div>
 
         {/* Timeframe Pill Switcher */}
         <div className="inline-flex items-center rounded-xl bg-gray-100 p-1 border border-gray-200/80 text-xs font-bold self-start sm:self-auto">
           {[
-            { id: "today", label: isRTL ? "اليوم" : "Today" },
-            { id: "7d", label: isRTL ? "7 أيام" : "7 Days" },
-            { id: "30d", label: isRTL ? "30 يوم" : "30 Days" },
-            { id: "ytd", label: isRTL ? `الكل (${shipments.length})` : `All (${shipments.length})` },
+            { id: "today", label: t("admin.statistics.timeframe.today") || (isRTL ? "اليوم" : "Today") },
+            { id: "7d", label: t("admin.statistics.timeframe.days7") || (isRTL ? "7 أيام" : "7 Days") },
+            { id: "30d", label: t("admin.statistics.timeframe.days30") || (isRTL ? "30 يوم" : "30 Days") },
+            {
+              id: "ytd",
+              label:
+                t("admin.statistics.timeframe.all", { count: shipments.length }) ||
+                (isRTL ? `الكل (${shipments.length})` : `All (${shipments.length})`),
+            },
           ].map((tf) => (
             <button
               key={tf.id}
@@ -309,17 +319,27 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
               <Package className="w-4 h-4" />
             </div>
             <span className="text-xs font-bold text-gray-500">
-              {isRTL ? "عدد الشحنات" : "Shipments"}
+              {t("admin.statistics.kpis.shipmentsCount") || (isRTL ? "عدد الشحنات" : "Shipments")}
             </span>
           </div>
-          <div className="mt-2 flex items-baseline gap-1.5" dir="ltr">
-            <span className="text-xs font-bold text-gray-400">{isRTL ? "شحنة" : "AWB"}</span>
-            <span className="text-2xl sm:text-3xl font-black font-mono text-gray-900">{totalVolume}</span>
+          <div className="mt-2 flex items-baseline gap-1.5">
+            <span className="text-2xl sm:text-3xl font-black font-mono text-gray-900" dir="ltr">
+              {totalVolume.toLocaleString()}
+            </span>
+            <span className="text-xs font-bold text-gray-400">
+              {t("admin.statistics.kpis.shipmentsUnit") || (isRTL ? "شحنة" : "AWB")}
+            </span>
           </div>
           <div className="mt-2 text-xs text-gray-500 flex items-center gap-1.5 font-medium">
-            <span className="text-emerald-700 font-bold">{deliveredCount} {isRTL ? "مُسلّمة" : "Delivered"}</span>
+            <span className="text-emerald-700 font-bold">
+              <span className="font-mono">{deliveredCount}</span>{" "}
+              {t("admin.statistics.kpis.delivered") || (isRTL ? "مُسلّمة" : "Delivered")}
+            </span>
             <span>•</span>
-            <span className="text-blue-700 font-bold">{inTransitCount} {isRTL ? "بالطريق" : "Transit"}</span>
+            <span className="text-blue-700 font-bold">
+              <span className="font-mono">{inTransitCount}</span>{" "}
+              {t("admin.statistics.kpis.inTransit") || (isRTL ? "بالطريق" : "Transit")}
+            </span>
           </div>
         </Card>
 
@@ -330,19 +350,19 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
               <DollarSign className="w-4 h-4" />
             </div>
             <span className="text-xs font-bold text-gray-500">
-              {isRTL ? "إجمالي المبيعات" : "Total Revenue"}
+              {t("admin.statistics.kpis.totalRevenue") || (isRTL ? "إجمالي المبيعات" : "Total Revenue")}
             </span>
           </div>
-          <div className="mt-2 flex items-baseline gap-1.5" dir="ltr">
-            <span className="text-2xl sm:text-3xl font-black font-mono text-gray-900">
+          <div className="mt-2 flex items-baseline gap-1.5">
+            <span className="text-xs font-bold text-blue-600">{currencyUnit}</span>
+            <span className="text-2xl sm:text-3xl font-black font-mono text-gray-900" dir="ltr">
               {totalSalesRevenue.toLocaleString()}
             </span>
-            <span className="text-xs font-bold text-blue-600">EGP</span>
           </div>
           <div className="mt-2 text-xs text-gray-500 font-medium">
-            {isRTL ? "متوسط الشحنة:" : "Avg per shipment:"}{" "}
+            {t("admin.statistics.kpis.avgPerShipment") || (isRTL ? "متوسط الشحنة:" : "Avg per shipment:")}{" "}
             <span className="font-mono font-bold text-gray-700" dir="ltr">
-              {totalVolume > 0 ? Math.round(totalSalesRevenue / totalVolume).toLocaleString() : 0} EGP
+              {totalVolume > 0 ? Math.round(totalSalesRevenue / totalVolume).toLocaleString() : 0} {currencyUnit}
             </span>
           </div>
         </Card>
@@ -354,19 +374,19 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
               <Receipt className="w-4 h-4" />
             </div>
             <span className="text-xs font-bold text-gray-500">
-              {isRTL ? "التكاليف والمصروفات" : "Costs & Expenses"}
+              {t("admin.statistics.kpis.costsExpenses") || (isRTL ? "التكاليف والمصروفات" : "Costs & Expenses")}
             </span>
           </div>
-          <div className="mt-2 flex items-baseline gap-1.5" dir="ltr">
-            <span className="text-2xl sm:text-3xl font-black font-mono text-gray-900">
+          <div className="mt-2 flex items-baseline gap-1.5">
+            <span className="text-xs font-bold text-rose-600">{currencyUnit}</span>
+            <span className="text-2xl sm:text-3xl font-black font-mono text-gray-900" dir="ltr">
               {(totalDirectCosts + totalGeneralExpenses).toLocaleString()}
             </span>
-            <span className="text-xs font-bold text-rose-600">EGP</span>
           </div>
           <div className="mt-2 text-xs text-gray-500 font-medium">
-            {isRTL ? "تكلفة الشحن: " : "Freight Cost: "}{" "}
+            {t("admin.statistics.kpis.freightCost") || (isRTL ? "تكلفة الشحن: " : "Freight Cost: ")}{" "}
             <span className="font-mono font-bold text-gray-700" dir="ltr">
-              {totalDirectCosts.toLocaleString()} EGP
+              {totalDirectCosts.toLocaleString()} {currencyUnit}
             </span>
           </div>
         </Card>
@@ -378,17 +398,17 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
               <TrendingUp className="w-4 h-4" />
             </div>
             <span className="text-xs font-bold text-emerald-950">
-              {isRTL ? "صافي الربح" : "Net Profit"}
+              {t("admin.statistics.kpis.netProfit") || (isRTL ? "صافي الربح" : "Net Profit")}
             </span>
           </div>
-          <div className="mt-2 flex items-baseline gap-1.5" dir="ltr">
-            <span className="text-2xl sm:text-3xl font-black font-mono text-emerald-950">
+          <div className="mt-2 flex items-baseline gap-1.5">
+            <span className="text-xs font-bold text-emerald-700">{currencyUnit}</span>
+            <span className="text-2xl sm:text-3xl font-black font-mono text-emerald-950" dir="ltr">
               {netOperatingProfit.toLocaleString()}
             </span>
-            <span className="text-xs font-bold text-emerald-700">EGP</span>
           </div>
           <div className="mt-2 text-xs font-bold text-emerald-800">
-            {isRTL ? "هامش الربح:" : "Margin:"} {netProfitMarginPct}%
+            {t("admin.statistics.kpis.profitMargin") || (isRTL ? "هامش الربح:" : "Margin:")} {netProfitMarginPct}%
           </div>
         </Card>
       </div>
@@ -401,7 +421,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
             className="px-4 py-2 rounded-lg text-xs font-bold data-[state=active]:bg-[#C45B2A] data-[state=active]:text-white transition-all cursor-pointer flex items-center gap-1.5"
           >
             <TrendingUp className="w-3.5 h-3.5" />
-            <span>{isRTL ? "الملخص المالي والسيولة" : "Financial Summary"}</span>
+            <span>{t("admin.statistics.tabs.financialSummary") || (isRTL ? "الملخص المالي والسيولة" : "Financial Summary")}</span>
           </TabsTrigger>
 
           <TabsTrigger
@@ -409,7 +429,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
             className="px-4 py-2 rounded-lg text-xs font-bold data-[state=active]:bg-[#C45B2A] data-[state=active]:text-white transition-all cursor-pointer flex items-center gap-1.5"
           >
             <Truck className="w-3.5 h-3.5" />
-            <span>{isRTL ? "شركات الشحن" : "Carriers"}</span>
+            <span>{t("admin.statistics.tabs.carriers") || (isRTL ? "شركات الشحن" : "Carriers")}</span>
           </TabsTrigger>
 
           <TabsTrigger
@@ -417,7 +437,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
             className="px-4 py-2 rounded-lg text-xs font-bold data-[state=active]:bg-[#C45B2A] data-[state=active]:text-white transition-all cursor-pointer flex items-center gap-1.5"
           >
             <Users className="w-3.5 h-3.5" />
-            <span>{isRTL ? "أهم العملاء" : "Top Clients"}</span>
+            <span>{t("admin.statistics.tabs.topClients") || (isRTL ? "أهم العملاء" : "Top Clients")}</span>
           </TabsTrigger>
 
           <TabsTrigger
@@ -425,7 +445,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
             className="px-4 py-2 rounded-lg text-xs font-bold data-[state=active]:bg-[#C45B2A] data-[state=active]:text-white transition-all cursor-pointer flex items-center gap-1.5"
           >
             <Globe className="w-3.5 h-3.5" />
-            <span>{isRTL ? "الوجهات والدول" : "Destinations"}</span>
+            <span>{t("admin.statistics.tabs.destinations") || (isRTL ? "الوجهات والدول" : "Destinations")}</span>
           </TabsTrigger>
         </TabsList>
 
@@ -437,46 +457,56 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
               <CardHeader className="p-4 pb-2 border-b border-gray-100">
                 <CardTitle className="text-sm font-bold text-gray-900 flex items-center gap-2">
                   <DollarSign className="w-4 h-4 text-[#C45B2A]" />
-                  <span>{isRTL ? "تفصيل الإيرادات والأرباح" : "Profit & Cost Breakdown"}</span>
+                  <span>{t("admin.statistics.breakdown.title") || (isRTL ? "تفصيل الإيرادات والأرباح" : "Profit & Cost Breakdown")}</span>
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-4 space-y-2.5 text-xs">
                 <div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
-                  <span className="text-gray-600 font-medium">{isRTL ? "مبيعات الشحن" : "Freight Sales"}</span>
+                  <span className="text-gray-600 font-medium">
+                    {t("admin.statistics.breakdown.freightSales") || (isRTL ? "مبيعات الشحن" : "Freight Sales")}
+                  </span>
                   <span className="font-mono font-bold text-blue-700 text-sm" dir="ltr">
-                    +{totalSalesRevenue.toLocaleString()} EGP
+                    +{totalSalesRevenue.toLocaleString()} {currencyUnit}
                   </span>
                 </div>
 
                 <div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
-                  <span className="text-gray-600 font-medium">{isRTL ? "تكاليف الشحن للناقلين" : "Carrier Costs"}</span>
+                  <span className="text-gray-600 font-medium">
+                    {t("admin.statistics.breakdown.carrierCosts") || (isRTL ? "تكاليف الشحن للناقلين" : "Carrier Costs")}
+                  </span>
                   <span className="font-mono font-bold text-gray-700 text-sm" dir="ltr">
-                    -{totalCarrierCosts.toLocaleString()} EGP
+                    -{totalCarrierCosts.toLocaleString()} {currencyUnit}
                   </span>
                 </div>
 
                 {totalTransExpenses > 0 && (
                   <div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
-                    <span className="text-gray-600 font-medium">{isRTL ? "النقل والمناولة الداخلية" : "Local Handling"}</span>
+                    <span className="text-gray-600 font-medium">
+                      {t("admin.statistics.breakdown.localHandling") || (isRTL ? "النقل والمناولة الداخلية" : "Local Handling")}
+                    </span>
                     <span className="font-mono font-bold text-gray-700 text-sm" dir="ltr">
-                      -{totalTransExpenses.toLocaleString()} EGP
+                      -{totalTransExpenses.toLocaleString()} {currencyUnit}
                     </span>
                   </div>
                 )}
 
                 {totalGeneralExpenses > 0 && (
                   <div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
-                    <span className="text-gray-600 font-medium">{isRTL ? "المصروفات العامة" : "Overhead Expenses"}</span>
+                    <span className="text-gray-600 font-medium">
+                      {t("admin.statistics.breakdown.overheadExpenses") || (isRTL ? "المصروفات العامة" : "Overhead Expenses")}
+                    </span>
                     <span className="font-mono font-bold text-rose-700 text-sm" dir="ltr">
-                      -{totalGeneralExpenses.toLocaleString()} EGP
+                      -{totalGeneralExpenses.toLocaleString()} {currencyUnit}
                     </span>
                   </div>
                 )}
 
                 <div className="flex items-center justify-between p-3 bg-emerald-50 rounded-xl border border-emerald-200 mt-2">
-                  <span className="text-emerald-950 font-bold">{isRTL ? "صافي الربح المحقق" : "Net Operating Profit"}</span>
+                  <span className="text-emerald-950 font-bold">
+                    {t("admin.statistics.breakdown.netOperatingProfit") || (isRTL ? "صافي الربح المحقق" : "Net Operating Profit")}
+                  </span>
                   <span className="font-mono font-black text-emerald-800 text-base" dir="ltr">
-                    {netOperatingProfit > 0 ? `+${netOperatingProfit.toLocaleString()}` : netOperatingProfit.toLocaleString()} EGP
+                    {netOperatingProfit > 0 ? `+${netOperatingProfit.toLocaleString()}` : netOperatingProfit.toLocaleString()} {currencyUnit}
                   </span>
                 </div>
               </CardContent>
@@ -488,29 +518,45 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 <CardHeader className="p-4 pb-2 border-b border-gray-100">
                   <CardTitle className="text-sm font-bold text-gray-900 flex items-center gap-2">
                     <Wallet className="w-4 h-4 text-[#C45B2A]" />
-                    <span>{isRTL ? "الفواتير والسيولة" : "Invoicing & Liquidity"}</span>
+                    <span>{t("admin.statistics.liquidity.title") || (isRTL ? "الفواتير والسيولة" : "Invoicing & Liquidity")}</span>
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-4 space-y-2.5 text-xs">
                   <div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
-                    <span className="text-gray-600 font-medium">{isRTL ? "إجمالي فواتير العملاء" : "Invoiced to Clients"}</span>
-                    <span className="font-mono font-bold text-gray-900" dir="ltr">{totalBilledInvoices.toLocaleString()} EGP</span>
+                    <span className="text-gray-600 font-medium">
+                      {t("admin.statistics.liquidity.invoicedToClients") || (isRTL ? "إجمالي فواتير العملاء" : "Invoiced to Clients")}
+                    </span>
+                    <span className="font-mono font-bold text-gray-900" dir="ltr">
+                      {totalBilledInvoices.toLocaleString()} {currencyUnit}
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between p-2.5 bg-emerald-50/70 rounded-lg border border-emerald-100">
-                    <span className="text-emerald-900 font-medium">{isRTL ? "التحصيلات المستلمة" : "Collections Received"}</span>
-                    <span className="font-mono font-bold text-emerald-800" dir="ltr">{totalCollectedCash.toLocaleString()} EGP</span>
+                    <span className="text-emerald-900 font-medium">
+                      {t("admin.statistics.liquidity.collectionsReceived") || (isRTL ? "التحصيلات المستلمة" : "Collections Received")}
+                    </span>
+                    <span className="font-mono font-bold text-emerald-800" dir="ltr">
+                      {totalCollectedCash.toLocaleString()} {currencyUnit}
+                    </span>
                   </div>
 
                   <div className="flex items-center justify-between p-2.5 bg-blue-50/70 rounded-lg border border-blue-100">
-                    <span className="text-blue-900 font-medium">{isRTL ? "المسدد لشركات الشحن" : "Paid to Carriers"}</span>
-                    <span className="font-mono font-bold text-blue-800" dir="ltr">{totalTransferredToCarriers.toLocaleString()} EGP</span>
+                    <span className="text-blue-900 font-medium">
+                      {t("admin.statistics.liquidity.paidToCarriers") || (isRTL ? "المسدد لشركات الشحن" : "Paid to Carriers")}
+                    </span>
+                    <span className="font-mono font-bold text-blue-800" dir="ltr">
+                      {totalTransferredToCarriers.toLocaleString()} {currencyUnit}
+                    </span>
                   </div>
 
                   {totalSalariesPaid > 0 && (
                     <div className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
-                      <span className="text-gray-600 font-medium">{isRTL ? "الرواتب والمسحوبات" : "Salaries Paid"}</span>
-                      <span className="font-mono font-bold text-gray-900" dir="ltr">{totalSalariesPaid.toLocaleString()} EGP</span>
+                      <span className="text-gray-600 font-medium">
+                        {t("admin.statistics.liquidity.salariesPaid") || (isRTL ? "الرواتب والمسحوبات" : "Salaries Paid")}
+                      </span>
+                      <span className="font-mono font-bold text-gray-900" dir="ltr">
+                        {totalSalariesPaid.toLocaleString()} {currencyUnit}
+                      </span>
                     </div>
                   )}
                 </CardContent>
@@ -523,8 +569,8 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                   onClick={() => onNavigateTab("invoices")}
                   className="w-full text-xs font-bold rounded-lg cursor-pointer h-8"
                 >
-                  <span>{isRTL ? "عرض الفواتير والمطالبات" : "Open Invoices"}</span>
-                  <ChevronLeft className={`w-4 h-4 ${isRTL ? "" : "rotate-180"}`} />
+                  <span>{t("admin.statistics.liquidity.openInvoicesBtn") || (isRTL ? "عرض الفواتير والمطالبات" : "Open Invoices")}</span>
+                  <ChevronLeft className="w-4 h-4 rtl:rotate-0 rotate-180" />
                 </Button>
               </div>
             </Card>
@@ -537,7 +583,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
             <CardHeader className="p-4 pb-2 border-b border-gray-100 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-bold text-gray-900 flex items-center gap-2">
                 <Truck className="w-4 h-4 text-[#C45B2A]" />
-                <span>{isRTL ? "حصة وأداء شركات الشحن والناقلين" : "Carrier Routing & Distribution"}</span>
+                <span>{t("admin.statistics.carriersSection.title") || (isRTL ? "حصة وأداء شركات الشحن والناقلين" : "Carrier Routing & Distribution")}</span>
               </CardTitle>
               <Button
                 variant="ghost"
@@ -545,13 +591,13 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 onClick={() => onNavigateTab("carriers")}
                 className="text-xs text-[#C45B2A] hover:bg-orange-50 font-bold h-7"
               >
-                {isRTL ? "إدارة الشركات" : "Manage"}
+                {t("admin.statistics.carriersSection.manageBtn") || (isRTL ? "إدارة الشركات" : "Manage")}
               </Button>
             </CardHeader>
             <CardContent className="p-4">
               {carrierDistribution.length === 0 ? (
                 <div className="p-8 text-center text-gray-400 text-xs">
-                  {isRTL ? "لا توجد بيانات شحن لهذه الفترة." : "No carrier data found for this period."}
+                  {t("admin.statistics.carriersSection.noData") || (isRTL ? "لا توجد بيانات شحن لهذه الفترة." : "No carrier data found for this period.")}
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">
@@ -564,28 +610,34 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                         <div>
                           <p className="font-bold text-gray-900 text-sm">{c.name}</p>
                           <p className="text-[11px] text-gray-500">
-                            {c.count} {isRTL ? "شحنة" : "AWBs"} ({c.share}%)
+                            <span className="font-mono">{c.count}</span> {t("admin.statistics.carriersSection.unit") || (isRTL ? "شحنة" : "AWBs")} ({c.share}%)
                           </p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-4 sm:gap-6 self-end sm:self-auto" dir="ltr">
                         <div className="text-end">
-                          <span className="text-[10px] text-gray-400 block">{isRTL ? "التكلفة" : "Cost"}</span>
+                          <span className="text-[10px] text-gray-400 block">
+                            {t("admin.statistics.carriersSection.cost") || (isRTL ? "التكلفة" : "Cost")}
+                          </span>
                           <span className="font-mono font-bold text-gray-700 text-xs">
-                            {c.cost.toLocaleString()} EGP
+                            {c.cost.toLocaleString()} {currencyUnit}
                           </span>
                         </div>
                         <div className="text-end">
-                          <span className="text-[10px] text-gray-400 block">{isRTL ? "المبيعات" : "Sales"}</span>
+                          <span className="text-[10px] text-gray-400 block">
+                            {t("admin.statistics.carriersSection.sales") || (isRTL ? "المبيعات" : "Sales")}
+                          </span>
                           <span className="font-mono font-bold text-gray-900 text-xs">
-                            {c.sales.toLocaleString()} EGP
+                            {c.sales.toLocaleString()} {currencyUnit}
                           </span>
                         </div>
                         <div className="text-end">
-                          <span className="text-[10px] text-gray-400 block">{isRTL ? "صافي الربح" : "Profit"}</span>
+                          <span className="text-[10px] text-gray-400 block">
+                            {t("admin.statistics.carriersSection.profit") || (isRTL ? "صافي الربح" : "Profit")}
+                          </span>
                           <span className="font-mono font-black text-emerald-700 text-xs">
-                            +{c.profit.toLocaleString()} EGP
+                            +{c.profit.toLocaleString()} {currencyUnit}
                           </span>
                         </div>
                       </div>
@@ -603,7 +655,7 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
             <CardHeader className="p-4 pb-2 border-b border-gray-100 flex flex-row items-center justify-between">
               <CardTitle className="text-sm font-bold text-gray-900 flex items-center gap-2">
                 <Users className="w-4 h-4 text-[#C45B2A]" />
-                <span>{isRTL ? "أهم العملاء وحسابات الشحن" : "Top Accounts"}</span>
+                <span>{t("admin.statistics.topAccountsSection.title") || (isRTL ? "أهم العملاء وحسابات الشحن" : "Top Accounts")}</span>
               </CardTitle>
               <Button
                 variant="ghost"
@@ -611,41 +663,45 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                 onClick={() => onNavigateTab("customers")}
                 className="text-xs text-[#C45B2A] hover:bg-orange-50 font-bold h-7"
               >
-                {isRTL ? "سجل العملاء" : "Clients"}
+                {t("admin.statistics.topAccountsSection.manageBtn") || (isRTL ? "سجل العملاء" : "Clients")}
               </Button>
             </CardHeader>
             <CardContent className="p-4">
               {topAccounts.length === 0 ? (
                 <div className="p-8 text-center text-gray-400 text-xs">
-                  {isRTL ? "لا توجد حسابات شحن مسجلة." : "No accounts found."}
+                  {t("admin.statistics.topAccountsSection.noData") || (isRTL ? "لا توجد حسابات شحن مسجلة." : "No accounts found.")}
                 </div>
               ) : (
                 <div className="divide-y divide-gray-100">
                   {topAccounts.slice(0, 10).map((acc, idx) => (
                     <div key={acc.name} className="py-2.5 flex items-center justify-between gap-2 text-xs">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <span className="w-5 h-5 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-[10px] font-bold shrink-0" dir="ltr">
+                        <span className="w-5 h-5 rounded-full bg-gray-100 text-gray-600 flex items-center justify-center text-[10px] font-bold shrink-0 font-mono" dir="ltr">
                           {idx + 1}
                         </span>
                         <div className="min-w-0">
                           <p className="font-bold text-gray-900 truncate">{acc.name}</p>
                           <p className="text-[10px] text-gray-400">
-                            {acc.count} {isRTL ? "شحنة" : "AWBs"}
+                            <span className="font-mono">{acc.count}</span> {t("admin.statistics.topAccountsSection.unit") || (isRTL ? "شحنة" : "AWBs")}
                           </p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-4 shrink-0" dir="ltr">
                         <div className="text-end">
-                          <span className="text-[10px] text-gray-400 block">{isRTL ? "المبيعات" : "Sales"}</span>
+                          <span className="text-[10px] text-gray-400 block">
+                            {t("admin.statistics.topAccountsSection.sales") || (isRTL ? "المبيعات" : "Sales")}
+                          </span>
                           <span className="font-mono font-bold text-gray-800 text-xs">
-                            {acc.sales.toLocaleString()} EGP
+                            {acc.sales.toLocaleString()} {currencyUnit}
                           </span>
                         </div>
                         <div className="text-end">
-                          <span className="text-[10px] text-gray-400 block">{isRTL ? "الربح" : "Profit"}</span>
+                          <span className="text-[10px] text-gray-400 block">
+                            {t("admin.statistics.topAccountsSection.profit") || (isRTL ? "الربح" : "Profit")}
+                          </span>
                           <span className="font-mono font-black text-emerald-700 text-xs">
-                            +{acc.netProf.toLocaleString()} EGP
+                            +{acc.netProf.toLocaleString()} {currencyUnit}
                           </span>
                         </div>
                       </div>
@@ -663,13 +719,13 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
             <CardHeader className="p-4 pb-2 border-b border-gray-100">
               <CardTitle className="text-sm font-bold text-gray-900 flex items-center gap-2">
                 <Globe className="w-4 h-4 text-[#C45B2A]" />
-                <span>{isRTL ? "الوجهات والدول المستلمة للشحنات" : "Destination Countries"}</span>
+                <span>{t("admin.statistics.destinationsSection.title") || (isRTL ? "الوجهات والدول المستلمة للشحنات" : "Destination Countries")}</span>
               </CardTitle>
             </CardHeader>
             <CardContent className="p-4">
               {countryDistribution.length === 0 ? (
                 <div className="p-8 text-center text-gray-400 text-xs">
-                  {isRTL ? "لا توجد شحنات مسجلة." : "No destinations found."}
+                  {t("admin.statistics.destinationsSection.noData") || (isRTL ? "لا توجد شحنات مسجلة." : "No destinations found.")}
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -681,14 +737,12 @@ export const StatisticsView: React.FC<StatisticsViewProps> = ({
                       <div>
                         <p className="font-bold text-gray-900">{item.country}</p>
                         <p className="text-[11px] text-gray-500 font-mono" dir="ltr">
-                          {item.sales.toLocaleString()} EGP
+                          {item.sales.toLocaleString()} {currencyUnit}
                         </p>
                       </div>
-                      <Badge variant="outline" className="font-mono font-bold text-[#C45B2A] bg-orange-50 border-orange-200 text-xs">
-                         {isRTL ? "شحنة" : "AWBs"}
-                        <span>
-                           {item.count}
-                        </span>
+                      <Badge variant="outline" className="font-bold text-[#C45B2A] bg-orange-50 border-orange-200 text-xs gap-1">
+                        <span className="font-mono">{item.count}</span>
+                        <span>{t("admin.statistics.destinationsSection.unit") || (isRTL ? "شحنة" : "AWBs")}</span>
                       </Badge>
                     </div>
                   ))}

@@ -73,7 +73,7 @@ export function DialogContent({
         <button
           type="button"
           onClick={onClose}
-          className="absolute right-3.5 top-3.5 rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors z-20 cursor-pointer"
+          className="absolute ltr:right-3.5 rtl:left-3.5 top-3.5 rounded-lg p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors z-20 cursor-pointer"
           aria-label="Close"
         >
           <X className="h-5 w-5" />
@@ -128,7 +128,7 @@ export function DialogFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:justify-end sm:items-center sm:gap-2.5 pt-4 border-t border-[#F1F5F9] mt-5 sm:mt-6 [&>*]:w-full sm:[&>*]:w-auto [&>*:only-child]:col-span-2 ${className}`}
+      className={`flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:items-center sm:gap-2.5 pt-4 border-t border-[#F1F5F9] mt-5 sm:mt-6 [&>*]:w-full sm:[&>*]:w-auto ${className}`}
       {...props}
     />
   );

@@ -111,7 +111,7 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
             <button
               key={fac.id}
               onClick={() => setActiveFacilityId(fac.id)}
-              className={`p-4 rounded-xl border text-start transition-all cursor-pointer space-y-2 ${
+              className={`p-4 rounded-2xl border text-start transition-all cursor-pointer space-y-2 ${
                 isActive
                   ? "bg-[#251516] text-white border-[#C45B2A] shadow-md ring-2 ring-[#C45B2A]/20"
                   : "bg-white text-gray-900 border-gray-200 hover:border-gray-300 shadow-2xs"
@@ -122,9 +122,10 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
                   {fac.city.toUpperCase()}
                 </span>
                 <span
-                  className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded ${
+                  className={`text-[10px] font-mono font-bold px-2 py-0.5 rounded-lg ${
                     isActive ? "bg-[#C45B2A] text-white" : "bg-gray-100 text-gray-700"
                   }`}
+                  dir="ltr"
                 >
                   {fac.capacityUtilizationPct}% {isRTL ? "إشغال" : "Cap"}
                 </span>
@@ -133,8 +134,8 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
                 {fac.name}
               </p>
               <div className={`flex items-center justify-between text-[11px] ${isActive ? "text-gray-300" : "text-gray-500"}`}>
-                <span>{fac.activePallets.toLocaleString()} {isRTL ? "طبلية" : "Pallets"}</span>
-                <span>{fac.dockDoors} {isRTL ? "أبواب تفريغ" : "Dock Doors"}</span>
+                <span dir="ltr">{fac.activePallets.toLocaleString("en-US")} {isRTL ? "طبلية" : "Pallets"}</span>
+                <span dir="ltr">{fac.dockDoors} {isRTL ? "أبواب تفريغ" : "Dock Doors"}</span>
               </div>
             </button>
           );
@@ -142,7 +143,7 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
       </div>
 
       {/* Selected Facility Live Metrics Bar */}
-      <div className="p-5 bg-white rounded-xl border border-gray-200/90 shadow-2xs space-y-4 text-start">
+      <div className="p-5 bg-white rounded-2xl border border-gray-200/90 shadow-2xs space-y-4 text-start">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <div className="flex items-center gap-2">
@@ -151,8 +152,8 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
                 {isRTL ? "عمليات نشطة" : "Active Operations"}
               </Badge>
             </div>
-            <p className="text-xs text-gray-500">
-              {currentFacility.totalCapacitySqM.toLocaleString()} m² • {currentFacility.country}
+            <p className="text-xs text-gray-500" dir="ltr">
+              {currentFacility.totalCapacitySqM.toLocaleString("en-US")} m² • {currentFacility.country}
             </p>
           </div>
 
@@ -160,7 +161,7 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
             size="sm"
             variant="brand"
             onClick={() => setInboundModalOpen(true)}
-            className="text-xs font-bold shadow-sm self-start sm:self-auto cursor-pointer"
+            className="text-xs font-bold shadow-xs self-start sm:self-auto cursor-pointer rounded-xl h-9.5 px-4"
           >
             <ArrowDownToLine className="h-4 w-4" />
             <span>{t("admin.warehouse.addItem")}</span>
@@ -170,10 +171,10 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
         {/* 4 Sensor & Capacity Metric Gauges */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
           {/* Capacity */}
-          <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 space-y-1 text-start">
+          <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-1 text-start">
             <div className="flex items-center justify-between text-[10px] font-bold text-gray-500 uppercase">
               <span>{isRTL ? "نسبة الإشغال" : "Bay Utilization"}</span>
-              <span>{currentFacility.capacityUtilizationPct}%</span>
+              <span className="font-mono" dir="ltr">{currentFacility.capacityUtilizationPct}%</span>
             </div>
             <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
               <div
@@ -183,36 +184,36 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
                 }`}
               />
             </div>
-            <p className="text-[11px] font-mono font-bold text-gray-800">
+            <p className="text-[11px] font-mono font-bold text-gray-800" dir="ltr">
               {currentFacility.occupiedBays} / {currentFacility.totalBays} {isRTL ? "مساحة" : "Bays"}
             </p>
           </div>
 
           {/* Temperature */}
-          <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 space-y-1 text-start">
+          <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-1 text-start">
             <span className="text-[10px] font-bold text-gray-500 uppercase flex items-center gap-1">
-              <Thermometer className="h-3 w-3 text-sky-600" />
-              {isRTL ? "درجة الحرارة" : "Ambient Temp"}
+              <Thermometer className="h-3 w-3 text-sky-600 shrink-0" />
+              <span>{isRTL ? "درجة الحرارة" : "Ambient Temp"}</span>
             </span>
-            <p className="text-lg font-black font-mono text-gray-900 ltr-preserve">
+            <p className="text-lg font-black font-mono text-gray-900 ltr-preserve" dir="ltr">
               {currentFacility.temperatureCelsius}°C
             </p>
             <p className="text-[10px] text-emerald-600 font-semibold">{isRTL ? "الغرف المبردة: 4.2°C" : "Cold Vault: 4.2°C Active"}</p>
           </div>
 
           {/* Staff */}
-          <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 space-y-1 text-start">
+          <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-1 text-start">
             <span className="text-[10px] font-bold text-gray-500 uppercase">{isRTL ? "فريق العمليات" : "Active Staff"}</span>
-            <p className="text-lg font-black font-mono text-gray-900">
+            <p className="text-lg font-black font-mono text-gray-900" dir="ltr">
               {currentFacility.activeStaff} {isRTL ? "مشغلين" : "Operators"}
             </p>
             <p className="text-[10px] text-gray-500">{isRTL ? "ماسحات RF ورافعات شوكية" : "Forklifts & RF active"}</p>
           </div>
 
           {/* Staging Bays */}
-          <div className="p-3 bg-gray-50 rounded-lg border border-gray-100 space-y-1 text-start">
+          <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-1 text-start">
             <span className="text-[10px] font-bold text-gray-500 uppercase">{isRTL ? "بوابات التوزيع" : "Dock Doors"}</span>
-            <p className="text-lg font-black font-mono text-gray-900">
+            <p className="text-lg font-black font-mono text-gray-900" dir="ltr">
               {currentFacility.dockDoors} {isRTL ? "بوابة" : "Doors"}
             </p>
             <p className="text-[10px] text-emerald-600 font-semibold">{isRTL ? "انسيابية حركة بدون تأخير" : "Zero congestion"}</p>
@@ -221,14 +222,14 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
       </div>
 
       {/* Filter and Search */}
-      <div className="bg-white p-4 rounded-xl border border-gray-200/90 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
+      <div className="bg-white p-4 rounded-2xl border border-gray-200/90 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3">
         <div className="relative w-full sm:w-80">
-          <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-2.5 h-4 w-4 text-gray-400`} />
+          <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder={t("admin.warehouse.searchPlaceholder")}
-            className={`text-xs ${isRTL ? "pr-9 pl-3 text-right" : "pl-9 pr-3 text-left"}`}
+            className="text-xs ps-9 pe-3 text-start h-9.5 rounded-xl border-gray-200 bg-gray-50/70 focus:bg-white transition-all"
           />
         </div>
 
@@ -247,9 +248,9 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
               <button
                 key={cat}
                 onClick={() => setCategoryFilter(cat)}
-                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition-all cursor-pointer ${
+                className={`px-2.5 py-1.5 rounded-xl text-[11px] font-bold transition-all cursor-pointer ${
                   categoryFilter === cat
-                    ? "bg-[#251516] text-white"
+                    ? "bg-[#251516] text-white shadow-2xs"
                     : "bg-gray-100 text-gray-600 hover:bg-gray-200"
                 }`}
               >
@@ -261,34 +262,34 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
       </div>
 
       {/* Warehouse Items Table */}
-      <Card className="shadow-2xs overflow-hidden">
+      <Card className="shadow-2xs overflow-hidden rounded-2xl border border-gray-200/90 bg-white">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-gray-50/80 border-b border-gray-100">
             <TableRow>
-              <TableHead className="text-start">{t("admin.warehouse.table.skuItem")}</TableHead>
-              <TableHead className="text-start">{t("admin.warehouse.table.category")}</TableHead>
-              <TableHead className="text-start">{t("admin.warehouse.table.quantity")}</TableHead>
-              <TableHead className="text-start">{t("admin.warehouse.table.bayAisle")}</TableHead>
-              <TableHead className="text-start">{isRTL ? "مدة التخزين" : "Dwell Time"}</TableHead>
-              <TableHead className="text-start">{isRTL ? "بيئة التخزين" : "Climate Zone"}</TableHead>
-              <TableHead className="text-end">{t("admin.warehouse.table.status")}</TableHead>
+              <TableHead className="text-start py-3.5 px-4 text-xs font-bold text-gray-600">{t("admin.warehouse.table.skuItem")}</TableHead>
+              <TableHead className="text-start py-3.5 px-4 text-xs font-bold text-gray-600">{t("admin.warehouse.table.category")}</TableHead>
+              <TableHead className="text-start py-3.5 px-4 text-xs font-bold text-gray-600">{t("admin.warehouse.table.quantity")}</TableHead>
+              <TableHead className="text-start py-3.5 px-4 text-xs font-bold text-gray-600">{t("admin.warehouse.table.bayAisle")}</TableHead>
+              <TableHead className="text-start py-3.5 px-4 text-xs font-bold text-gray-600">{isRTL ? "مدة التخزين" : "Dwell Time"}</TableHead>
+              <TableHead className="text-start py-3.5 px-4 text-xs font-bold text-gray-600">{isRTL ? "بيئة التخزين" : "Climate Zone"}</TableHead>
+              <TableHead className="text-end py-3.5 px-4 text-xs font-bold text-gray-600">{t("admin.warehouse.table.status")}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {filteredItems.map((item) => (
-              <TableRow key={item.id} className="hover:bg-gray-50/90">
-                <TableCell>
+              <TableRow key={item.id} className="hover:bg-gray-50/70 border-b border-gray-100/70">
+                <TableCell className="py-3 px-4">
                   <div className="space-y-0.5 text-start">
-                    <span className="font-mono font-bold text-xs text-[#251516] flex items-center gap-1.5 ltr-preserve">
-                      <Barcode className="h-3.5 w-3.5 text-gray-400" />
+                    <span className="font-mono font-bold text-xs text-[#251516] flex items-center gap-1.5 ltr-preserve" dir="ltr">
+                      <Barcode className="h-3.5 w-3.5 text-gray-400 shrink-0" />
                       {item.sku}
                     </span>
                     <p className="text-xs font-bold text-gray-900">{item.name}</p>
                   </div>
                 </TableCell>
 
-                <TableCell>
-                  <Badge variant="outline" size="sm">
+                <TableCell className="py-3 px-4">
+                  <Badge variant="outline" size="sm" className="bg-gray-50 text-gray-700 border-gray-200">
                     {isRTL ? (
                       item.category === "Electronics" ? "إلكترونيات" :
                       item.category === "Pharmaceuticals" ? "أدوية ومستلزمات" :
@@ -300,26 +301,26 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
                   </Badge>
                 </TableCell>
 
-                <TableCell>
-                  <div className="space-y-0.5 font-mono text-xs text-start">
+                <TableCell className="py-3 px-4">
+                  <div className="space-y-0.5 font-mono text-xs text-start" dir="ltr">
                     <span className="font-bold text-gray-900">{item.quantity} {isRTL ? "وحدة" : "units"}</span>
                     <p className="text-[10px] text-gray-400">({item.totalWeight} {t("common.kg")})</p>
                   </div>
                 </TableCell>
 
-                <TableCell>
+                <TableCell className="py-3 px-4">
                   <div className="space-y-0.5 text-start">
-                    <span className="font-mono text-xs font-bold text-gray-900">{item.bayLocation}</span>
+                    <span className="font-mono text-xs font-bold text-gray-900" dir="ltr">{item.bayLocation}</span>
                     <p className="text-[10px] text-gray-500">{item.zone}</p>
                   </div>
                 </TableCell>
 
-                <TableCell>
-                  <span className="font-mono text-xs text-gray-700 text-start">{item.dwellDays} {isRTL ? "يوم" : "Days"}</span>
+                <TableCell className="py-3 px-4">
+                  <span className="font-mono text-xs text-gray-700 text-start" dir="ltr">{item.dwellDays} {isRTL ? "يوم" : "Days"}</span>
                 </TableCell>
 
-                <TableCell>
-                  <span className="text-xs text-gray-600 text-start">
+                <TableCell className="py-3 px-4">
+                  <span className="text-xs text-gray-600 text-start font-medium">
                     {isRTL ? (
                       item.temperatureZone === "Ambient" ? "مستودع جاف" :
                       item.temperatureZone === "Cold Chain (2-8°C)" ? "تبريد (2-8°C)" :
@@ -329,7 +330,7 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
                   </span>
                 </TableCell>
 
-                <TableCell className="text-end">
+                <TableCell className="text-end py-3 px-4">
                   <Badge variant={item.status === "Stored" ? "success" : item.status === "In Staging" ? "brand" : "warning"} size="sm">
                     {isRTL ? (
                       item.status === "Stored" ? "مخزن" :
@@ -353,18 +354,18 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
 
       {/* ── Inbound Receiving Modal ── */}
       <Dialog open={inboundModalOpen} onOpenChange={setInboundModalOpen}>
-        <DialogContent className="max-w-xl text-start p-4 sm:p-6" onClose={() => setInboundModalOpen(false)}>
+        <DialogContent className="max-w-xl text-start p-4 sm:p-6 rounded-3xl max-h-[90vh] overflow-y-auto bg-white" onClose={() => setInboundModalOpen(false)}>
           <DialogHeader>
-            <DialogTitle>
-              <Warehouse className="h-5 w-5 text-[#C45B2A]" />
-              {t("admin.warehouse.modal.createTitle")}
+            <DialogTitle className="flex items-center gap-2 text-base font-bold text-gray-900">
+              <Warehouse className="h-5 w-5 text-[#C45B2A] shrink-0" />
+              <span>{t("admin.warehouse.modal.createTitle")}</span>
             </DialogTitle>
-            <DialogDescription>
+            <DialogDescription className="text-xs text-gray-500">
               {t("admin.warehouse.modal.createSubtitle")} ({currentFacility.name})
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleInboundItem} className="space-y-3.5">
+          <form onSubmit={handleInboundItem} className="space-y-3.5 pt-2">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label className="block text-[11px] font-bold uppercase text-gray-600 mb-1">
@@ -375,6 +376,7 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
                   value={sku}
                   onChange={(e) => setSku(e.target.value)}
                   className="font-mono text-xs uppercase font-bold ltr-preserve"
+                  dir="ltr"
                 />
               </div>
               <div>
@@ -419,7 +421,8 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
                   required
                   value={qty}
                   onChange={(e) => setQty(e.target.value)}
-                  className="text-xs font-mono"
+                  className="text-xs font-mono font-bold"
+                  dir="ltr"
                 />
               </div>
               <div>
@@ -432,7 +435,8 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
                   required
                   value={unitWeight}
                   onChange={(e) => setUnitWeight(e.target.value)}
-                  className="text-xs font-mono"
+                  className="text-xs font-mono font-bold"
+                  dir="ltr"
                 />
               </div>
             </div>
@@ -448,6 +452,7 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
                   onChange={(e) => setBayLocation(e.target.value)}
                   placeholder="Aisle 02 - Bay B-14 / Shelf 3"
                   className="text-xs font-mono"
+                  dir="ltr"
                 />
               </div>
               <div>
@@ -467,19 +472,19 @@ export const WarehouseView: React.FC<WarehouseViewProps> = ({
               </div>
             </div>
 
-            <DialogFooter>
+            <DialogFooter className="pt-2 gap-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setInboundModalOpen(false)}
-                className="w-full sm:w-auto h-10 text-xs cursor-pointer justify-center"
+                className="w-full sm:w-auto h-10 text-xs cursor-pointer justify-center rounded-xl"
               >
                 {t("common.cancel")}
               </Button>
               <Button
                 type="submit"
                 variant="brand"
-                className="w-full sm:w-auto h-10 text-xs font-bold cursor-pointer justify-center"
+                className="w-full sm:w-auto h-10 text-xs font-bold cursor-pointer justify-center rounded-xl shadow-2xs"
               >
                 {t("admin.warehouse.modal.saveBtn")}
               </Button>

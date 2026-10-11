@@ -44,7 +44,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const user = useMemo<UserProfile | null>(() => {
     if (!session?.user) return null;
-    const sessionUser = session.user as any;
+    const sessionUser = session.user;
     const role: "admin" | "user" =
       sessionUser.role === "admin" || (sessionUser.email && sessionUser.email.includes("admin"))
         ? "admin"
@@ -118,8 +118,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { success: true };
         }
         return { success: false, error: json.error || "Registration failed" };
-      } catch (err: any) {
-        return { success: false, error: err.message || "Network error" };
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Network error";
+        return { success: false, error: message };
       }
     },
     []
@@ -149,8 +150,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { success: true, message: json.message || "Profile updated successfully!" };
         }
         return { success: false, message: json.error || "Failed to update profile" };
-      } catch (err: any) {
-        return { success: false, message: err.message || "Network error" };
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Network error";
+        return { success: false, message };
       }
     },
     [update]
@@ -169,8 +171,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { success: true, message: json.message, devCode: json.devCode, token: json.token };
         }
         return { success: false, message: json.error || "Failed to process forgot password request" };
-      } catch (err: any) {
-        return { success: false, message: err.message || "Network error" };
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Network error";
+        return { success: false, message };
       }
     },
     []
@@ -189,8 +192,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           return { success: true, message: json.message };
         }
         return { success: false, message: json.error || "Failed to reset password" };
-      } catch (err: any) {
-        return { success: false, message: err.message || "Network error" };
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : "Network error";
+        return { success: false, message };
       }
     },
     []

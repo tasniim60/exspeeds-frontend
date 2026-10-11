@@ -5,22 +5,18 @@ import {
   Banknote,
   Plus,
   Search,
-  Filter,
   Calendar,
   User,
-  CreditCard,
   Receipt,
   Trash2,
   AlertCircle,
-  Wallet,
   Landmark,
-  ArrowUpRight,
   TrendingUp,
   UserCheck,
   CheckCircle2,
   RefreshCw,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card,CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -69,7 +65,7 @@ export const SalariesView: React.FC<SalariesViewProps> = ({
   // Modal State: Record Salary
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [date, setDate] = useState<string>(new Date().toISOString().split("T")[0]);
-  const [employeeName, setEmployeeName] = useState<string>(MASTER_AGENTS[0] || "مصطفي");
+  const [employeeName, setEmployeeName] = useState<string>(MASTER_AGENTS[0] || "Admin");
   const [customEmployeeName, setCustomEmployeeName] = useState<string>("");
   const [type, setType] = useState<"salary" | "advance" | "bonus" | "deduction">("salary");
   const [amount, setAmount] = useState<string>("");
@@ -85,7 +81,7 @@ export const SalariesView: React.FC<SalariesViewProps> = ({
     }
   });
   const [paymentMethod, setPaymentMethod] = useState<string>("تحويل بنكي / إنستاباي");
-  const [recorder, setRecorder] = useState<string>(MASTER_AGENTS[0] || "مصطفي");
+  const [recorder, setRecorder] = useState<string>(MASTER_AGENTS[0] || "Admin");
   const [notes, setNotes] = useState<string>("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -227,7 +223,7 @@ export const SalariesView: React.FC<SalariesViewProps> = ({
           <CardContent className="p-4 sm:p-5 flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold text-gray-500 uppercase">{isRTL ? "إجمالي المنصرف" : "Total Payroll"}</p>
-              <p className="text-xl sm:text-2xl font-black text-indigo-700">{formatCurrency(kpis.grandTotal, "EGP")}</p>
+              <p className="text-start text-xl sm:text-2xl font-black text-indigo-700 font-mono" dir="ltr">{formatCurrency(kpis.grandTotal, "EGP")}</p>
             </div>
             <div className="w-11 h-11 rounded-xl bg-indigo-50 text-indigo-700 flex items-center justify-center border border-indigo-200">
               <Banknote className="w-5 h-5" />
@@ -239,7 +235,7 @@ export const SalariesView: React.FC<SalariesViewProps> = ({
           <CardContent className="p-4 sm:p-5 flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold text-gray-500 uppercase">{isRTL ? "مرتبات الشهر الحالي" : "This Month"}</p>
-              <p className="text-xl sm:text-2xl font-black text-gray-900">{formatCurrency(kpis.thisMonthTotal, "EGP")}</p>
+              <p className="text-start text-xl sm:text-2xl font-black text-gray-900 font-mono" dir="ltr">{formatCurrency(kpis.thisMonthTotal, "EGP")}</p>
             </div>
             <div className="w-11 h-11 rounded-xl bg-teal-50 text-teal-700 flex items-center justify-center border border-teal-200">
               <TrendingUp className="w-5 h-5" />
@@ -251,7 +247,7 @@ export const SalariesView: React.FC<SalariesViewProps> = ({
           <CardContent className="p-4 sm:p-5 flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold text-gray-500 uppercase">{isRTL ? "سلف مسحوبة" : "Advances & Loans"}</p>
-              <p className="text-2xl font-black text-amber-700">{formatCurrency(kpis.totalAdvances, "EGP")}</p>
+              <p className="text-start text-2xl font-black text-amber-700 font-mono" dir="ltr">{formatCurrency(kpis.totalAdvances, "EGP")}</p>
             </div>
             <div className="w-11 h-11 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-200">
               <Receipt className="w-5 h-5" />
@@ -263,7 +259,7 @@ export const SalariesView: React.FC<SalariesViewProps> = ({
           <CardContent className="p-4 sm:p-5 flex items-center justify-between">
             <div className="space-y-1">
               <p className="text-xs font-bold text-gray-500 uppercase">{isRTL ? "فريق العمل والمستلمين" : "Staff Count"}</p>
-              <p className="text-2xl font-black text-gray-900">{kpis.employeeCount}</p>
+              <p className="text-start text-2xl font-black text-gray-900 font-mono" dir="ltr">{kpis.employeeCount}</p>
             </div>
             <div className="w-11 h-11 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center border border-purple-200">
               <UserCheck className="w-5 h-5" />
@@ -277,12 +273,12 @@ export const SalariesView: React.FC<SalariesViewProps> = ({
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <div className="relative flex-1 w-full">
-              <Search className={`w-4 h-4 text-gray-400 absolute top-1/2 -translate-y-1/2 ${isRTL ? "right-3" : "left-3"}`} />
+              <Search className="w-4 h-4 text-gray-400 absolute top-1/2 -translate-y-1/2 start-3" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={isRTL ? "بحث باسم الموظف، شهر المرتب، الحساب، أو البيان..." : "Search employee, period, notes..."}
-                className={`h-10 rounded-xl bg-gray-50/60 border-gray-200 text-xs sm:text-sm ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+                className="h-10 rounded-xl bg-gray-50/60 border-gray-200 text-xs sm:text-sm ps-9 pe-3 text-start"
               />
             </div>
 
@@ -335,25 +331,25 @@ export const SalariesView: React.FC<SalariesViewProps> = ({
           <Table>
             <TableHeader className="bg-gray-50/90 border-b border-gray-200">
               <TableRow>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "التاريخ" : "Date"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "اسم الموظف / المستلم" : "Employee"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "نوع البند" : "Type"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "المبلغ المصروف" : "Amount"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "المنصرف من حساب" : "Paying Vault"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "شهر المرتب / البيان" : "Period & Notes"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "المسجل" : "Agent"}
                 </TableHead>
                 <TableHead className="text-center text-xs font-bold text-gray-700">
@@ -378,9 +374,9 @@ export const SalariesView: React.FC<SalariesViewProps> = ({
                 filteredList.map((s) => (
                   <TableRow key={s.id} className="hover:bg-indigo-50/20 transition-colors">
                     <TableCell className="text-xs text-gray-700 font-mono">
-                      <div className="flex items-center gap-1">
+                      <div className="flex rtl:justify-end ltr:justify-start items-center gap-1">
                         <Calendar className="w-3.5 h-3.5 text-gray-400" />
-                        <span>{s.date}</span>
+                        <span dir="ltr">{s.date}</span>
                       </div>
                     </TableCell>
 
@@ -415,7 +411,7 @@ export const SalariesView: React.FC<SalariesViewProps> = ({
                     </TableCell>
 
                     <TableCell>
-                      <span className="text-sm font-black text-indigo-700 font-mono">
+                      <span className="text-sm font-black text-indigo-700 font-mono inline-block" dir="ltr">
                         {formatCurrency(s.amount, s.currency || "EGP")}
                       </span>
                     </TableCell>
@@ -423,7 +419,7 @@ export const SalariesView: React.FC<SalariesViewProps> = ({
                     <TableCell>
                       <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 text-[11px] font-bold border border-slate-200">
                         <Landmark className="w-3 h-3 text-indigo-600" />
-                        <span>{s.payingAccount}</span>
+                        <span dir="ltr">{s.payingAccount}</span>
                       </span>
                     </TableCell>
 
@@ -436,7 +432,7 @@ export const SalariesView: React.FC<SalariesViewProps> = ({
 
                     <TableCell>
                       <span className="text-xs font-bold text-gray-700 bg-gray-100 px-2 py-0.5 rounded">
-                        {s.recordedBy || "مصطفي"}
+                        {s.recordedBy || "Admin"}
                       </span>
                     </TableCell>
 
@@ -462,7 +458,7 @@ export const SalariesView: React.FC<SalariesViewProps> = ({
 
       {/* Modal: Add Salary */}
       <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
-        <DialogContent className="sm:max-w-lg rounded-3xl p-6">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl p-6 text-start">
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-gray-900 flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-indigo-100 text-indigo-800 flex items-center justify-center">
@@ -635,9 +631,17 @@ export const SalariesView: React.FC<SalariesViewProps> = ({
             {isRTL ? "تأكيد حذف القيد" : "Confirm Delete"}
           </DialogTitle>
           <DialogDescription className="text-xs text-gray-500">
-            {isRTL
-              ? `هل أنت متأكد من حذف قيد ${deleteTarget?.employeeName} بمبلغ ${deleteTarget?.amount} ${deleteTarget?.currency}؟`
-              : `Delete salary record for ${deleteTarget?.employeeName}?`}
+            {isRTL ? (
+              <>
+                هل أنت متأكد من حذف قيد {deleteTarget?.employeeName} بمبلغ{" "}
+                <span dir="ltr" className="font-mono font-bold text-gray-800">
+                  {deleteTarget?.amount} {deleteTarget?.currency || "EGP"}
+                </span>
+                ؟
+              </>
+            ) : (
+              `Delete salary record for ${deleteTarget?.employeeName}?`
+            )}
           </DialogDescription>
           <DialogFooter className="mt-4 flex gap-2 sm:justify-center">
             <Button variant="outline" onClick={() => setDeleteTarget(null)} className="h-10 rounded-xl">

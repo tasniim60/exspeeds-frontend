@@ -94,14 +94,14 @@ function calculateWaitingDuration(updatedAt: string, createdAt: string, status: 
 }
 
 export const SUPPORTED_CURRENCIES = [
-  { code: "EGP", labelAr: "ج.م", labelEn: "EGP", nameAr: "جنيه مصري", nameEn: "Egyptian Pound" },
+  { code: "EGP", labelAr: "EGP", labelEn: "EGP", nameAr: "جنيه مصري", nameEn: "Egyptian Pound" },
   { code: "USD", labelAr: "$", labelEn: "USD ($)", nameAr: "دولار أمريكي", nameEn: "US Dollar" },
   { code: "EUR", labelAr: "€", labelEn: "EUR (€)", nameAr: "يورو", nameEn: "Euro" },
-  { code: "SAR", labelAr: "ر.س", labelEn: "SAR", nameAr: "ريال سعودي", nameEn: "Saudi Riyal" },
-  { code: "AED", labelAr: "د.إ", labelEn: "AED", nameAr: "درهم إماراتي", nameEn: "UAE Dirham" },
-  { code: "GBP", labelAr: "£", labelEn: "GBP (£)", nameAr: "جنيه إسترليني", nameEn: "British Pound" },
-  { code: "KWD", labelAr: "د.ك", labelEn: "KWD", nameAr: "دينار كويتي", nameEn: "Kuwaiti Dinar" },
-  { code: "QAR", labelAr: "ر.ق", labelEn: "QAR", nameAr: "ريال قطري", nameEn: "Qatari Riyal" },
+  { code: "SAR", labelAr: "SAR", labelEn: "SAR", nameAr: "ريال سعودي", nameEn: "Saudi Riyal" },
+  { code: "AED", labelAr: "AED", labelEn: "AED", nameAr: "درهم إماراتي", nameEn: "UAE Dirham" },
+  { code: "GBP", labelAr: "GBP", labelEn: "GBP (£)", nameAr: "جنيه إسترليني", nameEn: "British Pound" },
+  { code: "KWD", labelAr: "KWD", labelEn: "KWD", nameAr: "دينار كويتي", nameEn: "Kuwaiti Dinar" },
+  { code: "QAR", labelAr: "QAR", labelEn: "QAR", nameAr: "ريال قطري", nameEn: "Qatari Riyal" },
 ];
 
 export const POPULAR_COUNTRIES = [
@@ -302,6 +302,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [delayedOnlyFilter, setDelayedOnlyFilter] = useState<boolean>(false);
   const [selectedRequest, setSelectedRequest] = useState<ShipmentRequest | null>(null);
+  const [copiedReqNum, setCopiedReqNum] = useState(false);
 
   // Inline Price Editing State in Table
   const [editingPriceId, setEditingPriceId] = useState<string | null>(null);
@@ -1420,21 +1421,20 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
       <div className="bg-white p-4 rounded-2xl border border-gray-200/90 shadow-2xs space-y-3">
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <div className="relative flex-1">
-            <Search className={`w-4 h-4 text-gray-400 absolute top-3.5 ${isRTL ? "right-3.5" : "left-3.5"} pointer-events-none`} />
+            <Search className="w-4 h-4 text-gray-400 absolute top-3.5 start-3.5 pointer-events-none" />
             <input
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               placeholder={t("admin.requests.searchPlaceholder")}
-              className={`w-full h-11 bg-gray-50/80 text-[#251516] text-xs font-semibold rounded-xl border border-gray-200 focus:border-[#C45B2A] focus:bg-white outline-none transition-all shadow-inner ${
-                isRTL ? "pr-10 pl-4" : "pl-10 pr-4"
-              }`}
+              className="w-full h-11 bg-gray-50/80 text-[#251516] text-xs font-semibold rounded-xl border border-gray-200 focus:border-[#C45B2A] focus:bg-white outline-none transition-all shadow-inner ps-10 pe-10"
             />
             {searchTerm && (
               <button
                 type="button"
                 onClick={() => setSearchTerm("")}
-                className={`absolute top-3 ${isRTL ? "left-3" : "right-3"} text-gray-400 hover:text-gray-600`}
+                className="absolute top-3 end-3 text-gray-400 hover:text-gray-600 p-0.5 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
+                aria-label={isRTL ? "مسح البحث" : "Clear search"}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1789,7 +1789,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
       {/* ─── 4. REQUEST DETAILS & QUOTING MODAL ─── */}
       <Dialog open={!!selectedRequest} onOpenChange={(open) => !open && setSelectedRequest(null)}>
         {selectedRequest && (
-          <DialogContent className="max-w-4xl w-[95vw] sm:w-full space-y-4 sm:space-y-5 text-start p-4 sm:p-6 md:p-7" onClose={() => setSelectedRequest(null)}>
+          <DialogContent className="max-w-4xl w-[95vw] sm:w-full space-y-4 sm:space-y-5 text-start p-4 sm:p-6 md:p-7 max-h-[90vh] overflow-y-auto rounded-3xl" onClose={() => setSelectedRequest(null)}>
             {/* Modal Header */}
             <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 border-b border-gray-100 pb-4">
               <div>
@@ -1798,7 +1798,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     {t("admin.requests.modal.title")}
                   </span>
                   <span
-                    className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
                       selectedRequest.status === "Converted to Shipment"
                         ? "bg-emerald-50 text-emerald-700 border-emerald-200"
                         : selectedRequest.status === "Customer Confirmed"
@@ -1814,15 +1814,48 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                         : "bg-amber-50 text-amber-700 border-amber-200"
                     }`}
                   >
-                    {getLocalizedStatus(selectedRequest.status, isRTL)}
+                    <span className={`w-1.5 h-1.5 rounded-full ${
+                      selectedRequest.status === "Converted to Shipment"
+                        ? "bg-emerald-500"
+                        : selectedRequest.status === "Customer Confirmed"
+                        ? "bg-blue-500"
+                        : selectedRequest.status === "Awaiting Customer Response"
+                        ? "bg-indigo-500"
+                        : selectedRequest.status === "Price Sent"
+                        ? "bg-purple-500"
+                        : selectedRequest.status === "Contacted"
+                        ? "bg-cyan-500"
+                        : selectedRequest.status === "Cancelled"
+                        ? "bg-rose-500"
+                        : "bg-amber-500"
+                    }`} />
+                    <span>{getLocalizedStatus(selectedRequest.status, isRTL)}</span>
                   </span>
                 </div>
-                <h3 className="text-xl sm:text-2xl font-black text-[#251516] mt-1 font-mono" dir="ltr">
-                  {selectedRequest.requestNumber}
-                </h3>
+
+                <div className="flex items-center gap-2 mt-1.5">
+                  <h3 className="text-xl sm:text-2xl font-black text-[#251516] font-mono tracking-tight" dir="ltr">
+                    {selectedRequest.requestNumber}
+                  </h3>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (typeof navigator !== "undefined" && navigator.clipboard) {
+                        navigator.clipboard.writeText(selectedRequest.requestNumber);
+                        setCopiedReqNum(true);
+                        setTimeout(() => setCopiedReqNum(false), 2000);
+                      }
+                    }}
+                    className="p-1.5 rounded-lg text-gray-500 hover:text-[#C45B2A] hover:bg-orange-50 transition-colors border border-gray-200 shadow-2xs cursor-pointer"
+                    title={isRTL ? "نسخ رقم الطلب" : "Copy Request #"}
+                  >
+                    {copiedReqNum ? <Check className="w-3.5 h-3.5 text-emerald-600 stroke-[3]" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+
                 <p className="text-xs text-gray-500 mt-1 flex items-center gap-1.5 flex-wrap">
                   <span>{t("admin.requests.modal.submittedOn")}</span>
-                  <span className="font-bold text-gray-700">
+                  <span className="font-bold text-gray-700 font-mono" dir="ltr">
                     {formatDateTime(selectedRequest.createdAt) || selectedRequest.createdAt}
                   </span>
                 </p>
@@ -1845,7 +1878,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
             </div>
 
             {/* Quick Status Action Buttons Bar */}
-            <div className="bg-gray-50 p-3 sm:p-4 rounded-xl border border-gray-200 space-y-2">
+            <div className="bg-gray-50/80 p-3 sm:p-4 rounded-2xl border border-gray-200 space-y-2 shadow-2xs">
               <span className="text-[11px] font-bold uppercase text-gray-600 tracking-wider block">
                 {t("admin.requests.modal.quickStatusUpdates")}
               </span>
@@ -1853,7 +1886,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                 <button
                   type="button"
                   onClick={() => handleQuickStatusChange("Contacted", isRTL ? "تم التواصل مع العميل عبر واتساب" : "Contacted customer via WhatsApp")}
-                  className="px-3 py-2 sm:py-1.5 rounded-lg text-xs font-bold bg-cyan-50 text-cyan-800 border border-cyan-200 hover:bg-cyan-100 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  className="px-3 py-2 sm:py-1.5 rounded-xl text-xs font-bold bg-cyan-50 text-cyan-800 border border-cyan-200 hover:bg-cyan-100 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <MessageSquare className="w-3.5 h-3.5 shrink-0" />
                   <span>{t("admin.requests.modal.markContacted")}</span>
@@ -1862,7 +1895,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                 <button
                   type="button"
                   onClick={() => handleQuickStatusChange("Approved", isRTL ? "تم الاتفاق على السعر واعتماد الطلب" : "Rate agreed and request approved")}
-                  className="px-3 py-2 sm:py-1.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  className="px-3 py-2 sm:py-1.5 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 hover:bg-emerald-100 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <CheckCheck className="w-3.5 h-3.5 shrink-0" />
                   <span>{t("admin.requests.modal.markApproved")}</span>
@@ -1871,7 +1904,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                 <button
                   type="button"
                   onClick={() => handleQuickStatusChange("Cancelled", isRTL ? "تم إلغاء الطلب" : "Request cancelled")}
-                  className="px-3 py-2 sm:py-1.5 rounded-lg text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  className="px-3 py-2 sm:py-1.5 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                 >
                   <XCircle className="w-3.5 h-3.5 shrink-0" />
                   <span>{t("admin.requests.modal.cancelRequest")}</span>
@@ -1880,7 +1913,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
             </div>
 
             {/* Audit Trail & Timestamps Card (سجل المتابعة) */}
-            <div className="bg-amber-50/60 p-3.5 sm:p-4 rounded-xl border border-amber-200/80 space-y-2">
+            <div className="bg-amber-50/60 p-3.5 sm:p-4 rounded-2xl border border-amber-200/80 space-y-2 shadow-2xs">
               <span className="text-[11px] font-bold uppercase text-amber-900 tracking-wider flex items-center gap-1.5">
                 <Clock className="w-4 h-4 text-amber-700 shrink-0" />
                 <span>{t("admin.requests.modal.auditTrailTitle")}</span>
@@ -1888,14 +1921,14 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-2.5 text-xs pt-1">
                 {/* 1. Created At (تاريخ التقديم) */}
-                <div className="bg-white p-2.5 rounded-lg border border-amber-100 shadow-2xs flex flex-col justify-between">
+                <div className="bg-white p-2.5 rounded-xl border border-amber-100 shadow-2xs flex flex-col justify-between">
                   <span className="text-[10px] text-gray-500 font-bold uppercase block truncate">{t("admin.requests.modal.createdAt")}</span>
                   <div className="mt-1">
-                    <p className="font-bold text-gray-900 text-xs leading-tight">
+                    <p className="font-mono font-bold text-gray-900 text-xs leading-tight" dir="ltr">
                       {formatDate(selectedRequest.createdAt) || "N/A"}
                     </p>
                     {formatTime(selectedRequest.createdAt) && (
-                      <p className="text-[10px] text-gray-500 mt-0.5">
+                      <p className="text-[10px] text-gray-500 mt-0.5 font-mono" dir="ltr">
                         {formatTime(selectedRequest.createdAt)}
                       </p>
                     )}
@@ -1903,7 +1936,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                 </div>
 
                 {/* 2. Approved At (تاريخ الاعتماد) */}
-                <div className="bg-white p-2.5 rounded-lg border border-amber-100 shadow-2xs flex flex-col justify-between">
+                <div className="bg-white p-2.5 rounded-xl border border-amber-100 shadow-2xs flex flex-col justify-between">
                   <span className="text-[10px] text-gray-500 font-bold uppercase block truncate">{isRTL ? "تاريخ الاعتماد" : "Approved At"}</span>
                   <div className="mt-1">
                     {(() => {
@@ -1920,11 +1953,11 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
 
                       return modalApprovedAt ? (
                         <>
-                          <p className="font-bold text-emerald-700 text-xs leading-tight">
+                          <p className="font-mono font-bold text-emerald-700 text-xs leading-tight" dir="ltr">
                             {formatDate(modalApprovedAt)}
                           </p>
                           {formatTime(modalApprovedAt) && (
-                            <p className="text-[10px] text-emerald-600 mt-0.5">
+                            <p className="text-[10px] text-emerald-600 mt-0.5 font-mono" dir="ltr">
                               {formatTime(modalApprovedAt)}
                             </p>
                           )}
@@ -1937,10 +1970,10 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                 </div>
 
                 {/* 3. Currency & Agreed Rate (العملة المعتمدة) */}
-                <div className="bg-white p-2.5 rounded-lg border border-amber-100 shadow-2xs flex flex-col justify-between">
+                <div className="bg-white p-2.5 rounded-xl border border-amber-100 shadow-2xs flex flex-col justify-between">
                   <span className="text-[10px] text-gray-500 font-bold uppercase block truncate">{isRTL ? "العملة المعتمدة" : "Agreed Currency"}</span>
                   <div className="mt-1">
-                    <p className="font-mono font-black text-[#C45B2A] text-sm leading-tight">
+                    <p className="font-mono font-black text-[#C45B2A] text-sm leading-tight" dir="ltr">
                       {selectedRequest.currency || "EGP"}
                     </p>
                     <span className="text-[10px] text-gray-500 font-semibold block mt-0.5 truncate">
@@ -1952,18 +1985,18 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
 
               {/* Conversion to Live AWB Banner */}
               {(selectedRequest.convertedAt || selectedRequest.linkedAwb) && (
-                <div className="text-xs text-emerald-800 font-bold bg-emerald-50 p-2.5 rounded-lg border border-emerald-200 flex items-center justify-between gap-2 flex-wrap">
+                <div className="text-xs text-emerald-800 font-bold bg-emerald-50 p-2.5 rounded-xl border border-emerald-200 flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2">
                     <Truck className="w-4 h-4 text-emerald-700 shrink-0" />
                     <span>
                       {isRTL ? "تم التحويل لبوليصة شحن مسجلة برقم: " : "Converted to Registered Live AWB: "}
-                      <strong className="font-mono text-emerald-950 bg-emerald-100/90 px-2 py-0.5 rounded border border-emerald-300" dir="ltr">
+                      <strong className="font-mono text-emerald-950 bg-emerald-100/90 px-2 py-0.5 rounded-lg border border-emerald-300" dir="ltr">
                         {selectedRequest.linkedAwb}
                       </strong>
                     </span>
                   </div>
                   {selectedRequest.convertedAt && (
-                    <span className="text-[11px] text-emerald-700 font-medium">
+                    <span className="text-[11px] text-emerald-700 font-medium font-mono" dir="ltr">
                       {formatDateTime(selectedRequest.convertedAt)}
                     </span>
                   )}
@@ -1971,10 +2004,10 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
               )}
             </div>
 
-            {/* Request Summary Cards */}
+            {/* Request Summary Cards (2x2 Grid) */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 sm:gap-4 text-xs">
               {/* 1. Customer Info */}
-              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/90 space-y-3 shadow-2xs text-start">
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 space-y-3 shadow-2xs text-start">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
                   <span className="font-bold text-gray-400 uppercase text-[10px] tracking-wider flex items-center gap-1.5">
                     <User className="w-3.5 h-3.5 text-[#C45B2A] shrink-0" />
@@ -1994,7 +2027,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     </div>
                   )}
                   {selectedRequest.customerId && (
-                    <div className="text-[10px] font-mono text-gray-400 pt-0.5">
+                    <div className="text-[10px] font-mono text-gray-400 pt-0.5" dir="ltr">
                       <span>ID: #{selectedRequest.customerId}</span>
                     </div>
                   )}
@@ -2057,7 +2090,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
               </div>
 
               {/* 2. Route & Cargo */}
-              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/90 space-y-3 shadow-2xs text-start">
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 space-y-3 shadow-2xs text-start">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
                   <span className="font-bold text-gray-400 uppercase text-[10px] tracking-wider flex items-center gap-1.5">
                     <Package className="w-3.5 h-3.5 text-[#C45B2A] shrink-0" />
@@ -2077,7 +2110,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
 
                 <div className="font-black text-gray-900 flex items-center gap-2 flex-wrap text-sm">
                   <span>{selectedRequest.pickupCity}, {selectedRequest.pickupCountry}</span>
-                  <ArrowRight className={`w-4 h-4 text-[#C45B2A] shrink-0 ${isRTL ? "rotate-180" : ""}`} />
+                  <ArrowRight className="w-4 h-4 text-[#C45B2A] shrink-0 rtl:rotate-180" />
                   <span>{selectedRequest.deliveryCity}, {selectedRequest.deliveryCountry}</span>
                 </div>
 
@@ -2089,7 +2122,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
 
                   <div className="flex items-center justify-between">
                     <span className="text-gray-500">{t("admin.requests.modal.weight")}:</span>
-                    <strong className="font-mono text-gray-900">{selectedRequest.weight || 0} {isRTL ? "كجم" : "KG"} ({selectedRequest.packageCount || 1} {isRTL ? "طرد" : "pkgs"})</strong>
+                    <strong className="font-mono text-gray-900" dir="ltr">{selectedRequest.weight || 0} {isRTL ? "كجم" : "KG"} ({selectedRequest.packageCount || 1} {isRTL ? "طرد" : "pkgs"})</strong>
                   </div>
 
                   {(() => {
@@ -2112,7 +2145,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                           </div>
                         ) : null}
                         {volWt > 0 && (
-                          <div className="flex items-center justify-between bg-orange-50/60 px-2.5 py-1 rounded-lg border border-orange-200/80">
+                          <div className="flex items-center justify-between bg-orange-50/60 px-2.5 py-1 rounded-xl border border-orange-200/80">
                             <span className="text-gray-700 font-bold text-[11px]">{isRTL ? "الوزن المعتمد للشحن (Chargeable):" : "Chargeable Weight:"}</span>
                             <span className="font-mono font-black text-xs text-[#C45B2A]" dir="ltr">
                               {chgWt} KG
@@ -2127,7 +2160,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     <div className="flex items-center justify-between">
                       <span className="text-gray-500">{isRTL ? "القيمة المعلنة:" : "Declared Value:"}</span>
                       <strong className="text-emerald-700 font-mono font-bold" dir="ltr">
-                        {selectedRequest.declaredValue} {selectedRequest.currency || "USD"}
+                        {selectedRequest.declaredValue} {selectedRequest.currency || "EGP"}
                       </strong>
                     </div>
                   ) : null}
@@ -2141,7 +2174,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                   </div>
 
                   {selectedRequest.specialInstructions && (
-                    <p className="text-xs text-gray-700 bg-orange-50/50 p-2 rounded-lg border border-orange-200/60 mt-1">
+                    <p className="text-xs text-gray-700 bg-orange-50/50 p-2.5 rounded-xl border border-orange-200/60 mt-1">
                       <span className="font-bold text-gray-900">{isRTL ? "تعليمات خاصة: " : "Special Notes: "}</span>
                       {selectedRequest.specialInstructions}
                     </p>
@@ -2150,7 +2183,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
               </div>
 
               {/* 3. Pickup Address */}
-              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/90 space-y-3 shadow-2xs text-start">
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 space-y-3 shadow-2xs text-start">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
                   <span className="font-bold text-gray-400 uppercase text-[10px] tracking-wider flex items-center gap-1.5">
                     <MapPin className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
@@ -2179,10 +2212,10 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                   </div>
                   <div className="flex items-center justify-between gap-2">
                     <span className="text-gray-500">{t("admin.requests.modal.date")}:</span>
-                    <strong className="text-gray-900 font-mono">{formatDate(selectedRequest.preferredPickupDate) || selectedRequest.preferredPickupDate}</strong>
+                    <strong className="text-gray-900 font-mono" dir="ltr">{formatDate(selectedRequest.preferredPickupDate) || selectedRequest.preferredPickupDate}</strong>
                   </div>
                   {selectedRequest.pickupNotes && (
-                    <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-200 mt-1">
+                    <p className="text-xs text-gray-600 bg-gray-50 p-2.5 rounded-xl border border-gray-200 mt-1">
                       <span className="font-bold text-gray-800">{isRTL ? "ملاحظات الاستلام: " : "Notes: "}</span>
                       {selectedRequest.pickupNotes}
                     </p>
@@ -2191,7 +2224,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
               </div>
 
               {/* 4. Delivery Address */}
-              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200/90 space-y-3 shadow-2xs text-start">
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-gray-200 space-y-3 shadow-2xs text-start">
                 <div className="flex items-center justify-between border-b border-gray-100 pb-2.5">
                   <span className="font-bold text-gray-400 uppercase text-[10px] tracking-wider flex items-center gap-1.5">
                     <Building2 className="w-3.5 h-3.5 text-blue-600 shrink-0" />
@@ -2204,7 +2237,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                 <div>
                   <p className="font-bold text-gray-900 text-xs leading-relaxed">{selectedRequest.deliveryAddress}</p>
                   {selectedRequest.deliveryShortAddress && (
-                    <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-orange-50 border border-orange-200 text-[#C45B2A] text-xs font-mono font-bold mt-1.5" dir="ltr">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-lg bg-orange-50 border border-orange-200 text-[#C45B2A] text-xs font-mono font-bold mt-1.5" dir="ltr">
                       <span className="font-sans text-[11px] font-bold text-gray-700">{isRTL ? "العنوان المختصر:" : "Short Address:"}</span>
                       <span>{selectedRequest.deliveryShortAddress}</span>
                     </div>
@@ -2227,7 +2260,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     </div>
                   </div>
                   {selectedRequest.deliveryNotes && (
-                    <p className="text-xs text-gray-600 bg-gray-50 p-2 rounded-lg border border-gray-200 mt-1">
+                    <p className="text-xs text-gray-600 bg-gray-50 p-2.5 rounded-xl border border-gray-200 mt-1">
                       <span className="font-bold text-gray-800">{isRTL ? "ملاحظات التسليم: " : "Notes: "}</span>
                       {selectedRequest.deliveryNotes}
                     </p>
@@ -2246,34 +2279,34 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
               if (agreedVal > 0 || costVal > 0) {
                 const netProfit = agreedVal - costVal - transVal;
                 return (
-                  <div className="bg-gray-50 p-3.5 sm:p-4 rounded-xl border border-gray-200 space-y-2">
+                  <div className="bg-gray-50/80 p-3.5 sm:p-4 rounded-2xl border border-gray-200 space-y-2 shadow-2xs">
                     <div className="flex items-center justify-between">
                       <span className="text-[11px] font-bold uppercase text-gray-700 tracking-wider flex items-center gap-1.5">
                         <DollarSign className="w-4 h-4 text-emerald-600 shrink-0" />
                         <span>{isRTL ? "البيانات المالية والأرباح المتوقعة" : "Financial & Profit Breakdown"}</span>
                       </span>
-                      <span className="font-mono text-xs font-black text-[#C45B2A] bg-orange-100/70 px-2 py-0.5 rounded border border-orange-200">
+                      <span className="font-mono text-xs font-black text-[#C45B2A] bg-orange-100/70 px-2 py-0.5 rounded-lg border border-orange-200" dir="ltr">
                         {curr}
                       </span>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs pt-1">
-                      <div className="bg-white p-2.5 rounded-lg border border-gray-200 shadow-2xs">
+                      <div className="bg-white p-2.5 rounded-xl border border-gray-200 shadow-2xs">
                         <span className="text-[10px] text-gray-500 font-bold block">{isRTL ? "سعر البيع المعتمد" : "Agreed Price"}</span>
-                        <p className="font-mono font-black text-gray-900 text-sm mt-0.5" dir="ltr">{agreedVal} {curr}</p>
+                        <p className="font-mono font-black text-gray-900 text-sm mt-0.5" dir="ltr">{agreedVal.toLocaleString()} {curr}</p>
                       </div>
-                      <div className="bg-white p-2.5 rounded-lg border border-gray-200 shadow-2xs">
+                      <div className="bg-white p-2.5 rounded-xl border border-gray-200 shadow-2xs">
                         <span className="text-[10px] text-gray-500 font-bold block">{isRTL ? "تكلفة الشحن الناقل" : "Carrier Cost"}</span>
-                        <p className="font-mono font-bold text-gray-700 text-sm mt-0.5" dir="ltr">{costVal} {curr}</p>
+                        <p className="font-mono font-bold text-gray-700 text-sm mt-0.5" dir="ltr">{costVal.toLocaleString()} {curr}</p>
                       </div>
-                      <div className="bg-white p-2.5 rounded-lg border border-gray-200 shadow-2xs">
+                      <div className="bg-white p-2.5 rounded-xl border border-gray-200 shadow-2xs">
                         <span className="text-[10px] text-gray-500 font-bold block">{isRTL ? "مصاريف النقل والتحميل" : "Trans Expense"}</span>
-                        <p className="font-mono font-bold text-gray-700 text-sm mt-0.5" dir="ltr">{transVal} {curr}</p>
+                        <p className="font-mono font-bold text-gray-700 text-sm mt-0.5" dir="ltr">{transVal.toLocaleString()} {curr}</p>
                       </div>
-                      <div className={`p-2.5 rounded-lg border shadow-2xs ${netProfit >= 0 ? "bg-emerald-50 border-emerald-200" : "bg-rose-50 border-rose-200"}`}>
+                      <div className={`p-2.5 rounded-xl border shadow-2xs ${netProfit >= 0 ? "bg-emerald-50 border-emerald-200" : "bg-rose-50 border-rose-200"}`}>
                         <span className={`text-[10px] font-bold block ${netProfit >= 0 ? "text-emerald-700" : "text-rose-700"}`}>{isRTL ? "صافي الربح المتوقع" : "Est. Net Profit"}</span>
                         <p className={`font-mono font-black text-sm mt-0.5 ${netProfit >= 0 ? "text-emerald-800" : "text-rose-800"}`} dir="ltr">
-                          {netProfit > 0 ? `+${netProfit}` : netProfit} {curr}
+                          {netProfit > 0 ? `+${netProfit.toLocaleString()}` : netProfit.toLocaleString()} {curr}
                         </p>
                       </div>
                     </div>
@@ -2308,9 +2341,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     <select
                       value={currencyInput}
                       onChange={(e) => setCurrencyInput(e.target.value)}
-                      className={`w-full h-11 bg-gray-50 text-[#251516] text-xs font-bold rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:bg-white focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all cursor-pointer shadow-2xs appearance-none ${
-                        isRTL ? "pr-3.5 pl-8 text-right" : "pl-3.5 pr-8 text-left"
-                      }`}
+                      className="w-full h-11 bg-gray-50 text-[#251516] text-xs font-bold rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:bg-white focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all cursor-pointer shadow-2xs appearance-none ps-3.5 pe-8 text-start"
                     >
                       {SUPPORTED_CURRENCIES.map((c) => (
                         <option key={c.code} value={c.code}>
@@ -2318,7 +2349,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                         </option>
                       ))}
                     </select>
-                    <ChevronDown className={`w-4 h-4 text-gray-500 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+                    <ChevronDown className="w-4 h-4 text-gray-500 absolute end-2.5 pointer-events-none" />
                   </div>
                 </div>
 
@@ -2330,9 +2361,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     <select
                       value={statusInput}
                       onChange={(e) => setStatusInput(e.target.value as any)}
-                      className={`w-full h-11 bg-gray-50 text-[#251516] text-xs font-bold rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:bg-white focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all cursor-pointer shadow-2xs appearance-none ${
-                        isRTL ? "pr-3.5 pl-8 text-right" : "pl-3.5 pr-8 text-left"
-                      }`}
+                      className="w-full h-11 bg-gray-50 text-[#251516] text-xs font-bold rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:bg-white focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all cursor-pointer shadow-2xs appearance-none ps-3.5 pe-8 text-start"
                     >
                       <option value="New">{isRTL ? "طلب جديد" : "New"}</option>
                       <option value="Contacted">{isRTL ? "تم التواصل عبر واتساب" : "Contacted"}</option>
@@ -2340,7 +2369,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                       <option value="Converted to Shipment">{isRTL ? "تم تحويلها لبوليصة شحن" : "Converted to Shipment"}</option>
                       <option value="Cancelled">{isRTL ? "ملغي" : "Cancelled"}</option>
                     </select>
-                    <ChevronDown className={`w-4 h-4 text-gray-500 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+                    <ChevronDown className="w-4 h-4 text-gray-500 absolute end-2.5 pointer-events-none" />
                   </div>
                 </div>
 
@@ -2359,7 +2388,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
               </div>
 
               {/* Action Buttons: Sticky Bottom Bar with Close, Convert, and Save */}
-              <div className="sticky bottom-0 bg-white pt-4 pb-1 border-t border-gray-100 z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3">
+              <div className="sticky bottom-0 bg-white/95 backdrop-blur-md pt-4 pb-1 border-t border-gray-100 z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 sm:gap-3">
                 {selectedRequest.status !== "Converted to Shipment" && (
                   <Button
                     type="button"
@@ -2453,9 +2482,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                   <select
                     value={convertCarrierInput}
                     onChange={(e) => setConvertCarrierInput(e.target.value)}
-                    className={`w-full h-11 bg-white text-[#251516] text-xs font-bold rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all cursor-pointer shadow-2xs appearance-none ${
-                      isRTL ? "pr-3.5 pl-10 text-right" : "pl-3.5 pr-10 text-left"
-                    }`}
+                    className="w-full h-11 bg-white text-[#251516] text-xs font-bold rounded-xl border border-gray-300 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all cursor-pointer shadow-2xs appearance-none ps-3.5 pe-10 text-start"
                     required
                   >
                     <option value="Express">Express</option>
@@ -2476,7 +2503,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className={`w-4 h-4 text-gray-500 absolute ${isRTL ? "left-3" : "right-3"} pointer-events-none`} />
+                  <ChevronDown className="w-4 h-4 text-gray-500 absolute end-3 pointer-events-none" />
                 </div>
               </div>
 
@@ -2530,9 +2557,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                       <select
                         value={convertCurrencyInput}
                         onChange={(e) => setConvertCurrencyInput(e.target.value)}
-                        className={`w-full h-10 bg-white text-[#251516] text-xs font-bold rounded-xl border border-gray-300 focus:border-[#C45B2A] outline-none transition-all cursor-pointer shadow-2xs appearance-none ${
-                          isRTL ? "pr-3 pl-7 text-right" : "pl-3 pr-7 text-left"
-                        }`}
+                        className="w-full h-10 bg-white text-[#251516] text-xs font-bold rounded-xl border border-gray-300 focus:border-[#C45B2A] outline-none transition-all cursor-pointer shadow-2xs appearance-none ps-3 pe-7 text-start"
                       >
                         {SUPPORTED_CURRENCIES.map((c) => (
                           <option key={c.code} value={c.code}>
@@ -2540,7 +2565,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                           </option>
                         ))}
                       </select>
-                      <ChevronDown className={`w-3.5 h-3.5 text-gray-500 absolute ${isRTL ? "left-2" : "right-2"} pointer-events-none`} />
+                      <ChevronDown className="w-3.5 h-3.5 text-gray-500 absolute end-2 pointer-events-none" />
                     </div>
                   </div>
 
@@ -2647,7 +2672,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
       {/* ─── 6. CREATE SHIPMENT REQUEST MODAL (ADMIN INITIATED) ─── */}
       <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
         <DialogContent
-          className="max-w-4xl w-[95vw] sm:w-full space-y-4 sm:space-y-5 text-start p-4 sm:p-6 md:p-7 max-h-[90vh] overflow-y-auto bg-white"
+          className="max-w-4xl w-[95vw] sm:w-full space-y-4 sm:space-y-5 text-start p-4 sm:p-6 md:p-7 max-h-[90vh] overflow-y-auto rounded-3xl bg-white"
           onClose={() => setCreateModalOpen(false)}
         >
           {/* Header */}
@@ -2670,8 +2695,8 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
 
             {/* Customer count indicator */}
             <div className="flex items-center gap-2">
-              <Badge variant="outline" className="text-xs font-bold bg-orange-50 text-[#C45B2A] border-orange-200 py-1 px-2.5">
-                <Users className="w-3.5 h-3.5 mr-1" />
+              <Badge variant="outline" className="text-xs font-bold bg-orange-50 text-[#C45B2A] border-orange-200 py-1 px-2.5 rounded-xl">
+                <Users className="w-3.5 h-3.5 me-1.5" />
                 <span>{allCustomers.length} {isRTL ? "عميل مسجل في الموقع" : "Registered Clients"}</span>
               </Badge>
             </div>
@@ -2679,60 +2704,60 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
 
           {/* Error Banner */}
           {createError && (
-            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold rounded-xl flex items-center gap-2 animate-in fade-in">
+            <div className="p-3 bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold rounded-2xl flex items-center gap-2 animate-in fade-in">
               <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
               <span>{createError}</span>
             </div>
           )}
 
-          {/* Navigation Tabs Bar */}
-          <div className="flex rounded-xl bg-gray-100 p-1 gap-1 overflow-x-auto text-xs font-bold">
+          {/* Navigation Stepper / Tabs Bar */}
+          <div className="flex rounded-2xl bg-gray-100/90 p-1.5 gap-1.5 overflow-x-auto text-xs font-bold border border-gray-200/80 shadow-2xs">
             <button
               type="button"
               onClick={() => setCreateTab("client")}
-              className={`flex-1 min-w-[110px] py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              className={`flex-1 min-w-[115px] py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 createTab === "client"
-                  ? "bg-white text-[#C45B2A] shadow-xs font-extrabold"
+                  ? "bg-white text-[#C45B2A] shadow-xs font-black"
                   : "text-gray-600 hover:text-gray-900"
               }`}
             >
-              <User className="w-3.5 h-3.5" />
+              <User className="w-3.5 h-3.5 shrink-0" />
               <span>{isRTL ? "1. العميل والراسل" : "1. Shipper"}</span>
             </button>
             <button
               type="button"
               onClick={() => setCreateTab("route")}
-              className={`flex-1 min-w-[110px] py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              className={`flex-1 min-w-[115px] py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 createTab === "route"
-                  ? "bg-white text-[#C45B2A] shadow-xs font-extrabold"
+                  ? "bg-white text-[#C45B2A] shadow-xs font-black"
                   : "text-gray-600 hover:text-gray-900"
               }`}
             >
-              <MapPin className="w-3.5 h-3.5" />
+              <MapPin className="w-3.5 h-3.5 shrink-0" />
               <span>{isRTL ? "2. مسار الشحنة" : "2. Route"}</span>
             </button>
             <button
               type="button"
               onClick={() => setCreateTab("cargo")}
-              className={`flex-1 min-w-[110px] py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              className={`flex-1 min-w-[115px] py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 createTab === "cargo"
-                  ? "bg-white text-[#C45B2A] shadow-xs font-extrabold"
+                  ? "bg-white text-[#C45B2A] shadow-xs font-black"
                   : "text-gray-600 hover:text-gray-900"
               }`}
             >
-              <Package className="w-3.5 h-3.5" />
+              <Package className="w-3.5 h-3.5 shrink-0" />
               <span>{isRTL ? "3. مواصفات الطرود" : "3. Cargo & Pkgs"}</span>
             </button>
             <button
               type="button"
               onClick={() => setCreateTab("broker")}
-              className={`flex-1 min-w-[110px] py-2 px-3 rounded-lg flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+              className={`flex-1 min-w-[115px] py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
                 createTab === "broker"
-                  ? "bg-white text-[#C45B2A] shadow-xs font-extrabold"
+                  ? "bg-white text-[#C45B2A] shadow-xs font-black"
                   : "text-gray-600 hover:text-gray-900"
               }`}
             >
-              <DollarSign className="w-3.5 h-3.5" />
+              <DollarSign className="w-3.5 h-3.5 shrink-0" />
               <span>{isRTL ? "4. التسعير والوسيط" : "4. Pricing & Broker"}</span>
             </button>
           </div>
@@ -2742,9 +2767,9 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
             {createTab === "client" && (
               <div className="space-y-4 animate-in fade-in duration-150">
                 {/* Information Header */}
-                <div className="p-3 bg-orange-50/70 border border-orange-200/80 rounded-2xl flex items-center justify-between gap-3 text-xs">
+                <div className="p-3.5 bg-orange-50/70 border border-orange-200/80 rounded-2xl flex items-center justify-between gap-3 text-xs">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-8 h-8 rounded-xl bg-[#C45B2A] text-white flex items-center justify-center shrink-0">
+                    <div className="w-8 h-8 rounded-xl bg-[#C45B2A] text-white flex items-center justify-center shrink-0 shadow-2xs">
                       <UserCheck className="w-4 h-4" />
                     </div>
                     <div>
@@ -2759,8 +2784,8 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     </div>
                   </div>
 
-                  <Badge variant="outline" className="bg-white text-[#C45B2A] border-orange-300 font-mono text-[11px] font-black shrink-0 px-2.5 py-1 hidden sm:inline-flex">
-                    {allCustomers.length} {isRTL ? "عميل مسجل" : "Registered Clients"}
+                  <Badge variant="outline" className=" bg-white text-[#C45B2A] border-orange-300 font-mono text-[11px] font-black shrink-0 px-2.5 py-1 hidden sm:inline-flex rounded-xl">
+                    {isRTL ? "عميل مسجل" : "Registered Clients"} {allCustomers.length}
                   </Badge>
                 </div>
 
@@ -2775,7 +2800,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                         <div>
                           <div className="flex items-center gap-2 flex-wrap">
                             <h4 className="font-black text-emerald-950 text-sm sm:text-base">{selectedCustomerObj.name}</h4>
-                            <Badge variant="outline" className="bg-emerald-100 text-emerald-800 border-emerald-300 text-[10px] font-bold font-mono">
+                            <Badge variant="outline" className="bg-emerald-100 text-emerald-800 border-emerald-300 text-[10px] font-bold font-mono rounded-lg" dir="ltr">
                               ID: #{selectedCustomerObj.id}
                             </Badge>
                           </div>
@@ -2803,7 +2828,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                         }}
                         className="text-xs font-bold text-gray-700 bg-white hover:bg-gray-50 border-gray-300 rounded-xl h-8.5 px-3 cursor-pointer shrink-0"
                       >
-                        <X className="w-3.5 h-3.5 mr-1" />
+                        <X className="w-3.5 h-3.5 me-1.5" />
                         <span>{isRTL ? "تغيير العميل" : "Change Client"}</span>
                       </Button>
                     </div>
@@ -2842,25 +2867,25 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                         <Users className="w-4 h-4 text-[#C45B2A]" />
                         <span>{isRTL ? "اختر العميل من قائمة عملاء الموقع:" : "Select Registered Customer:"}</span>
                       </label>
-                      <span className="text-[11px] font-mono text-gray-500 font-bold">
+                      <span className="text-[11px] font-mono text-gray-500 font-bold" dir="ltr">
                         {allCustomers.length} {isRTL ? "عميل مسجل" : "clients"}
                       </span>
                     </div>
 
                     {/* Search Filter Input */}
                     <div className="relative">
-                      <Search className={`w-4 h-4 text-gray-400 absolute top-3 ${isRTL ? "right-3.5" : "left-3.5"}`} />
+                      <Search className="w-4 h-4 text-gray-400 absolute top-3 start-3.5 pointer-events-none" />
                       <Input
                         type="text"
                         value={customerSearchQuery}
                         onChange={(e) => setCustomerSearchQuery(e.target.value)}
                         placeholder={isRTL ? "ابحث بالاسم، اسم الشركة، رقم الهاتف، أو البريد الإلكتروني..." : "Search by name, company, phone, or email..."}
-                        className={`h-10 text-xs bg-white rounded-xl border-gray-300 focus:border-[#C45B2A] ${isRTL ? "pr-10 pl-3.5" : "pl-10 pr-3.5"}`}
+                        className="h-10 text-xs bg-white rounded-xl border-gray-300 focus:border-[#C45B2A] ps-10 pe-3.5"
                       />
                     </div>
 
                     {/* Scrollable Customer List */}
-                    <div className="max-h-64 overflow-y-auto rounded-xl border border-gray-200 bg-white divide-y divide-gray-100 shadow-2xs">
+                    <div className="max-h-64 overflow-y-auto rounded-2xl border border-gray-200 bg-white divide-y divide-gray-100 shadow-2xs">
                       {filteredCustomers.length === 0 ? (
                         <div className="p-6 text-center text-xs text-gray-400 space-y-1">
                           <Users className="w-8 h-8 text-gray-300 mx-auto" />
@@ -2890,13 +2915,13 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                               </div>
                             </div>
 
-                            <div className="flex items-center gap-2.5 shrink-0" dir="ltr">
+                            <div className="flex rtl:flex-row-reverse ltr:flex-row items-center gap-2.5 shrink-0" dir="ltr">
                               {c.phone && (
                                 <span className="font-mono text-[11px] text-gray-700 bg-gray-50 px-2 py-0.5 rounded-lg border border-gray-200">
                                   {c.phone}
                                 </span>
                               )}
-                              <Badge variant="outline" className="text-[10px] font-bold text-gray-500 border-gray-200 hidden sm:inline-flex">
+                              <Badge variant="outline" className="text-[10px] font-bold text-gray-500 border-gray-200 hidden sm:inline-flex rounded-lg">
                                 {c.city || "Cairo"}
                               </Badge>
                               <Button
@@ -2929,10 +2954,10 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                       setCreateError(null);
                       setCreateTab("route");
                     }}
-                    className="text-xs font-bold bg-[#C45B2A] hover:bg-[#A8481B] text-white rounded-xl h-9.5 px-4 cursor-pointer"
+                    className="text-xs font-bold bg-[#C45B2A] hover:bg-[#A8481B] text-white rounded-xl h-10 px-5 cursor-pointer flex items-center gap-1.5 shadow-xs"
                   >
                     <span>{isRTL ? "التالي: مسار الشحنة" : "Next: Route"}</span>
-                    <ArrowRight className={`w-3.5 h-3.5 ml-1.5 ${isRTL ? "rotate-180 mr-1.5 ml-0" : ""}`} />
+                    <ArrowRight className="w-3.5 h-3.5 ms-1.5 rtl:rotate-180" />
                   </Button>
                 </div>
               </div>
@@ -2943,9 +2968,9 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
               <div className="space-y-4 animate-in fade-in duration-150">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {/* Origin / Pickup Card */}
-                  <div className="p-4 rounded-2xl bg-slate-50/80 border border-slate-200 space-y-3">
-                    <div className="flex items-center gap-2 pb-2 border-b border-slate-200">
-                      <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-slate-50/80 border border-slate-200 space-y-3.5 shadow-2xs">
+                    <div className="flex items-center gap-2 pb-2.5 border-b border-slate-200">
+                      <div className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-xs">
                         A
                       </div>
                       <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wide">
@@ -2961,7 +2986,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                         <select
                           value={createForm.pickupCountry}
                           onChange={(e) => setCreateForm({ ...createForm, pickupCountry: e.target.value })}
-                          className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-lg px-2 cursor-pointer"
+                          className="w-full h-10 bg-white border border-gray-300 text-xs font-bold text-gray-800 rounded-xl px-3 cursor-pointer shadow-2xs outline-none focus:border-[#C45B2A]"
                         >
                           <option value="Egypt">{isRTL ? "مصر (Egypt)" : "Egypt"}</option>
                           {POPULAR_COUNTRIES.filter((c) => c.nameEn !== "Egypt").map((c) => (
@@ -2980,7 +3005,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                           <select
                             value={createForm.pickupCity}
                             onChange={(e) => setCreateForm({ ...createForm, pickupCity: e.target.value })}
-                            className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-lg px-2 cursor-pointer"
+                            className="w-full h-10 bg-white border border-gray-300 text-xs font-bold text-gray-800 rounded-xl px-3 cursor-pointer shadow-2xs outline-none focus:border-[#C45B2A]"
                           >
                             {POPULAR_EGYPT_CITIES.map((city) => (
                               <option key={city.nameEn} value={city.nameEn}>
@@ -2994,7 +3019,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                             value={createForm.pickupCity}
                             onChange={(e) => setCreateForm({ ...createForm, pickupCity: e.target.value })}
                             placeholder={isRTL ? "المدينة" : "City"}
-                            className="text-xs h-9"
+                            className="text-xs h-10 rounded-xl"
                           />
                         )}
                       </div>
@@ -3008,7 +3033,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                         value={createForm.pickupAddress}
                         onChange={(e) => setCreateForm({ ...createForm, pickupAddress: e.target.value })}
                         placeholder={isRTL ? "اسم الشارع، رقم المبنى، المعلم المميز..." : "Street name, building number, landmark..."}
-                        className="text-xs h-9"
+                        className="text-xs h-10 rounded-xl"
                       />
                     </div>
 
@@ -3021,7 +3046,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                           value={createForm.pickupContactName}
                           onChange={(e) => setCreateForm({ ...createForm, pickupContactName: e.target.value })}
                           placeholder={isRTL ? "اسم الشخص بالفرع" : "Contact name"}
-                          className="text-xs h-9"
+                          className="text-xs h-10 rounded-xl"
                         />
                       </div>
                       <div>
@@ -3033,7 +3058,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                           value={createForm.pickupContactPhone}
                           onChange={(e) => setCreateForm({ ...createForm, pickupContactPhone: e.target.value })}
                           placeholder="010xxxxxxxx"
-                          className="text-xs h-9 font-mono"
+                          className="text-xs h-10 font-mono rounded-xl"
                           dir="ltr"
                         />
                       </div>
@@ -3048,7 +3073,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                           type="date"
                           value={createForm.preferredPickupDate}
                           onChange={(e) => setCreateForm({ ...createForm, preferredPickupDate: e.target.value })}
-                          className="text-xs h-9 font-mono"
+                          className="text-xs h-10 font-mono rounded-xl"
                         />
                       </div>
                       <div>
@@ -3059,16 +3084,16 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                           value={createForm.pickupNotes}
                           onChange={(e) => setCreateForm({ ...createForm, pickupNotes: e.target.value })}
                           placeholder={isRTL ? "مواعيد العمل..." : "Working hours..."}
-                          className="text-xs h-9"
+                          className="text-xs h-10 rounded-xl"
                         />
                       </div>
                     </div>
                   </div>
 
                   {/* Destination / Consignee Card */}
-                  <div className="p-4 rounded-2xl bg-orange-50/40 border border-orange-200 space-y-3">
-                    <div className="flex items-center gap-2 pb-2 border-b border-orange-200/80">
-                      <div className="w-6 h-6 rounded-lg bg-[#C45B2A] text-white flex items-center justify-center font-bold text-xs">
+                  <div className="p-4 sm:p-5 rounded-2xl bg-orange-50/40 border border-orange-200 space-y-3.5 shadow-2xs">
+                    <div className="flex items-center gap-2 pb-2.5 border-b border-orange-200/80">
+                      <div className="w-6 h-6 rounded-lg bg-[#C45B2A] text-white flex items-center justify-center font-black text-xs">
                         B
                       </div>
                       <h4 className="text-xs font-extrabold text-[#251516] uppercase tracking-wide">
@@ -3084,7 +3109,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                         <select
                           value={createForm.deliveryCountry}
                           onChange={(e) => setCreateForm({ ...createForm, deliveryCountry: e.target.value })}
-                          className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-lg px-2 cursor-pointer"
+                          className="w-full h-10 bg-white border border-gray-300 text-xs font-bold text-gray-800 rounded-xl px-3 cursor-pointer shadow-2xs outline-none focus:border-[#C45B2A]"
                         >
                           {POPULAR_COUNTRIES.map((c) => (
                             <option key={c.code} value={c.nameEn}>
@@ -3103,7 +3128,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                           value={createForm.deliveryCity}
                           onChange={(e) => setCreateForm({ ...createForm, deliveryCity: e.target.value })}
                           placeholder={isRTL ? "مثال: الرياض / دبي" : "e.g. Riyadh / Dubai"}
-                          className="text-xs h-9"
+                          className="text-xs h-10 rounded-xl"
                         />
                       </div>
                     </div>
@@ -3118,7 +3143,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                           value={createForm.consigneeName}
                           onChange={(e) => setCreateForm({ ...createForm, consigneeName: e.target.value })}
                           placeholder={isRTL ? "اسم المستلم بالوجهة" : "Receiver name"}
-                          className="text-xs h-9"
+                          className="text-xs h-10 rounded-xl"
                         />
                       </div>
                       <div>
@@ -3131,7 +3156,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                           value={createForm.consigneePhone}
                           onChange={(e) => setCreateForm({ ...createForm, consigneePhone: e.target.value })}
                           placeholder="+966xxxxxxxxx"
-                          className="text-xs h-9 font-mono"
+                          className="text-xs h-10 font-mono rounded-xl"
                           dir="ltr"
                         />
                       </div>
@@ -3145,7 +3170,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                         value={createForm.deliveryAddress}
                         onChange={(e) => setCreateForm({ ...createForm, deliveryAddress: e.target.value })}
                         placeholder={isRTL ? "الشارع، الحي، المعلم..." : "Street, district, building..."}
-                        className="text-xs h-9"
+                        className="text-xs h-10 rounded-xl"
                       />
                     </div>
 
@@ -3158,7 +3183,8 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                           value={createForm.deliveryShortAddress}
                           onChange={(e) => setCreateForm({ ...createForm, deliveryShortAddress: e.target.value })}
                           placeholder="e.g. 12271"
-                          className="text-xs h-9 font-mono"
+                          className="text-xs h-10 font-mono rounded-xl"
+                          dir="ltr"
                         />
                       </div>
                       <div>
@@ -3169,7 +3195,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                           value={createForm.deliveryNotes}
                           onChange={(e) => setCreateForm({ ...createForm, deliveryNotes: e.target.value })}
                           placeholder={isRTL ? "ملاحظات للمندوب..." : "Special instructions..."}
-                          className="text-xs h-9"
+                          className="text-xs h-10 rounded-xl"
                         />
                       </div>
                     </div>
@@ -3182,9 +3208,9 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     size="sm"
                     variant="outline"
                     onClick={() => setCreateTab("client")}
-                    className="text-xs"
+                    className="text-xs font-bold rounded-xl h-10 px-4 flex items-center gap-1.5 cursor-pointer shadow-2xs"
                   >
-                    <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "" : "rotate-180"}`} />
+                    <ArrowRight className="w-3.5 h-3.5 me-1.5 ltr:rotate-180" />
                     <span>{isRTL ? "السابق" : "Back"}</span>
                   </Button>
                   <Button
@@ -3192,10 +3218,10 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     size="sm"
                     variant="brand"
                     onClick={() => setCreateTab("cargo")}
-                    className="text-xs font-bold bg-[#C45B2A] text-white"
+                    className="text-xs font-bold bg-[#C45B2A] hover:bg-[#A8481B] text-white rounded-xl h-10 px-5 flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <span>{isRTL ? "التالي: مواصفات الطرود" : "Next: Cargo Specs"}</span>
-                    <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
+                    <ArrowRight className="w-3.5 h-3.5 ms-1.5 rtl:rotate-180" />
                   </Button>
                 </div>
               </div>
@@ -3212,7 +3238,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     <select
                       value={createForm.shipmentType}
                       onChange={(e) => setCreateForm({ ...createForm, shipmentType: e.target.value as any })}
-                      className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-lg px-2 cursor-pointer"
+                      className="w-full h-10 bg-white border border-gray-300 text-xs font-bold text-gray-800 rounded-xl px-3 cursor-pointer shadow-2xs outline-none focus:border-[#C45B2A]"
                     >
                       <option value="Commercial Goods">{isRTL ? "بضائع تجارية (Commercial Goods)" : "Commercial Goods"}</option>
                       <option value="Parcel">{isRTL ? "طرد / شحنة عادية (Parcel)" : "Parcel"}</option>
@@ -3230,20 +3256,20 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                       value={createForm.contents}
                       onChange={(e) => setCreateForm({ ...createForm, contents: e.target.value })}
                       placeholder={isRTL ? "مثال: ملابس قطنية جاهزة، إلكترونيات، عينات تجارية..." : "e.g. Cotton apparel, spare parts..."}
-                      className="text-xs"
+                      className="text-xs h-10 rounded-xl"
                     />
                   </div>
                 </div>
 
                 {/* Dimensions & Weights Grid */}
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-gray-50 to-orange-50/30 border border-gray-200 space-y-3">
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-gray-50 to-orange-50/30 border border-gray-200 space-y-3.5 shadow-2xs">
                   <div className="flex items-center justify-between pb-2 border-b border-gray-200">
                     <span className="text-xs font-extrabold text-gray-900 flex items-center gap-1.5">
                       <Scale className="w-4 h-4 text-[#C45B2A]" />
                       <span>{isRTL ? "الأوزان والأبعاد (الحساب التلقائي للوزن الحجمي)" : "Weights & Volumetric Dimensions"}</span>
                     </span>
-                    <span className="text-[10px] font-bold text-gray-500">
-                      معادلة الشحن الجوي الدولي: (L × W × H) / 5000
+                    <span className="text-[10px] font-bold text-gray-500 font-mono" dir="ltr">
+                      (L × W × H) / 5000
                     </span>
                   </div>
 
@@ -3257,7 +3283,8 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                         min="1"
                         value={createForm.packageCount}
                         onChange={(e) => setCreateForm({ ...createForm, packageCount: e.target.value })}
-                        className="text-xs font-mono font-bold h-9"
+                        className="text-xs font-mono font-bold h-10 rounded-xl"
+                        dir="ltr"
                       />
                     </div>
 
@@ -3272,7 +3299,8 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                         min="0.1"
                         value={createForm.weight}
                         onChange={(e) => setCreateForm({ ...createForm, weight: e.target.value })}
-                        className="text-xs font-mono font-bold h-9 text-rose-700"
+                        className="text-xs font-mono font-bold h-10 rounded-xl text-rose-700"
+                        dir="ltr"
                       />
                     </div>
 
@@ -3285,8 +3313,9 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                         min="1"
                         value={createForm.length}
                         onChange={(e) => setCreateForm({ ...createForm, length: e.target.value })}
-                        className="text-xs font-mono h-9"
+                        className="text-xs font-mono h-10 rounded-xl"
                         placeholder="30"
+                        dir="ltr"
                       />
                     </div>
 
@@ -3299,8 +3328,9 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                         min="1"
                         value={createForm.width}
                         onChange={(e) => setCreateForm({ ...createForm, width: e.target.value })}
-                        className="text-xs font-mono h-9"
+                        className="text-xs font-mono h-10 rounded-xl"
                         placeholder="25"
+                        dir="ltr"
                       />
                     </div>
 
@@ -3313,15 +3343,16 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                         min="1"
                         value={createForm.height}
                         onChange={(e) => setCreateForm({ ...createForm, height: e.target.value })}
-                        className="text-xs font-mono h-9"
+                        className="text-xs font-mono h-10 rounded-xl"
                         placeholder="15"
+                        dir="ltr"
                       />
                     </div>
                   </div>
 
                   {/* Live Volumetric Calculation Result Card */}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-2">
-                    <div className="p-2.5 rounded-xl bg-white border border-gray-200 text-center shadow-2xs">
+                    <div className="p-3 rounded-xl bg-white border border-gray-200 text-center shadow-2xs">
                       <span className="text-[10px] font-bold text-gray-500 block uppercase">
                         {isRTL ? "الوزن الفعلي" : "Actual Weight"}
                       </span>
@@ -3330,7 +3361,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                       </span>
                     </div>
 
-                    <div className="p-2.5 rounded-xl bg-white border border-gray-200 text-center shadow-2xs">
+                    <div className="p-3 rounded-xl bg-white border border-gray-200 text-center shadow-2xs">
                       <span className="text-[10px] font-bold text-gray-500 block uppercase">
                         {isRTL ? "الوزن الحجمي التقديري" : "Volumetric Weight"}
                       </span>
@@ -3339,7 +3370,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                       </span>
                     </div>
 
-                    <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/60 border border-emerald-200 text-center shadow-2xs">
+                    <div className="p-3 rounded-xl bg-gradient-to-br from-emerald-50 to-emerald-100/60 border border-emerald-200 text-center shadow-2xs">
                       <span className="text-[10px] font-bold text-emerald-800 block uppercase">
                         {isRTL ? "الوزن المعتمد للفوترة" : "Chargeable Weight"}
                       </span>
@@ -3356,24 +3387,25 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     <label className="block text-xs font-bold text-gray-700 mb-1">
                       {isRTL ? "القيمة الجمركية المعلنة والعملة" : "Declared Customs Value"}
                     </label>
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-2">
                       <Input
                         type="number"
                         value={createForm.declaredValue}
                         onChange={(e) => setCreateForm({ ...createForm, declaredValue: e.target.value })}
                         placeholder="500"
-                        className="text-xs font-mono font-bold"
+                        className="text-xs font-mono font-bold h-10 rounded-xl"
+                        dir="ltr"
                       />
                       <select
                         value={createForm.declaredCurrency}
                         onChange={(e) => setCreateForm({ ...createForm, declaredCurrency: e.target.value })}
-                        className="w-24 h-10 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-xl px-2 cursor-pointer"
+                        className="w-28 h-10 bg-white border border-gray-300 text-xs font-bold text-gray-800 rounded-xl px-2.5 cursor-pointer shadow-2xs"
                       >
                         <option value="USD">USD ($)</option>
                         <option value="EUR">EUR (€)</option>
-                        <option value="EGP">EGP (ج.م)</option>
-                        <option value="SAR">SAR (ر.س)</option>
-                        <option value="AED">AED (د.إ)</option>
+                        <option value="EGP">EGP</option>
+                        <option value="SAR">SAR</option>
+                        <option value="AED">AED</option>
                       </select>
                     </div>
                   </div>
@@ -3386,13 +3418,13 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                       value={createForm.specialInstructions}
                       onChange={(e) => setCreateForm({ ...createForm, specialInstructions: e.target.value })}
                       placeholder={isRTL ? "يحفظ جافاً، عدم التكديس..." : "Keep dry, do not stack..."}
-                      className="text-xs"
+                      className="text-xs h-10 rounded-xl"
                     />
                   </div>
                 </div>
 
                 {/* Checkboxes: Fragile & Temperature */}
-                <div className="flex flex-wrap gap-4 p-3 rounded-xl bg-gray-50 border border-gray-200 text-xs">
+                <div className="flex flex-wrap gap-4 p-3.5 rounded-2xl bg-gray-50 border border-gray-200 text-xs shadow-2xs">
                   <label className="flex items-center gap-2 cursor-pointer select-none">
                     <input
                       type="checkbox"
@@ -3426,9 +3458,9 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     size="sm"
                     variant="outline"
                     onClick={() => setCreateTab("route")}
-                    className="text-xs"
+                    className="text-xs font-bold rounded-xl h-10 px-4 flex items-center gap-1.5 cursor-pointer shadow-2xs"
                   >
-                    <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "" : "rotate-180"}`} />
+                    <ArrowRight className="w-3.5 h-3.5 me-1.5 ltr:rotate-180" />
                     <span>{isRTL ? "السابق" : "Back"}</span>
                   </Button>
                   <Button
@@ -3436,10 +3468,10 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     size="sm"
                     variant="brand"
                     onClick={() => setCreateTab("broker")}
-                    className="text-xs font-bold bg-[#C45B2A] text-white"
+                    className="text-xs font-bold bg-[#C45B2A] hover:bg-[#A8481B] text-white rounded-xl h-10 px-5 flex items-center gap-1.5 cursor-pointer shadow-xs"
                   >
                     <span>{isRTL ? "التالي: التسعير والوسيط" : "Next: Pricing & Broker"}</span>
-                    <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "rotate-180" : ""}`} />
+                    <ArrowRight className="w-3.5 h-3.5 ms-1.5 rtl:rotate-180" />
                   </Button>
                 </div>
               </div>
@@ -3464,7 +3496,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                           serviceTitle: sObj ? (isRTL ? sObj.titleAr : sObj.titleEn) : sId,
                         });
                       }}
-                      className="w-full h-10 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-xl px-2 cursor-pointer"
+                      className="w-full h-10 bg-white border border-gray-300 text-xs font-bold text-gray-800 rounded-xl px-3 cursor-pointer shadow-2xs outline-none focus:border-[#C45B2A]"
                     >
                       {BROKER_SERVICES.map((s) => (
                         <option key={s.id} value={s.id}>
@@ -3481,7 +3513,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     <select
                       value={createForm.status}
                       onChange={(e) => setCreateForm({ ...createForm, status: e.target.value as any })}
-                      className="w-full h-10 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-xl px-2 cursor-pointer"
+                      className="w-full h-10 bg-white border border-gray-300 text-xs font-bold text-gray-800 rounded-xl px-3 cursor-pointer shadow-2xs outline-none focus:border-[#C45B2A]"
                     >
                       <option value="New">{isRTL ? "طلب جديد (New)" : "New"}</option>
                       <option value="Approved">{isRTL ? "معتمد ومسعر (Approved)" : "Approved"}</option>
@@ -3496,19 +3528,20 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     <label className="block text-xs font-bold text-gray-700 mb-1">
                       {isRTL ? "السعر المتفق عليه / المعروض للعميل" : "Agreed / Quoted Price"}
                     </label>
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-2">
                       <Input
                         type="number"
                         step="0.01"
                         value={createForm.agreedPrice}
                         onChange={(e) => setCreateForm({ ...createForm, agreedPrice: e.target.value })}
                         placeholder="2500"
-                        className="text-xs font-mono font-bold"
+                        className="text-xs font-mono font-bold h-10 rounded-xl"
+                        dir="ltr"
                       />
                       <select
                         value={createForm.agreedCurrency}
                         onChange={(e) => setCreateForm({ ...createForm, agreedCurrency: e.target.value })}
-                        className="w-28 h-10 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-xl px-2 cursor-pointer"
+                        className="w-28 h-10 bg-white border border-gray-300 text-xs font-bold text-gray-800 rounded-xl px-2.5 cursor-pointer shadow-2xs"
                       >
                         {SUPPORTED_CURRENCIES.map((c) => (
                           <option key={c.code} value={c.code}>
@@ -3530,13 +3563,13 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                       value={createForm.internalNotes}
                       onChange={(e) => setCreateForm({ ...createForm, internalNotes: e.target.value })}
                       placeholder={isRTL ? "ملاحظات خاصة بفريق العمليات والتنسيق..." : "Internal notes for dispatch..."}
-                      className="text-xs"
+                      className="text-xs h-10 rounded-xl"
                     />
                   </div>
                 </div>
 
                 {/* ─── Direct Entry & AWB in Shipments Ledger ("سجل الشحنات والقيد") ─── */}
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-50/70 to-orange-50/50 border border-orange-200/80 space-y-3 shadow-2xs">
+                <div className="p-4 sm:p-5 rounded-2xl bg-gradient-to-br from-amber-50/70 to-orange-50/50 border border-orange-200/80 space-y-3.5 shadow-2xs">
                   <label className="flex items-start gap-2.5 cursor-pointer select-none">
                     <input
                       type="checkbox"
@@ -3570,7 +3603,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                           <select
                             value={createForm.carrier}
                             onChange={(e) => setCreateForm({ ...createForm, carrier: e.target.value })}
-                            className="w-full h-9 bg-white border border-gray-200 text-xs font-bold text-gray-800 rounded-xl px-2 cursor-pointer shadow-2xs"
+                            className="w-full h-10 bg-white border border-gray-300 text-xs font-bold text-gray-800 rounded-xl px-3 cursor-pointer shadow-2xs outline-none focus:border-[#C45B2A]"
                           >
                             <option value="Express">Express</option>
                             <option value="FEDEX">FedEx Priority</option>
@@ -3592,7 +3625,6 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                           </select>
                         </div>
 
-
                         <div>
                           <label className="block text-[11px] font-bold text-gray-700 mb-1">
                             {isRTL ? "رقم البوليصة (AWB)" : "Carrier AWB #"}
@@ -3601,7 +3633,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                             value={createForm.carrierAwb}
                             onChange={(e) => setCreateForm({ ...createForm, carrierAwb: e.target.value.toUpperCase() })}
                             placeholder={isRTL ? "تلقائي (EXP-XXXXX) أو أدخل رقم البوليصة" : "Auto (EXP-XXXXX) or enter AWB"}
-                            className="text-xs h-9 font-mono font-bold uppercase shadow-2xs"
+                            className="text-xs h-10 font-mono font-bold uppercase rounded-xl shadow-2xs"
                             dir="ltr"
                           />
                         </div>
@@ -3620,7 +3652,7 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                                 ? String(Math.round(parseFloat(createForm.agreedPrice) * 0.65))
                                 : "1625"
                             }
-                            className="text-xs h-9 font-mono font-bold shadow-2xs"
+                            className="text-xs h-10 font-mono font-bold rounded-xl shadow-2xs"
                             dir="ltr"
                           />
                         </div>
@@ -3635,15 +3667,14 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                             value={createForm.transExpense}
                             onChange={(e) => setCreateForm({ ...createForm, transExpense: e.target.value })}
                             placeholder="0"
-                            className="text-xs h-9 font-mono font-bold shadow-2xs"
+                            className="text-xs h-10 font-mono font-bold rounded-xl shadow-2xs"
                             dir="ltr"
                           />
                         </div>
                       </div>
 
-
                       {/* Live Profit Preview */}
-                      <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-2.5 flex items-center justify-between text-xs">
+                      <div className="bg-emerald-50/80 border border-emerald-200/80 rounded-xl p-3 flex items-center justify-between text-xs">
                         <span className="font-bold text-emerald-950 text-[11px]">
                           {isRTL ? "صافي الربح المتوقع للقيد (بيع - تكلفة - نقل):" : "Estimated Ledger Net Profit:"}
                         </span>
@@ -3665,16 +3696,16 @@ export default function ShipmentRequestsView({ onTriggerNotification }: Shipment
                     size="sm"
                     variant="outline"
                     onClick={() => setCreateTab("cargo")}
-                    className="text-xs"
+                    className="text-xs font-bold rounded-xl h-10 px-4 flex items-center gap-1.5 cursor-pointer shadow-2xs"
                   >
-                    <ArrowRight className={`w-3.5 h-3.5 ${isRTL ? "" : "rotate-180"}`} />
+                    <ArrowRight className="w-3.5 h-3.5 me-1.5 ltr:rotate-180" />
                     <span>{isRTL ? "السابق" : "Back"}</span>
                   </Button>
                   <Button
                     type="submit"
                     variant="brand"
                     disabled={createIsSubmitting}
-                    className="h-10 px-5 text-xs font-bold flex items-center gap-2 rounded-xl cursor-pointer"
+                    className="h-10 px-5 text-xs font-extrabold flex items-center gap-2 rounded-xl cursor-pointer shadow-xs bg-[#C45B2A] hover:bg-[#A8481B] text-white"
                   >
                     {createIsSubmitting ? (
                       <>

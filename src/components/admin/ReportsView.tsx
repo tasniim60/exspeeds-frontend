@@ -97,7 +97,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
   const [lossCurrency, setLossCurrency] = useState<"EGP" | "USD">("EGP");
   const [lossReason, setLossReason] = useState("");
   const [lossPayingAccount, setLossPayingAccount] = useState(MASTER_FINANCIAL_ACCOUNTS[0] || "CIB account");
-  const [lossRecorder, setLossRecorder] = useState(MASTER_AGENTS[0] || "مصطفي");
+  const [lossRecorder, setLossRecorder] = useState(MASTER_AGENTS[0] || "Admin");
   const [lossDate, setLossDate] = useState(new Date().toISOString().split("T")[0]);
   const [lossNotes, setLossNotes] = useState("");
 
@@ -130,7 +130,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
     });
   };
 
-  const currencySymbol = selectedCurrency === "EGP" ? (isRTL ? "ج.م" : "EGP") : "$";
+  const currencySymbol = selectedCurrency === "EGP" ? "EGP" : "$";
 
   // Month Labels Mapping
   const monthLabels: Record<string, string> = {
@@ -849,7 +849,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
               <DollarSign className="w-4 h-4" />
             </div>
           </div>
-          <div className="flex items-baseline gap-1.5" dir="ltr">
+          <div className="flex rtl:justify-end ltr:justify-start items-baseline gap-1.5" dir="ltr">
             <span className="text-xl sm:text-2xl font-black font-mono text-gray-950">
               {formatCurrency(grandTotalSales)}
             </span>
@@ -870,7 +870,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
               <Scale className="w-4 h-4" />
             </div>
           </div>
-          <div className="flex items-baseline gap-1.5" dir="ltr">
+          <div className="flex rtl:justify-end ltr:justify-start items-baseline gap-1.5" dir="ltr">
             <span className="text-xl sm:text-2xl font-black font-mono text-gray-800">
               {formatCurrency(grandTotalDirectCosts)}
             </span>
@@ -883,7 +883,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
 
         {/* 3. المصروفات التشغيلية */}
         <Card className="p-4 bg-white border border-gray-200/90 shadow-2xs space-y-1.5 text-start">
-          <div className="flex items-center justify-between">
+          <div className="flex  items-center justify-between">
             <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
               {isRTL ? "المصروفات المسجلة" : "General Expenses"}
             </span>
@@ -891,7 +891,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
               <Wallet className="w-4 h-4" />
             </div>
           </div>
-          <div className="flex items-baseline gap-1.5" dir="ltr">
+          <div className="flex rtl:justify-end ltr:justify-start items-baseline gap-1.5" dir="ltr">
             <span className="text-xl sm:text-2xl font-black font-mono text-gray-800">
               {formatCurrency(grandTotalGeneralExpenses)}
             </span>
@@ -913,7 +913,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
               <RotateCcw className="w-4 h-4" />
             </div>
           </div>
-          <div className="flex items-baseline gap-1.5" dir="ltr">
+          <div className="flex rtl:justify-end ltr:justify-start items-baseline gap-1.5" dir="ltr">
             <span className="text-xl sm:text-2xl font-black font-mono text-rose-600">
               {grandTotalInvoiceLosses > 0 ? `-${formatCurrency(grandTotalInvoiceLosses)}` : "0.00"}
             </span>
@@ -934,7 +934,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
               <Percent className="w-4 h-4" />
             </div>
           </div>
-          <div className="flex items-baseline gap-1.5" dir="ltr">
+          <div className="flex rtl:justify-end ltr:justify-start items-baseline gap-1.5" dir="ltr">
             <span className="text-xl sm:text-2xl font-black font-mono text-gray-800">
               {formatCurrency(vatAmount)}
             </span>
@@ -971,7 +971,7 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
-          <div className="flex items-baseline gap-1.5" dir="ltr">
+          <div className="flex rtl:justify-end ltr:justify-start items-baseline gap-1.5" dir="ltr">
             <span
               className={`text-2xl font-black font-mono ${
                 grandTotalNetProfit >= 0 ? "text-emerald-800" : "text-rose-700"
@@ -1022,11 +1022,11 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
               <TableRow className="bg-gray-50/95 text-gray-700 uppercase font-black border-b border-gray-200 select-none">
                 <TableHead className="font-black text-gray-700 text-start py-3.5 px-4">{isRTL ? "اسم العميل" : "Client Name"}</TableHead>
                 <TableHead className="font-black text-gray-700 text-center py-3.5 px-4">{isRTL ? "عدد الشحنات" : "Shipments"}</TableHead>
-                <TableHead className="font-black text-gray-700 text-end py-3.5 px-4">{`${isRTL ? "التكلفة" : "Cost"} (${currencySymbol})`}</TableHead>
-                <TableHead className="font-black text-gray-700 text-end py-3.5 px-4">{`${isRTL ? "المبيعات" : "Sales"} (${currencySymbol})`}</TableHead>
-                <TableHead className="font-black text-gray-700 text-end py-3.5 px-4">{`${isRTL ? "النقل" : "Transport"} (${currencySymbol})`}</TableHead>
-                <TableHead className="font-black text-gray-700 text-end py-3.5 px-4">{`${isRTL ? "صافي ربح العميل" : "Net Profit"} (${currencySymbol})`}</TableHead>
-                <TableHead className="font-black text-gray-700 text-center py-3.5 px-4">{isRTL ? "هامش الربح" : "Margin %"}</TableHead>
+                <TableHead className="font-black text-gray-700 text-start py-3.5 px-4">{`${isRTL ? "التكلفة" : "Cost"} (${currencySymbol})`}</TableHead>
+                <TableHead className="font-black text-gray-700 text-start py-3.5 px-4">{`${isRTL ? "المبيعات" : "Sales"} (${currencySymbol})`}</TableHead>
+                <TableHead className="font-black text-gray-700 text-start py-3.5 px-4">{`${isRTL ? "النقل" : "Transport"} (${currencySymbol})`}</TableHead>
+                <TableHead className="font-black text-gray-700 text-start py-3.5 px-4">{`${isRTL ? "صافي ربح العميل" : "Net Profit"} (${currencySymbol})`}</TableHead>
+                <TableHead className="font-black text-gray-700 text-start py-3.5 px-4">{isRTL ? "هامش الربح" : "Margin %"}</TableHead>
               </TableRow>
             </TableHeader>
 
@@ -1060,19 +1060,19 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                         </span>
                       </TableCell>
 
-                      <TableCell className="font-mono text-end text-gray-700 whitespace-nowrap py-3.5 px-4" dir="ltr">
+                      <TableCell className="font-mono text-start text-gray-700 whitespace-nowrap py-3.5 px-4" dir="ltr">
                         {formatCurrency(r.totalCost)}
                       </TableCell>
 
-                      <TableCell className="font-mono text-end font-black text-gray-900 whitespace-nowrap py-3.5 px-4" dir="ltr">
+                      <TableCell className="font-mono text-start font-black text-gray-900 whitespace-nowrap py-3.5 px-4" dir="ltr">
                         {formatCurrency(r.totalSales)}
                       </TableCell>
 
-                      <TableCell className="font-mono text-end text-gray-500 whitespace-nowrap py-3.5 px-4" dir="ltr">
+                      <TableCell className="font-mono text-start text-gray-500 whitespace-nowrap py-3.5 px-4" dir="ltr">
                         {formatCurrency(r.transExpense)}
                       </TableCell>
 
-                      <TableCell className={`font-mono font-black text-end whitespace-nowrap py-3.5 px-4 ${isProfit ? "text-emerald-700" : "text-rose-600"}`} dir="ltr">
+                      <TableCell className={`font-mono font-black text-start whitespace-nowrap py-3.5 px-4 ${isProfit ? "text-emerald-700" : "text-rose-600"}`} dir="ltr">
                         {isProfit ? "+" : ""}{formatCurrency(r.netProfit)}
                       </TableCell>
 
@@ -1102,19 +1102,19 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                     {totalShipmentsCount}
                   </TableCell>
 
-                  <TableCell className="font-mono font-bold text-gray-200 group-hover:text-[#251516] text-end whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
+                  <TableCell className="font-mono font-bold text-gray-200 group-hover:text-[#251516] text-start whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
                     {formatCurrency(sumTotalCost)}
                   </TableCell>
 
-                  <TableCell className="font-mono font-black text-gray-200 group-hover:text-[#251516] text-end whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
+                  <TableCell className="font-mono font-black text-gray-200 group-hover:text-[#251516] text-start whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
                     {formatCurrency(grandTotalSales)}
                   </TableCell>
 
-                  <TableCell className="font-mono font-bold text-gray-200 group-hover:text-[#251516] text-end whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
+                  <TableCell className="font-mono font-bold text-gray-200 group-hover:text-[#251516] text-start whitespace-nowrap py-4 px-4 text-xs" dir="ltr">
                     {formatCurrency(sumTransExpense)}
                   </TableCell>
 
-                  <TableCell className={`font-mono font-black text-end whitespace-nowrap py-4 px-4 text-xs group-hover:text-[#251516] ${grandTotalNetProfit >= 0 ? "text-emerald-400" : "text-rose-400"}`} dir="ltr">
+                  <TableCell className={`font-mono font-black text-start whitespace-nowrap py-4 px-4 text-xs group-hover:text-[#251516] ${grandTotalNetProfit >= 0 ? "text-emerald-400" : "text-rose-400"}`} dir="ltr">
                     {grandTotalNetProfit >= 0 ? "+" : ""}{formatCurrency(grandTotalNetProfit)}
                   </TableCell>
 
@@ -1156,8 +1156,8 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                 <TableHead className="font-black text-center py-3.5 px-4">{isRTL ? "المسجل" : "Recorder"}</TableHead>
                 <TableHead className="font-black text-center py-3.5 px-4">{isRTL ? "العميل / البوليصة" : "Allocation / AWB"}</TableHead>
                 <TableHead className="font-black text-center py-3.5 px-4">{isRTL ? "التاريخ والإيصال" : "Date & Receipt"}</TableHead>
-                <TableHead className="font-black text-end py-3.5 px-4">{`${isRTL ? "المبلغ" : "Amount"} (${currencySymbol})`}</TableHead>
-                <TableHead className="font-black text-center py-3.5 px-4">{isRTL ? "إجراء" : "Action"}</TableHead>
+                <TableHead className="font-black text-center py-3.5 px-4">{`${isRTL ? "المبلغ" : "Amount"} (${currencySymbol})`}</TableHead>
+                <TableHead className="font-black text-start py-3.5 px-4">{isRTL ? "إجراء" : "Action"}</TableHead>
               </TableRow>
             </TableHeader>
 
@@ -1241,12 +1241,12 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                         )}
                       </TableCell>
 
-                      <TableCell className="font-mono font-bold text-end text-rose-700 py-3 px-4" dir="ltr">
+                      <TableCell className="font-mono font-bold text-start text-rose-700 py-3 px-4" dir="ltr">
                         -{amtInSelected.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                       </TableCell>
 
-                      <TableCell className="text-center py-2.5 px-4">
-                        <div className="flex items-center justify-center">
+                      <TableCell className="text-start py-2.5 px-4">
+                        <div className="flex items-center justify-start">
                           <button
                             type="button"
                             onClick={() => handleDeleteExpense(exp.id)}
@@ -1269,16 +1269,16 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
 
       {/* ── RECORD INVOICE LOSS DIALOG ── */}
       <Dialog open={isAddLossOpen} onOpenChange={setIsAddLossOpen}>
-        <DialogContent className="sm:max-w-md bg-white">
+        <DialogContent className="sm:max-w-md bg-white rounded-3xl p-6 text-start max-h-[90vh] overflow-y-auto">
           <DialogTitle className="text-sm font-bold text-gray-900 flex items-center gap-2">
-            <div className="p-1.5 rounded-lg bg-rose-100 text-rose-700">
+            <div className="p-1.5 rounded-lg bg-rose-100 text-rose-700 shrink-0">
               <RotateCcw className="w-4 h-4" />
             </div>
             <span>{isRTL ? "تسجيل خسارة فاتورة منسوبة لتاريخ الشحنة" : "Record AWB-Attributed Invoice Loss"}</span>
           </DialogTitle>
           <DialogDescription className="text-xs text-gray-500">
             {isRTL
-              ? "توثيق خسارة فاتورة وخصمها من أرباح الفترة المنسوبة لتاريخ الشحنة الأصلي (Section 2.7)"
+              ? "توثيق خسارة فاتورة وخصمها من أرباح الفترة المنسوبة لتاريخ الشحنة الأصلي"
               : "Attribute loss to original AWB shipment date and deduct from period P&L"}
           </DialogDescription>
 
@@ -1416,10 +1416,11 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                 variant="outline"
                 size="sm"
                 onClick={() => setIsAddLossOpen(false)}
+                className="h-10 px-4 rounded-xl cursor-pointer text-xs font-bold"
               >
                 {isRTL ? "إلغاء" : "Cancel"}
               </Button>
-              <Button type="submit" className="bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs">
+              <Button type="submit" className="h-10 px-4 rounded-xl cursor-pointer bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs shadow-2xs">
                 {isRTL ? "حفظ وخصم الخسارة" : "Save & Deduct Loss"}
               </Button>
             </div>

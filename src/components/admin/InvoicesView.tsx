@@ -436,13 +436,13 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
       "رقم البوليصة (AWB)",
       "رقم الفاتورة",
       "الوزن المفوتر (كجم)",
-      "التكلفة المفوترة (ج.م)",
+      "التكلفة المفوترة (EGP)",
       "اسم العميل",
       "الشركة الناقلة",
       "وزن السيستم (كجم)",
-      "تكلفة السيستم (ج.م)",
+      "تكلفة السيستم (EGP)",
       "فرق الوزن",
-      "الفرق / الخسارة (ج.م)",
+      "الفرق / الخسارة (EGP)",
       "حالة الشحنة",
       "ملاحظات",
     ];
@@ -528,14 +528,14 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
         {/* Total Billed */}
         <Card className="border border-slate-200 shadow-2xs bg-white rounded-2xl">
           <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex  items-center justify-evenly ">
+              <div className="text-start">
                 <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                   {isRTL ? "إجمالي التكلفة المفوترة" : "Total Billed Cost"}
                 </p>
-                <h3 className="text-2xl sm:text-3xl font-black text-slate-950 mt-1 font-mono">
-                  {stats.totalBilled.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
-                  <span className="text-xs font-bold text-[#C45B2A]">{isRTL ? "ج.م" : "EGP"}</span>
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-950 mt-1 font-mono flex items-baseline gap-1.5" dir="ltr">
+                  <span>{stats.totalBilled.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span className="text-xs font-bold text-[#C45B2A]">EGP</span>
                 </h3>
                 <p className="text-[11px] text-slate-600 font-medium mt-0.5">
                   {isRTL
@@ -543,7 +543,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                     : `Carrier claims on ${stats.count} items`}
                 </p>
               </div>
-              <div className="p-3 rounded-2xl bg-orange-50 text-[#C45B2A] border border-orange-200">
+              <div className="p-3 rounded-2xl bg-orange-50 text-[#C45B2A] border border-orange-200 shrink-0">
                 <Receipt className="h-6 w-6" />
               </div>
             </div>
@@ -553,20 +553,20 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
         {/* Expected System Cost */}
         <Card className="border border-slate-200 shadow-2xs bg-white rounded-2xl">
           <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center justify-evenly">
+              <div className="text-start">
                 <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                   {isRTL ? "تكلفة السيستم المتوقعة" : "Expected System Cost"}
                 </p>
-                <h3 className="text-2xl sm:text-3xl font-black text-slate-950 mt-1 font-mono">
-                  {stats.totalSystem.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
-                  <span className="text-xs font-bold text-slate-600">{isRTL ? "ج.م" : "EGP"}</span>
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-950 mt-1 font-mono flex items-baseline gap-1.5" dir="ltr">
+                  <span>{stats.totalSystem.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                  <span className="text-xs font-bold text-slate-600">EGP</span>
                 </h3>
                 <p className="text-[11px] text-slate-600 font-medium mt-0.5">
                   {isRTL ? "التكلفة التقديرية المسجلة مسبقاً" : "Pre-recorded estimated cost"}
                 </p>
               </div>
-              <div className="p-3 rounded-2xl bg-blue-50 text-blue-700 border border-blue-200">
+              <div className="p-3 rounded-2xl bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
                 <DollarSign className="h-6 w-6" />
               </div>
             </div>
@@ -582,8 +582,8 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
           }`}
         >
           <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center justify-evenly">
+              <div className="text-start">
                 <p
                   className={`text-xs font-bold uppercase tracking-wider ${
                     stats.totalNetDiff > 0 ? "text-rose-800" : "text-emerald-800"
@@ -592,16 +592,19 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                   {isRTL ? "صافي الفرق / الخسائر" : "Net Discrepancy"}
                 </p>
                 <h3
-                  className={`text-2xl sm:text-3xl font-black mt-1 font-mono ${
+                  className={`text-2xl sm:text-3xl font-black mt-1 font-mono flex items-baseline justify-end gap-1.5 ${
                     stats.totalNetDiff > 0 ? "text-rose-700" : "text-emerald-700"
                   }`}
+                  dir="ltr"
                 >
-                  {stats.totalNetDiff > 0 ? "+" : ""}
-                  {stats.totalNetDiff.toLocaleString("en-US", {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  })}{" "}
-                  <span className="text-xs font-bold">{isRTL ? "ج.م" : "EGP"}</span>
+                  <span>
+                    {stats.totalNetDiff > 0 ? "+" : ""}
+                    {stats.totalNetDiff.toLocaleString("en-US", {
+                      minimumFractionDigits: 2,
+                      maximumFractionDigits: 2,
+                    })}
+                  </span>
+                  <span className="text-xs font-bold">EGP</span>
                 </h3>
                 <p className="text-[11px] text-slate-700 font-medium mt-0.5">
                   {stats.totalNetDiff > 0
@@ -614,18 +617,18 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                 </p>
               </div>
               <div
-                className={`p-3 rounded-2xl border ${
-                  stats.totalNetDiff > 0
-                    ? "bg-rose-100 text-rose-700 border-rose-300"
-                    : "bg-emerald-100 text-emerald-700 border-emerald-300"
-                }`}
-              >
-                {stats.totalNetDiff > 0 ? (
-                  <TrendingUp className="h-6 w-6" />
-                ) : (
-                  <TrendingDown className="h-6 w-6" />
-                )}
-              </div>
+                      className={`p-3 rounded-2xl border shrink-0 ${
+                        stats.totalNetDiff > 0
+                          ? "bg-rose-100 text-rose-700 border-rose-300"
+                          : "bg-emerald-100 text-emerald-700 border-emerald-300"
+                      }`}
+                    >
+                      {stats.totalNetDiff > 0 ? (
+                        <TrendingUp className="h-6 w-6" />
+                      ) : (
+                        <TrendingDown className="h-6 w-6" />
+                      )}
+                    </div>
             </div>
           </CardContent>
         </Card>
@@ -633,24 +636,24 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
         {/* Overcharged Count */}
         <Card className="border border-slate-200 shadow-2xs bg-white rounded-2xl">
           <CardContent className="p-5">
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center justify-evenly">
+              <div className="text-start">
                 <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                   {isRTL ? "بوالص بفروقات زيادة" : "Overcharged Items"}
                 </p>
-                <h3 className="text-2xl sm:text-3xl font-black text-amber-700 mt-1 font-mono">
-                  {stats.totalLossesCount}{" "}
+                <h3 className="text-2xl sm:text-3xl font-black text-amber-700 mt-1 font-mono flex ltr:flex-row-reverse items-baseline justify-end gap-1.5">
                   <span className="text-xs font-bold text-slate-500">
                     {isRTL ? `من أصل ${stats.count}` : `of ${stats.count}`}
                   </span>
+                  <span dir="ltr">{stats.totalLossesCount}</span>
                 </h3>
                 <p className="text-[11px] text-slate-600 font-medium mt-0.5">
                   {isRTL
-                    ? `إجمالي الزيادات: ${stats.totalLossesAmount.toLocaleString()} ج.م`
-                    : `Total extra claims: ${stats.totalLossesAmount.toLocaleString()} EGP`}
+                    ? `إجمالي الزيادات: ${stats.totalLossesAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`
+                    : `Total extra claims: ${stats.totalLossesAmount.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP`}
                 </p>
               </div>
-              <div className="p-3 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200">
+              <div className="p-3 rounded-2xl bg-amber-50 text-amber-700 border border-amber-200 shrink-0">
                 <AlertTriangle className="h-6 w-6" />
               </div>
             </div>
@@ -901,7 +904,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
 
                       {/* Billed Weight */}
                       <TableCell className="py-3 px-4 text-center font-mono font-black text-slate-950 bg-orange-50/40">
-                        {item.billedWeight} <span className="text-[10px] text-slate-500 font-normal">{isRTL ? "كجم" : "kg"}</span>
+                        {item.billedWeight} <span className="text-[10px] text-slate-500 font-normal">kg</span>
                       </TableCell>
 
                       {/* Billed Cost */}
@@ -927,7 +930,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
 
                       {/* System Weight */}
                       <TableCell className="py-3 px-4 text-center font-mono font-bold text-slate-800 bg-slate-50">
-                        {item.systemWeight} <span className="text-[10px] text-slate-500 font-normal">{isRTL ? "كجم" : "kg"}</span>
+                        {item.systemWeight} <span className="text-[10px] text-slate-500 font-normal">kg</span>
                       </TableCell>
 
                       {/* System Cost */}
@@ -1034,31 +1037,31 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
               </span>
             )}
           </div>
-          <div className="flex items-center gap-4 font-mono font-black">
-            <span>
-              {isRTL ? "إجمالي مفوتر:" : "Billed:"}{" "}
+          <div className="flex flex-wrap items-center gap-4 font-mono font-black" dir="ltr">
+            <span className="flex ltr:flex-row-reverse rtl:flex-row  justify-end items-center gap-2">
               <strong className="text-[#C45B2A]">
-                {stats.totalBilled.toLocaleString("en-US", { minimumFractionDigits: 2 })} {isRTL ? "ج.م" : "EGP"}
+                {stats.totalBilled.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP
               </strong>
+              {isRTL ? " :إجمالي مفوتر" : "Billed: "}{" "}
             </span>
-            <span>
-              {isRTL ? "إجمالي سيستم:" : "System:"}{" "}
+            <span className="flex ltr:flex-row-reverse rtl:flex-row  justify-end items-center gap-2">
               <strong className="text-slate-950">
-                {stats.totalSystem.toLocaleString("en-US", { minimumFractionDigits: 2 })} {isRTL ? "ج.م" : "EGP"}
+                {stats.totalSystem.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP
               </strong>
+              {isRTL ? " :إجمالي سيستم" : "System: "}{" "}
             </span>
-            <span>
-              {isRTL ? "الصافي:" : "Net:"}{" "}
+            <span className="flex ltr:flex-row-reverse rtl:flex-row  justify-end items-center gap-2">
               <strong
                 className={
                   stats.totalNetDiff > 0
-                    ? "text-rose-700"
+                  ? "text-rose-700"
                     : "text-emerald-700"
-                }
-              >
+                  }
+                  >
                 {stats.totalNetDiff > 0 ? "+" : ""}
-                {stats.totalNetDiff.toLocaleString("en-US", { minimumFractionDigits: 2 })} {isRTL ? "ج.م" : "EGP"}
+                {stats.totalNetDiff.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} EGP
               </strong>
+              {isRTL ? " :الصافي" : "Net: "}
             </span>
           </div>
         </div>
@@ -1066,10 +1069,10 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
 
       {/* ─── 4. Add / Edit Single Item Modal ─── */}
       <Dialog open={addModalOpen} onOpenChange={setAddModalOpen}>
-        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto rounded-3xl p-6">
+          <DialogHeader className="text-start">
             <DialogTitle className="text-lg font-bold flex items-center gap-2 text-slate-950">
-              <div className="p-2 rounded-xl bg-orange-50 text-[#C45B2A]">
+              <div className="p-2 rounded-xl bg-orange-50 text-[#C45B2A] shrink-0">
                 <Receipt className="w-5 h-5" />
               </div>
               {editingItem
@@ -1080,7 +1083,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                 ? "إضافة بوليصة لتدقيق الفاتورة"
                 : "Add Billed AWB for Audit"}
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-600">
+            <DialogDescription className="text-xs text-slate-600 text-start">
               {isRTL
                 ? "أدخل رقم البوليصة للبحث التلقائي في الشحنات وجلب بيانات العميل وتكلفة السيستم فوراً"
                 : "Enter AWB to auto-populate client details and system expected weight and cost."}
@@ -1089,7 +1092,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
 
           <form onSubmit={handleSaveItem} className="space-y-4 py-2">
             {/* AWB + Auto lookup */}
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 text-start">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-slate-800">
                   {isRTL ? "رقم البوليصة (AWB) *" : "AWB Number *"}
@@ -1106,12 +1109,12 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                 value={formAwb}
                 onChange={(e) => handleAwbLookup(e.target.value)}
                 placeholder="e.g. 215199055380"
-                className="font-mono text-sm font-bold tracking-wider text-slate-950 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
+                className="font-mono text-sm font-bold tracking-wider text-slate-950 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20 text-start"
               />
             </div>
 
             {/* Invoice Number & Carrier */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-start">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-800">
                   {isRTL ? "رقم الفاتورة *" : "Invoice Number *"}
@@ -1121,7 +1124,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                   value={formInvoiceNumber}
                   onChange={(e) => setFormInvoiceNumber(e.target.value)}
                   placeholder="e.g. ACC-SINV-2026-03416"
-                  className="font-mono text-xs font-bold text-slate-950 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
+                  className="font-mono text-xs font-bold text-slate-950 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20 text-start"
                 />
               </div>
 
@@ -1132,7 +1135,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                 <select
                   value={formCarrier}
                   onChange={(e) => setFormCarrier(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#C45B2A]/20 focus:border-[#C45B2A] cursor-pointer"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#C45B2A]/20 focus:border-[#C45B2A] cursor-pointer text-start"
                 >
                   {CARRIERS.map((c) => (
                     <option key={c.id} value={c.name}>
@@ -1144,7 +1147,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
             </div>
 
             {/* Client Name & Status */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-start">
               <div className="space-y-1.5">
                 <label className="text-xs font-bold text-slate-800">
                   {isRTL ? "اسم العميل" : "Client Name"}
@@ -1153,7 +1156,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                   value={formClientName}
                   onChange={(e) => setFormClientName(e.target.value)}
                   placeholder={isRTL ? "مثال: old sheet / نور سعيد" : "e.g. Acme Corp"}
-                  className="text-xs font-bold text-slate-950 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
+                  className="text-xs font-bold text-slate-950 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20 text-start"
                 />
               </div>
 
@@ -1164,7 +1167,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                 <select
                   value={formShipmentStatus}
                   onChange={(e) => setFormShipmentStatus(e.target.value)}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#C45B2A]/20 focus:border-[#C45B2A]"
+                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-xs font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#C45B2A]/20 focus:border-[#C45B2A] text-start"
                 >
                   <option value="Delivered">Delivered (تم التسليم)</option>
                   <option value="Clearance Delay">Clearance Delay (تأخير جمركي)</option>
@@ -1177,7 +1180,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
             </div>
 
             {/* Billed Metrics vs System Metrics Box */}
-            <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-300 space-y-3">
+            <div className="p-3.5 bg-slate-50 rounded-2xl border border-slate-300 space-y-3 text-start">
               <span className="text-xs font-black text-slate-900 flex items-center gap-1.5">
                 <Scale className="w-4 h-4 text-[#C45B2A]" />
                 {isRTL ? "مقارنة الوزن والتكلفة (المفوتر ضد السيستم)" : "Weight & Cost Comparison"}
@@ -1187,7 +1190,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
               <div className="grid grid-cols-2 gap-3 p-2.5 rounded-xl bg-orange-50 border border-orange-200">
                 <div className="space-y-1">
                   <label className="text-[11px] font-black text-[#7A3416]">
-                    {isRTL ? "الوزن المفوتر (كجم) *" : "Billed Wt (kg) *"}
+                    {isRTL ? "الوزن المفوتر (kg) *" : "Billed Wt (kg) *"}
                   </label>
                   <Input
                     required
@@ -1196,12 +1199,12 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                     value={formBilledWeight}
                     onChange={(e) => setFormBilledWeight(e.target.value)}
                     placeholder="0.0"
-                    className="h-8 text-xs font-mono font-bold bg-white text-slate-950 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
+                    className="h-8 text-xs font-mono font-bold bg-white text-slate-950 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20 text-start"
                   />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[11px] font-black text-[#7A3416]">
-                    {isRTL ? "التكلفة المفوترة (ج.م) *" : "Billed Cost (EGP) *"}
+                    {isRTL ? "التكلفة المفوترة (EGP) *" : "Billed Cost (EGP) *"}
                   </label>
                   <Input
                     required
@@ -1210,7 +1213,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                     value={formBilledCost}
                     onChange={(e) => setFormBilledCost(e.target.value)}
                     placeholder="0.00"
-                    className="h-8 text-xs font-mono font-black bg-white text-slate-950 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
+                    className="h-8 text-xs font-mono font-black bg-white text-slate-950 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20 text-start"
                   />
                 </div>
               </div>
@@ -1219,7 +1222,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
               <div className="grid grid-cols-2 gap-3 p-2.5 rounded-xl bg-slate-100 border border-slate-300">
                 <div className="space-y-1">
                   <label className="text-[11px] font-black text-slate-800">
-                    {isRTL ? "وزن السيستم (كجم)" : "System Wt (kg)"}
+                    {isRTL ? "وزن السيستم (kg)" : "System Wt (kg)"}
                   </label>
                   <Input
                     type="number"
@@ -1227,12 +1230,12 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                     value={formSystemWeight}
                     onChange={(e) => setFormSystemWeight(e.target.value)}
                     placeholder="0.0"
-                    className="h-8 text-xs font-mono font-bold bg-white text-slate-950 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
+                    className="h-8 text-xs font-mono font-bold bg-white text-slate-950 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20 text-start"
                   />
                 </div>
                 <div className="space-y-1">
                   <label className="text-[11px] font-black text-slate-800">
-                    {isRTL ? "تكلفة السيستم (ج.م)" : "System Cost (EGP)"}
+                    {isRTL ? "تكلفة السيستم (EGP)" : "System Cost (EGP)"}
                   </label>
                   <Input
                     type="number"
@@ -1240,7 +1243,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                     value={formSystemCost}
                     onChange={(e) => setFormSystemCost(e.target.value)}
                     placeholder="0.00"
-                    className="h-8 text-xs font-mono font-bold bg-white text-slate-950 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
+                    className="h-8 text-xs font-mono font-bold bg-white text-slate-950 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20 text-start"
                   />
                 </div>
               </div>
@@ -1258,8 +1261,8 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                   <div className="flex items-center justify-between text-xs p-2.5 rounded-xl bg-white border border-slate-300">
                     <span className="text-slate-700 font-bold">
                       {isRTL ? "فرق الوزن المحسوب:" : "Weight Diff:"}{" "}
-                      <strong className="font-mono text-slate-950 font-black">
-                        {wdiff > 0 ? `+${wdiff}` : wdiff} {isRTL ? "كجم" : "kg"}
+                      <strong className="font-mono text-slate-950 font-black" dir="ltr">
+                        {wdiff > 0 ? `+${wdiff}` : wdiff} kg
                       </strong>
                     </span>
                     <span className="text-slate-700 font-bold">
@@ -1272,8 +1275,9 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                             ? "text-emerald-700"
                             : "text-slate-800"
                         }`}
+                        dir="ltr"
                       >
-                        {cdiff > 0 ? `+${cdiff}` : cdiff} {isRTL ? "ج.م" : "EGP"}
+                        {cdiff > 0 ? `+${cdiff}` : cdiff} EGP
                       </strong>
                     </span>
                   </div>
@@ -1282,7 +1286,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
             </div>
 
             {/* Notes */}
-            <div className="space-y-1">
+            <div className="space-y-1 text-start">
               <label className="text-xs font-bold text-slate-800">
                 {isRTL ? "ملاحظات إضافية" : "Notes"}
               </label>
@@ -1290,7 +1294,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                 value={formNotes}
                 onChange={(e) => setFormNotes(e.target.value)}
                 placeholder={isRTL ? "أي ملاحظات بخصوص الشحنة أو سبب فرق الوزن..." : "Notes..."}
-                className="text-xs text-slate-900 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
+                className="text-xs text-slate-900 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20 text-start"
               />
             </div>
 
@@ -1322,15 +1326,15 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
 
       {/* ─── 5. Bulk Excel Paste Modal ─── */}
       <Dialog open={bulkModalOpen} onOpenChange={setBulkModalOpen}>
-        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto rounded-3xl p-6">
+          <DialogHeader className="text-start">
             <DialogTitle className="text-lg font-bold flex items-center gap-2 text-slate-950">
-              <div className="p-2 rounded-xl bg-orange-50 text-[#C45B2A]">
+              <div className="p-2 rounded-xl bg-orange-50 text-[#C45B2A] shrink-0">
                 <FileUp className="w-5 h-5" />
               </div>
               {isRTL ? "استيراد فواتير مجمعة من إكسيل / جوجل شيت" : "Bulk Import from Excel / Google Sheets"}
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-600">
+            <DialogDescription className="text-xs text-slate-600 text-start">
               {isRTL
                 ? "انسخ الصفوف مباشرة من شيت إكسيل (Copy) والصقها هنا (Paste). سيقوم النظام بقراءة الأعمدة الـ 11 تلقائياً مع مطابقة البوالص مع السيستم"
                 : "Copy rows from Google Sheets or Excel and paste them here. Columns are automatically mapped."}
@@ -1339,7 +1343,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
 
           <div className="space-y-4 py-2">
             {/* Defaults */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-[#FCFAF7] rounded-2xl border border-slate-300">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 p-3.5 bg-[#FCFAF7] rounded-2xl border border-slate-300 text-start">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-800">
                   {isRTL ? "رقم الفاتورة الافتراضي (إذا لم يكن بالصف)" : "Default Invoice Number"}
@@ -1348,7 +1352,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                   value={bulkDefaultInvoice}
                   onChange={(e) => setBulkDefaultInvoice(e.target.value)}
                   placeholder="ACC-SINV-2026-03416"
-                  className="h-8 text-xs font-mono font-bold bg-white text-slate-950 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
+                  className="h-8 text-xs font-mono font-bold bg-white text-slate-950 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20 text-start"
                 />
               </div>
               <div className="space-y-1">
@@ -1358,7 +1362,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                 <select
                   value={bulkDefaultCarrier}
                   onChange={(e) => setBulkDefaultCarrier(e.target.value)}
-                  className="w-full h-8 text-xs font-bold bg-white text-slate-950 border border-slate-300 rounded-md px-2 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20 cursor-pointer"
+                  className="w-full h-8 text-xs font-bold bg-white text-slate-950 border border-slate-300 rounded-md px-2 focus:border-[#C45B2A] focus:ring-[#C45B2A]/20 cursor-pointer text-start"
                 >
                   {CARRIERS.map((c) => (
                     <option key={c.id} value={c.name}>
@@ -1370,7 +1374,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
             </div>
 
             {/* Paste Area */}
-            <div className="space-y-1.5">
+            <div className="space-y-1.5 text-start">
               <div className="flex items-center justify-between">
                 <label className="text-xs font-bold text-slate-800">
                   {isRTL ? "الصق البيانات المنسوخة هنا:" : "Paste rows here:"}
@@ -1388,12 +1392,12 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                 placeholder={
                   "215199055380\tACC-SINV-2026-03416\t2.2\t1688.76\told sheet\tSMSA\t2.5\t2000\t-0.3\t-311.24\tDelivered\n215199140570\tACC-SINV-2026-03416\t1.5\t1309.67\told sheet\tSMSA\t1.5\t1618\t0\t-308.33\tDelivered"
                 }
-                className="w-full font-mono text-xs font-medium p-3 rounded-xl border border-slate-300 bg-white text-slate-950 focus:outline-none focus:ring-2 focus:ring-[#C45B2A]/20 focus:border-[#C45B2A]"
+                className="w-full font-mono text-xs font-medium p-3 rounded-xl border border-slate-300 bg-white text-slate-950 focus:outline-none focus:ring-2 focus:ring-[#C45B2A]/20 focus:border-[#C45B2A] text-start"
               />
             </div>
 
             {bulkError && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-300 text-xs text-rose-800 font-bold flex items-center gap-2">
+              <div className="p-3 rounded-xl bg-rose-50 border border-rose-300 text-xs text-rose-800 font-bold flex items-center gap-2 text-start">
                 <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
                 <span>{bulkError}</span>
               </div>
@@ -1401,18 +1405,18 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
 
             {/* Preview of Parsed Rows */}
             {bulkPreview.length > 0 && (
-              <div className="space-y-2">
+              <div className="space-y-2 text-start">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-800">
                   <span>
                     {isRTL
                       ? `معاينة البيانات المستخرجة (${bulkPreview.length} بوليصة جاهزة للاستيراد):`
                       : `Parsed Preview (${bulkPreview.length} items ready):`}
                   </span>
-                  <span className="text-[#C45B2A] font-mono font-black">
+                  <span className="text-[#C45B2A] font-mono font-black" dir="ltr">
                     {bulkPreview
                       .reduce((acc, i) => acc + i.billedCost, 0)
-                      .toLocaleString("en-US", { minimumFractionDigits: 2 })}{" "}
-                    {isRTL ? "ج.م" : "EGP"}
+                      .toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}{" "}
+                    EGP
                   </span>
                 </div>
                 <div className="max-h-48 overflow-y-auto border border-slate-300 rounded-xl text-xs bg-white">
@@ -1430,11 +1434,11 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                     <tbody className="divide-y divide-slate-200">
                       {bulkPreview.slice(0, 50).map((row, idx) => (
                         <tr key={idx} className="hover:bg-orange-50/30">
-                          <td className="p-2 font-mono font-bold text-slate-950">{row.awb}</td>
-                          <td className="p-2 font-mono text-[11px] text-slate-700 font-semibold">{row.invoiceNumber}</td>
+                          <td className="p-2 font-mono font-bold text-slate-950 text-start">{row.awb}</td>
+                          <td className="p-2 font-mono text-[11px] text-slate-700 font-semibold text-start">{row.invoiceNumber}</td>
                           <td className="p-2 text-center font-mono font-bold text-slate-900">{row.billedWeight}</td>
                           <td className="p-2 text-center font-mono font-bold text-slate-900">{row.billedCost}</td>
-                          <td className="p-2 font-bold text-slate-900">{row.clientName}</td>
+                          <td className="p-2 font-bold text-slate-900 text-start">{row.clientName}</td>
                           <td
                             className={`p-2 text-center font-mono font-black ${
                               row.costDiff > 0
@@ -1443,6 +1447,7 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
                                 ? "text-emerald-700"
                                 : "text-slate-600"
                             }`}
+                            dir="ltr"
                           >
                             {row.costDiff > 0 ? `+${row.costDiff}` : row.costDiff}
                           </td>
@@ -1488,13 +1493,13 @@ export const InvoicesView: React.FC<InvoicesViewProps> = ({
 
       {/* ─── 6. Delete Confirmation Dialog ─── */}
       <Dialog open={!!deleteConfirmId} onOpenChange={(open) => !open && setDeleteConfirmId(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
+        <DialogContent className="max-w-md rounded-3xl p-6">
+          <DialogHeader className="text-start">
             <DialogTitle className="text-base font-bold text-rose-600 flex items-center gap-2">
-              <AlertTriangle className="w-5 h-5 text-rose-500" />
+              <AlertTriangle className="w-5 h-5 text-rose-500 shrink-0" />
               {isRTL ? "تأكيد حذف بند البوليصة" : "Confirm Record Deletion"}
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-600">
+            <DialogDescription className="text-xs text-slate-600 text-start">
               {isRTL
                 ? "هل أنت متأكد من حذف هذا السجل من تدقيق فواتير الشحن؟ لا يمكن التراجع عن هذا الإجراء."
                 : "Are you sure you want to remove this audited carrier record?"}

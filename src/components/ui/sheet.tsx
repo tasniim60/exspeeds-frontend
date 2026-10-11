@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import { useLanguage } from "@/context/LanguageContext";
 
@@ -18,6 +19,12 @@ export function Sheet({
   className?: string;
 }) {
   const { isRTL } = useLanguage();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
   // In RTL, the sidebar is on the right -> drawer opens on the left ("left").
   // In LTR, the sidebar is on the left -> drawer opens on the right ("right").
   const effectiveSide = side !== undefined ? side : isRTL ? "left" : "right";
@@ -40,13 +47,16 @@ export function Sheet({
     };
   }, [open, onOpenChange]);
 
-  if (!open) return null;
+  if (!open || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 overflow-hidden" dir={isRTL ? "rtl" : "ltr"}>
+  const hasCustomMaxW = /\bmax-w-/.test(className);
+  const defaultWidthClasses = hasCustomMaxW ? "" : "sm:max-w-xl md:max-w-2xl lg:max-w-3xl";
+
+  return createPortal(
+    <div className="fixed inset-0 z-[99999] overflow-hidden" dir={isRTL ? "rtl" : "ltr"}>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 bg-black/50 backdrop-blur-xs transition-opacity duration-300"
+        className="fixed inset-0 bg-black/60 backdrop-blur-xs transition-opacity duration-300"
         onClick={() => onOpenChange(false)}
         aria-hidden="true"
       />
@@ -59,16 +69,18 @@ export function Sheet({
         } max-w-full flex z-50`}
       >
         <div
-          className={`w-screen max-w-full sm:max-w-xl md:max-w-2xl lg:max-w-3xl bg-white shadow-2xl ${
+          className={`w-screen sm:w-[90vw] ${defaultWidthClasses} h-[100dvh] max-h-[100dvh] bg-white shadow-2xl ${
             effectiveSide === "left"
               ? "border-r border-gray-200 animate-drawer-left"
               : "border-l border-gray-200 animate-drawer-right"
-          } flex flex-col justify-between overflow-y-auto ${className}`}
+          } flex flex-col justify-between overflow-hidden ${className}`}
+          style={{ WebkitOverflowScrolling: "touch" }}
         >
           {children}
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -83,14 +95,14 @@ export function SheetHeader({
 }) {
   return (
     <div
-      className={`p-4 sm:p-6 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white/95 backdrop-blur-xs z-10 ${className}`}
+      className={`shrink-0 p-3.5 sm:p-5 border-b border-gray-100 flex items-start sm:items-center justify-between bg-white z-10 gap-2 ${className}`}
     >
       <div className="space-y-1 min-w-0 flex-1">{children}</div>
       {onClose && (
         <button
           type="button"
           onClick={onClose}
-          className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors shrink-0 cursor-pointer"
+          className="rounded-xl p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-700 transition-colors shrink-0 cursor-pointer -me-1 sm:me-0"
           aria-label="Close drawer"
         >
           <X className="h-5 w-5" />
@@ -117,7 +129,7 @@ export function SheetDescription({
   ...props
 }: React.HTMLAttributes<HTMLParagraphElement>) {
   return (
-    <p className={`text-xs text-gray-500 font-normal truncate ${className}`} {...props} />
+    <p className={`text-xs text-gray-500 font-normal ${className}`} {...props} />
   );
 }
 
@@ -125,7 +137,7 @@ export function SheetContent({
   className = "",
   ...props
 }: React.HTMLAttributes<HTMLDivElement>) {
-  return <div className={`p-4 sm:p-6 space-y-4 sm:space-y-6 flex-1 overflow-x-hidden ${className}`} {...props} />;
+  return <div className={`flex-1 overflow-y-auto overflow-x-hidden p-3.5 sm:p-6 space-y-4 sm:space-y-5 ${className}`} {...props} />;
 }
 
 export function SheetFooter({
@@ -134,7 +146,7 @@ export function SheetFooter({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={`p-4 sm:p-6 border-t border-gray-100 bg-gray-50/80 flex items-center justify-end gap-3 sticky bottom-0 z-10 ${className}`}
+      className={`shrink-0 p-3 sm:p-4 border-t border-gray-100 bg-gray-50/90 flex items-center justify-end gap-3 z-10 ${className}`}
       {...props}
     />
   );

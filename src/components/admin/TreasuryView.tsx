@@ -304,7 +304,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   {isRTL ? "إجمالي المقبوضات (الوارد)" : "Total Cash Inflow"}
                 </p>
-                <h3 className="text-2xl font-black text-emerald-600 mt-1 font-mono">
+                <h3 className="text-start text-2xl font-black text-emerald-600 mt-1 font-mono" dir="ltr">
                   {formatCurrency(treasuryState.totalInflows, "EGP")}
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
@@ -325,7 +325,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-wider">
                   {isRTL ? "إجمالي المدفوعات (المنصرف)" : "Total Cash Outflow"}
                 </p>
-                <h3 className="text-2xl font-black text-rose-600 mt-1 font-mono">
+                <h3 className="text-start text-2xl font-black text-rose-600 mt-1 font-mono" dir="ltr">
                   {formatCurrency(treasuryState.totalOutflows, "EGP")}
                 </h3>
                 <p className="text-[11px] text-slate-500 mt-0.5 font-medium">
@@ -347,7 +347,8 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
                   {isRTL ? "صافي السيولة النقدية" : "Net Treasury Liquidity"}
                 </p>
                 <h3
-                  className={`text-2xl font-black mt-1 font-mono ${
+                  dir="ltr"
+                  className={`text-start  text-2xl font-black mt-1 font-mono ${
                     treasuryState.totalCompanyCash >= 0 ? "text-slate-900" : "text-rose-600"
                   }`}
                 >
@@ -389,12 +390,12 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
               >
                 <CardContent className="p-4 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-black text-slate-800 truncate" title={accName}>
+                    <span className="text-sm font-black text-slate-800 truncate" title={accName} dir="ltr">
                       {accName}
                     </span>
                     <Badge
                       variant="outline"
-                      className={`text-[9px] px-1.5 py-0 font-bold ${
+                      className={`text-xs px-1.5 py-0 font-bold ${
                         selectedVaultFilter.toLowerCase() === accName.toLowerCase()
                           ? "bg-[#C45B2A] text-white border-[#C45B2A]"
                           : isCib
@@ -411,23 +412,23 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
                   </div>
 
                   <div className="pt-1">
-                    <div className="text-lg font-black font-mono text-slate-900">
+                    <h3 className="text-start  text-lg font-black font-mono text-slate-900" dir="ltr">
                       {formatCurrency(vault.currentBalance, "EGP")}
-                    </div>
+                    </h3>
                   </div>
 
                   <div className="grid grid-cols-2 gap-1 pt-1 border-t border-slate-100 text-[10px]">
                     <div>
-                      <span className="text-slate-400 block">{isRTL ? "وارد:" : "In:"}</span>
-                      <span className="font-mono font-bold text-emerald-600">
+                      <span className="text-slate-600 block font-bold text-xs">{isRTL ? "وارد: " : "In: "}</span>
+                      <span className="font-mono font-bold text-emerald-600 inline-block" dir="ltr">
                         {vault.totalInflows > 0
                           ? `+${vault.totalInflows.toLocaleString()}`
                           : "0"}
                       </span>
                     </div>
                     <div>
-                      <span className="text-slate-400 block">{isRTL ? "منصرف:" : "Out:"}</span>
-                      <span className="font-mono font-bold text-rose-600">
+                      <span className="text-slate-600 block font-bold text-xs">{isRTL ? "منصرف: " : "Out: "}</span>
+                      <span className="font-mono font-bold text-rose-600 inline-block" dir="ltr">
                         {vault.totalOutflows > 0
                           ? `-${vault.totalOutflows.toLocaleString()}`
                           : "0"}
@@ -447,19 +448,13 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
             <div className="flex items-center gap-2 flex-wrap">
               <div className="relative">
-                <Search
-                  className={`absolute top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 ${
-                    isRTL ? "right-3" : "left-3"
-                  }`}
-                />
+                <Search className="absolute top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-400 start-3" />
                 <Input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={isRTL ? "بحث في القيود والبيان..." : "Search transactions..."}
-                  className={`${
-                    isRTL ? "pr-8.5 text-right" : "pl-8.5 text-left"
-                  } h-9 text-xs bg-[#FAF8F5] border-slate-300 w-52 rounded-xl`}
+                  className="ps-8.5 pe-3 text-start h-9 text-xs bg-[#FAF8F5] border-slate-300 w-52 rounded-xl"
                 />
               </div>
 
@@ -549,7 +544,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
                 filteredTransactions.map((tx) => (
                   <TableRow key={tx.id} className="hover:bg-slate-50/80 transition-colors">
                     <TableCell className="text-xs font-mono text-slate-600">
-                      {tx.date}
+                      <span dir="ltr">{tx.date}</span>
                     </TableCell>
 
                     <TableCell className="text-center">
@@ -581,7 +576,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
 
                     <TableCell className="text-xs font-semibold text-slate-800">
                       <Badge variant="outline" className="text-[11px] font-mono bg-slate-50 text-slate-700 border-slate-200">
-                        {tx.account}
+                        <span dir="ltr">{tx.account}</span>
                       </Badge>
                     </TableCell>
 
@@ -594,7 +589,7 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
                     </TableCell>
 
                     <TableCell className="text-xs font-mono text-slate-500">
-                      {tx.reference || "-"}
+                      <span dir="ltr">{tx.reference || "-"}</span>
                     </TableCell>
 
                     <TableCell
@@ -602,8 +597,10 @@ export const TreasuryView: React.FC<TreasuryViewProps> = ({
                         tx.direction === "in" ? "text-emerald-600" : "text-rose-600"
                       }`}
                     >
-                      {tx.direction === "in" ? "+" : "-"}
-                      {formatCurrency(tx.amount, "EGP")}
+                      <span dir="ltr">
+                        {tx.direction === "in" ? "+" : "-"}
+                        {formatCurrency(tx.amount, "EGP")}
+                      </span>
                     </TableCell>
                   </TableRow>
                 ))

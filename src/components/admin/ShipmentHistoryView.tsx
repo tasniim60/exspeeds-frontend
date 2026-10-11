@@ -6,20 +6,11 @@ import {
   Search,
   FileSpreadsheet,
   Loader2,
-  Filter,
-  Package,
-  Calendar,
-  Building,
-  CheckCircle2,
-  AlertTriangle,
-  Clock,
   MapPin,
-  Truck,
   UserCheck,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import { Shipment, Customer } from "@/lib/adminData";
@@ -126,7 +117,7 @@ export const ShipmentHistoryView: React.FC<ShipmentHistoryViewProps> = ({
           Number((s.costPrice ?? 0).toFixed(2)),
           Number((s.sellingPrice ?? s.priceEgp ?? 0).toFixed(2)),
           Number((s.netProfit ?? 0).toFixed(2)),
-          s.agentName || "مصطفي"
+          s.agentName || "Admin"
         ]);
       });
 
@@ -221,12 +212,12 @@ export const ShipmentHistoryView: React.FC<ShipmentHistoryViewProps> = ({
         <CardContent className="p-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-3">
             <div className="relative w-full md:w-80">
-              <Search className={`absolute ${isRTL ? "right-3" : "left-3"} top-2.5 h-4 w-4 text-gray-400`} />
+              <Search className="absolute start-3 top-2.5 h-4 w-4 text-gray-400 pointer-events-none" />
               <Input
                 placeholder={isRTL ? "بحث بالبوليصة، الحساب، المستلم..." : "Search AWB, Account, Consignee..."}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className={`${isRTL ? "pr-9" : "pl-9"} h-9 text-xs`}
+                className="ps-9 pe-3 h-9 text-xs text-start"
               />
             </div>
 
@@ -273,6 +264,7 @@ export const ShipmentHistoryView: React.FC<ShipmentHistoryViewProps> = ({
               <TableRow className="bg-gray-50/90 hover:bg-gray-50/90 text-xs">
                 <TableHead className="font-bold text-gray-700">{isRTL ? "التاريخ" : "Date"}</TableHead>
                 <TableHead className="font-bold text-gray-700">{isRTL ? "حالة الشحنة" : "Shipment Status"}</TableHead>
+                <TableHead className="font-bold text-gray-700">{isRTL ? "الموقع الحالي" : "Live Location"}</TableHead>
                 <TableHead className="font-bold text-gray-700">{isRTL ? "رقم البوليصة (AWB)" : "AWB #"}</TableHead>
                 <TableHead className="font-bold text-gray-700">{isRTL ? "اسم العميل (Account)" : "Account"}</TableHead>
                 <TableHead className="font-bold text-gray-700">{isRTL ? "اسم المستلم" : "Consignee"}</TableHead>
@@ -281,14 +273,14 @@ export const ShipmentHistoryView: React.FC<ShipmentHistoryViewProps> = ({
                 <TableHead className="font-bold text-gray-700">{isRTL ? "الناقل والوسيط" : "Carrier / Broker"}</TableHead>
                 <TableHead className="font-bold text-gray-700">{isRTL ? "الوزن النهائي" : "Chargeable Wt"}</TableHead>
                 <TableHead className="font-bold text-gray-700">{isRTL ? "سعر البيع" : "Selling Price"}</TableHead>
-                <TableHead className="font-bold text-gray-700 text-right">{isRTL ? "الإجراءات والربط" : "Actions / Assign"}</TableHead>
+                <TableHead className="font-bold text-gray-700 text-end">{isRTL ? "الإجراءات والربط" : "Actions / Assign"}</TableHead>
               </TableRow>
             </TableHeader>
 
             <TableBody>
               {filteredShipments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={11} className="text-center py-12 text-gray-500">
+                  <TableCell colSpan={12} className="text-center py-12 text-gray-500">
                     <History className="h-10 w-10 mx-auto text-gray-300 mb-2" />
                     <p className="text-sm font-semibold">{isRTL ? "لا توجد شحنات في تاريخ الحركة تطابق الفلتر" : "No history records found."}</p>
                   </TableCell>
@@ -301,16 +293,28 @@ export const ShipmentHistoryView: React.FC<ShipmentHistoryViewProps> = ({
                     {/* Status Badge */}
                     <TableCell className="whitespace-nowrap">
                       <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border ${
-                        s.status === "Delivered"
+                        s.status === "Delivered" || (s.status as string) === "Deliverd"
                           ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                          : s.status === "Exception"
+                          : s.status === "Exception" || (s.status as string) === "RTO"
                           ? "bg-rose-50 text-rose-700 border-rose-200"
                           : s.status === "Delayed"
                           ? "bg-amber-50 text-amber-700 border-amber-200"
                           : "bg-blue-50 text-blue-700 border-blue-200"
                       }`}>
-                        {s.currentLocation || s.status}
+                        {s.status}
                       </span>
+                    </TableCell>
+
+                    {/* Live Location */}
+                    <TableCell className="text-xs">
+                      {s.currentLocation ? (
+                        <span className="flex items-center gap-1 font-semibold text-gray-800 truncate max-w-[160px]" title={s.currentLocation}>
+                          <MapPin className="w-3 h-3 text-[#C45B2A] shrink-0" />
+                          <span className="truncate">{s.currentLocation}</span>
+                        </span>
+                      ) : (
+                        <span className="text-gray-400 font-mono text-[11px]">—</span>
+                      )}
                     </TableCell>
 
                     {/* AWB */}
@@ -373,7 +377,7 @@ export const ShipmentHistoryView: React.FC<ShipmentHistoryViewProps> = ({
                     </TableCell>
 
                     {/* Actions & Official Track Redirect */}
-                    <TableCell className="text-right whitespace-nowrap">
+                    <TableCell className="text-end whitespace-nowrap">
                       <TrackingRedirect carrier={s.carrier} awb={s.awb} variant="button" label={isRTL ? "تتبع الناقل" : "Track"} />
                     </TableCell>
                   </TableRow>

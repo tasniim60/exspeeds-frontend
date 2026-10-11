@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useLanguage } from "@/context/LanguageContext";
 
 export default function Footer() {
@@ -13,13 +14,13 @@ export default function Footer() {
         <div className="space-y-5">
           <div className="flex flex-col items-start gap-1.5">
             <Link href={getLocalizedPath("/")} className="inline-block py-1 shrink-0">
-              <img
+              <Image
                 src="/assets/xspeed_logo_earth_dark.jpg"
                 alt="XSPEED Express Logistics"
                 width={280}
                 height={164}
                 className="h-20 w-auto object-cover rounded-md"
-                />
+              />
             </Link>
             <p className="text-sm text-gray-300 leading-relaxed max-w-xs">
               {t("footer.companySummary")}

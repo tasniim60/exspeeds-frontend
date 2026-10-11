@@ -5,51 +5,37 @@ import {
   Package,
   Plus,
   Search,
-  Filter,
   FileSpreadsheet,
   Loader2,
-  Printer,
   ChevronRight,
   ChevronLeft,
   ChevronDown,
   MapPin,
   Truck,
   User,
-  Calendar,
   Clock,
   CheckCircle2,
   AlertTriangle,
-  FileText,
   DollarSign,
   Scale,
-  QrCode,
-  Sparkles,
-  RefreshCw,
-  ExternalLink,
   Edit2,
   Edit3,
   Check,
   Trash2,
   TrendingUp,
-  AlertCircle,
-  Tag,
   UserCheck,
-  Globe,
   RotateCcw,
   Eye,
-  SlidersHorizontal,
   X,
 } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
-import { Sheet, SheetHeader, SheetTitle, SheetDescription, SheetContent, SheetFooter } from "@/components/ui/sheet";
 import { Table, TableHeader, TableBody, TableHead, TableRow, TableCell } from "@/components/ui/table";
 import {
   Shipment,
-  ShipmentRequest,
   AdminStorage,
   calculateVolumetricWeight,
   calculateChargeableWeight,
@@ -65,6 +51,7 @@ import {
 import { ShipmentRequestService } from "@/lib/backendApi";
 import { useLanguage } from "@/context/LanguageContext";
 import { TrackingRedirect } from "@/components/TrackingRedirect";
+import { buildUpdatedTimeline, getDefaultLocationForStatus } from "@/lib/shipmentUtils";
 
 interface ShipmentsViewProps {
   shipments: Shipment[];
@@ -88,7 +75,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
   onDeleteShipment,
   initialSelectedAwb,
 }) => {
-  const { t, isRTL, formatCurrency, formatDate, formatDateTime } = useLanguage();
+  const { t, isRTL,formatDate, formatDateTime } = useLanguage();
   const [search, setSearch] = useState("");
   const [accountFilter, setAccountFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -211,6 +198,139 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
     setIsEditingInspectFinancials(false);
   };
 
+  // Status & Location Quick & Inspect Edit State
+  const [statusEditModalShipment, setStatusEditModalShipment] = useState<Shipment | null>(null);
+  const [statusForm, setStatusForm] = useState<{
+    status: string;
+    currentLocation: string;
+    opNote: string;
+    milestoneNote: string;
+    addMilestone: boolean;
+  }>({
+    status: "In Transit",
+    currentLocation: "",
+    opNote: "",
+    milestoneNote: "",
+    addMilestone: true,
+  });
+  const [savingStatusId, setSavingStatusId] = useState<string | null>(null);
+  const [statusSuccessBadgeId, setStatusSuccessBadgeId] = useState<string | null>(null);
+
+  // Inspect Modal Status Edit State
+  const [isEditingInspectStatus, setIsEditingInspectStatus] = useState(false);
+  const [inspectStatusValue, setInspectStatusValue] = useState("");
+  const [inspectLocationValue, setInspectLocationValue] = useState("");
+  const [inspectOpNoteValue, setInspectOpNoteValue] = useState("");
+  const [inspectMilestoneNote, setInspectMilestoneNote] = useState("");
+
+  const handleQuickStatusChange = (shipment: Shipment, newStatus: string) => {
+    const statusChanged = newStatus !== shipment.status;
+    
+    let defaultLoc = shipment.currentLocation || "In Transit Gateway";
+    if (statusChanged) {
+      defaultLoc = getDefaultLocationForStatus(newStatus, shipment);
+    }
+
+    let updatedTimeline = shipment.timeline || [];
+    if (statusChanged || !shipment.timeline?.length) {
+      updatedTimeline = buildUpdatedTimeline(shipment.timeline, newStatus, defaultLoc, shipment.opNote || undefined);
+    }
+
+    const updated: Shipment = {
+      ...shipment,
+      status: newStatus,
+      currentLocation: defaultLoc,
+      timeline: updatedTimeline,
+    };
+
+    setSavingStatusId(shipment.id);
+    try {
+      onUpdateShipment(updated);
+      if (inspectShipment && inspectShipment.id === shipment.id) {
+        setInspectShipment(updated);
+      }
+      setStatusSuccessBadgeId(shipment.id);
+      setTimeout(() => setStatusSuccessBadgeId(null), 2500);
+    } catch (err) {
+      console.error("Failed to update status:", err);
+    } finally {
+      setSavingStatusId(null);
+    }
+  };
+
+  const handleOpenStatusModal = (shipment: Shipment) => {
+    setStatusEditModalShipment(shipment);
+    setStatusForm({
+      status: shipment.status || "In Transit",
+      currentLocation: shipment.currentLocation || "",
+      opNote: shipment.opNote || "",
+      milestoneNote: "",
+      addMilestone: true,
+    });
+  };
+
+  const handleSaveStatusModal = () => {
+    if (!statusEditModalShipment) return;
+
+    const statusChanged = statusForm.status !== statusEditModalShipment.status;
+    const locationChanged = statusForm.currentLocation !== statusEditModalShipment.currentLocation;
+    const loc = statusForm.currentLocation.trim() || statusEditModalShipment.currentLocation || "Cairo Gateway";
+    const note = statusForm.milestoneNote.trim() || statusForm.opNote.trim() || undefined;
+
+    let updatedTimeline = statusEditModalShipment.timeline || [];
+    if (statusForm.addMilestone && (statusChanged || locationChanged || statusForm.milestoneNote)) {
+      updatedTimeline = buildUpdatedTimeline(statusEditModalShipment.timeline, statusForm.status, loc, note);
+    }
+
+    const updated: Shipment = {
+      ...statusEditModalShipment,
+      status: statusForm.status,
+      currentLocation: loc,
+      opNote: statusForm.opNote.trim(),
+      timeline: updatedTimeline,
+    };
+
+    onUpdateShipment(updated);
+    if (inspectShipment && inspectShipment.id === updated.id) {
+      setInspectShipment(updated);
+    }
+    setStatusSuccessBadgeId(updated.id);
+    setTimeout(() => setStatusSuccessBadgeId(null), 3000);
+    setStatusEditModalShipment(null);
+  };
+
+  const handleStartEditInspectStatus = (s: Shipment) => {
+    setInspectStatusValue(s.status || "In Transit");
+    setInspectLocationValue(s.currentLocation || "");
+    setInspectOpNoteValue(s.opNote || "");
+    setInspectMilestoneNote("");
+    setIsEditingInspectStatus(true);
+  };
+
+  const handleSaveInspectStatus = (s: Shipment) => {
+    const statusChanged = inspectStatusValue !== s.status;
+    const locationChanged = inspectLocationValue !== s.currentLocation;
+    const loc = inspectLocationValue.trim() || s.currentLocation || "Cairo Gateway";
+    const note = inspectMilestoneNote.trim() || inspectOpNoteValue.trim() || undefined;
+
+    let updatedTimeline = s.timeline || [];
+    if (inspectMilestoneNote.trim() || statusChanged || locationChanged) {
+      updatedTimeline = buildUpdatedTimeline(s.timeline, inspectStatusValue, loc, note);
+    }
+
+    const updated: Shipment = {
+      ...s,
+      status: inspectStatusValue,
+      currentLocation: loc,
+      opNote: inspectOpNoteValue.trim(),
+      timeline: updatedTimeline,
+    };
+
+    onUpdateShipment(updated);
+    setInspectShipment(updated);
+    setIsEditingInspectStatus(false);
+  };
+
   const pendingRequests = AdminStorage.getShipmentRequests().filter(
     (r) => r.status !== "Converted to Shipment" && r.status !== "Cancelled"
   );
@@ -267,7 +387,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
       receiverName: formReceiverName || "Valued Consignee",
       receiverCity: formCountry.split(" ")[0] || "Main City",
       country: formCountry,
-      carrier: formCarrier as any,
+      carrier: formCarrier,
       broker: formBroker,
       weight: finalWtNum,
       actualWeight: actualWtNum,
@@ -873,7 +993,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
           </div>
           <div className="mt-2">
             <div className="text-xl sm:text-2xl font-black font-mono text-indigo-950 truncate" dir="ltr">
-              {totalSelling.toLocaleString()} <span className="text-xs font-bold text-indigo-600">{isRTL ? "ج.م" : "EGP"}</span>
+              {totalSelling.toLocaleString()} <span className="text-xs font-bold text-indigo-600">EGP</span>
             </div>
             <p className="text-[10px] text-indigo-800/80 font-semibold mt-0.5 truncate">
               {isRTL ? "إجمالي الفواتير المفوترة" : "Total billed sales"}
@@ -893,7 +1013,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
           </div>
           <div className="mt-2">
             <div className="text-xl sm:text-2xl font-black font-mono text-emerald-800 truncate" dir="ltr">
-              {totalNetProfit.toLocaleString()} <span className="text-xs font-bold text-emerald-600">{isRTL ? "ج.م" : "EGP"}</span>
+              {totalNetProfit.toLocaleString()} <span className="text-xs font-bold text-emerald-600">EGP</span>
             </div>
             <p className="text-[10px] text-emerald-800/80 font-semibold mt-0.5 truncate">
               {isRTL ? `هامش الربح: ${overallMarginPct}%` : `Margin: ${overallMarginPct}%`}
@@ -1012,21 +1132,19 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
           {/* Search Box */}
           <div className="relative flex-1 min-w-[280px]">
-            <Search className={`absolute ${isRTL ? "right-3.5" : "left-3.5"} top-3 h-4 w-4 text-gray-400`} />
+            <Search className="absolute start-3.5 top-3.5 h-4 w-4 text-gray-400 pointer-events-none" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder={isRTL ? "ابحث برقم البوليصة، اسم العميل، المستلم، الدولة، المحتوى، المسجل..." : "Search AWB, client account, consignee, country, agent..."}
-              className={`w-full h-11 bg-gray-50/90 text-[#251516] text-xs font-semibold rounded-xl border border-gray-200 focus:border-[#C45B2A] focus:bg-white focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all ${
-                isRTL ? "pr-10 pl-9 text-right" : "pl-10 pr-9 text-left"
-              }`}
+              className="w-full h-11 bg-gray-50/90 text-[#251516] text-xs font-semibold rounded-xl border border-gray-200 focus:border-[#C45B2A] focus:bg-white focus:ring-2 focus:ring-[#C45B2A]/20 outline-none transition-all ps-10 pe-9 text-start"
             />
             {search && (
               <button
                 type="button"
                 onClick={() => setSearch("")}
-                className={`absolute ${isRTL ? "left-3" : "right-3"} top-3 text-gray-400 hover:text-gray-600 p-0.5 rounded-md cursor-pointer`}
+                className="absolute end-3 top-3.5 text-gray-400 hover:text-gray-600 p-0.5 rounded-md cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1084,11 +1202,11 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
             <select
               value={accountFilter}
               onChange={(e) => setAccountFilter(e.target.value)}
-              className={`w-full h-10 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-2xs appearance-none ${
+              className={`w-full h-10 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-2xs appearance-none ps-3 pe-8 text-start ${
                 accountFilter !== "all"
                   ? "bg-orange-50/90 text-[#C45B2A] border-orange-300 font-extrabold"
                   : "bg-gray-50/80 text-gray-800 border-gray-200 hover:border-gray-300"
-              } ${isRTL ? "pr-3 pl-8 text-right" : "pl-3 pr-8 text-left"}`}
+              }`}
             >
               <option value="all">{t("admin.shipments.allClientAccounts")}</option>
               {uniqueAccounts.map((acc) => (
@@ -1097,7 +1215,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                 </option>
               ))}
             </select>
-            <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+            <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute end-2.5 pointer-events-none" />
           </div>
 
           {/* 2. اسم المسجل (Agent) */}
@@ -1105,11 +1223,11 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
             <select
               value={agentFilter}
               onChange={(e) => setAgentFilter(e.target.value)}
-              className={`w-full h-10 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-2xs appearance-none ${
+              className={`w-full h-10 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-2xs appearance-none ps-3 pe-8 text-start ${
                 agentFilter !== "all"
                   ? "bg-indigo-50 text-indigo-700 border-indigo-300 font-extrabold"
                   : "bg-gray-50/80 text-gray-800 border-gray-200 hover:border-gray-300"
-              } ${isRTL ? "pr-3 pl-8 text-right" : "pl-3 pr-8 text-left"}`}
+              }`}
             >
               <option value="all">{t("admin.shipments.allAgents")}</option>
               {uniqueAgents.map((ag) => (
@@ -1118,7 +1236,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                 </option>
               ))}
             </select>
-            <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+            <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute end-2.5 pointer-events-none" />
           </div>
 
           {/* 3. الشركة الناقلة (Carrier - Express) */}
@@ -1126,11 +1244,11 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
             <select
               value={carrierFilter}
               onChange={(e) => setCarrierFilter(e.target.value)}
-              className={`w-full h-10 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-2xs appearance-none ${
+              className={`w-full h-10 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-2xs appearance-none ps-3 pe-8 text-start ${
                 carrierFilter !== "all"
                   ? "bg-amber-50 text-amber-800 border-amber-300 font-extrabold"
                   : "bg-gray-50/80 text-gray-800 border-gray-200 hover:border-gray-300"
-              } ${isRTL ? "pr-3 pl-8 text-right" : "pl-3 pr-8 text-left"}`}
+              }`}
             >
               <option value="all">{t("admin.shipments.allCarriers")}</option>
               {uniqueCarriers.map((c) => (
@@ -1139,7 +1257,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                 </option>
               ))}
             </select>
-            <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+            <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute end-2.5 pointer-events-none" />
           </div>
 
           {/* 4. الشركة الوسيطة (Broker) */}
@@ -1147,11 +1265,11 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
             <select
               value={brokerFilter}
               onChange={(e) => setBrokerFilter(e.target.value)}
-              className={`w-full h-10 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-2xs appearance-none ${
+              className={`w-full h-10 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-2xs appearance-none ps-3 pe-8 text-start ${
                 brokerFilter !== "all"
                   ? "bg-purple-50 text-purple-800 border-purple-300 font-extrabold"
                   : "bg-gray-50/80 text-gray-800 border-gray-200 hover:border-gray-300"
-              } ${isRTL ? "pr-3 pl-8 text-right" : "pl-3 pr-8 text-left"}`}
+              }`}
             >
               <option value="all">{t("admin.shipments.allBrokers")}</option>
               {uniqueBrokers.map((b) => (
@@ -1160,7 +1278,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                 </option>
               ))}
             </select>
-            <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+            <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute end-2.5 pointer-events-none" />
           </div>
 
           {/* 5. حالة الشحنة (Status) */}
@@ -1168,11 +1286,11 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className={`w-full h-10 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-2xs appearance-none ${
+              className={`w-full h-10 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-2xs appearance-none ps-3 pe-8 text-start ${
                 statusFilter !== "all"
                   ? "bg-blue-50 text-blue-800 border-blue-300 font-extrabold"
                   : "bg-gray-50/80 text-gray-800 border-gray-200 hover:border-gray-300"
-              } ${isRTL ? "pr-3 pl-8 text-right" : "pl-3 pr-8 text-left"}`}
+              }`}
             >
               <option value="all">{t("admin.shipments.allStatuses")}</option>
               {uniqueStatuses.map((st) => (
@@ -1181,7 +1299,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                 </option>
               ))}
             </select>
-            <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+            <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute end-2.5 pointer-events-none" />
           </div>
 
           {/* 6. الدولة المستقبلة (Country) */}
@@ -1189,11 +1307,11 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
             <select
               value={countryFilter}
               onChange={(e) => setCountryFilter(e.target.value)}
-              className={`w-full h-10 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-2xs appearance-none ${
+              className={`w-full h-10 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-2xs appearance-none ps-3 pe-8 text-start ${
                 countryFilter !== "all"
                   ? "bg-emerald-50 text-emerald-800 border-emerald-300 font-extrabold"
                   : "bg-gray-50/80 text-gray-800 border-gray-200 hover:border-gray-300"
-              } ${isRTL ? "pr-3 pl-8 text-right" : "pl-3 pr-8 text-left"}`}
+              }`}
             >
               <option value="all">{t("admin.shipments.allCountries")}</option>
               {uniqueCountries.map((co) => (
@@ -1202,7 +1320,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                 </option>
               ))}
             </select>
-            <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+            <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute end-2.5 pointer-events-none" />
           </div>
 
           {/* 7. المصاريف الإضافية (Surcharges) */}
@@ -1210,11 +1328,11 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
             <select
               value={surchargeFilter}
               onChange={(e) => setSurchargeFilter(e.target.value)}
-              className={`w-full h-10 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-2xs appearance-none ${
+              className={`w-full h-10 text-xs font-bold rounded-xl border transition-all cursor-pointer shadow-2xs appearance-none ps-3 pe-8 text-start ${
                 surchargeFilter !== "all"
                   ? "bg-rose-50 text-rose-800 border-rose-300 font-extrabold"
                   : "bg-gray-50/80 text-gray-800 border-gray-200 hover:border-gray-300"
-              } ${isRTL ? "pr-3 pl-8 text-right" : "pl-3 pr-8 text-left"}`}
+              }`}
             >
               <option value="all">{t("admin.shipments.allSurcharges")}</option>
               {uniqueSurcharges.map((sur) => (
@@ -1223,7 +1341,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                 </option>
               ))}
             </select>
-            <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+            <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute end-2.5 pointer-events-none" />
           </div>
         </div>
       </div>
@@ -1243,7 +1361,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
               </p>
               <p className="text-xs text-gray-600 font-medium mt-0.5">
                 {isRTL
-                  ? `عرض ${filteredShipments.length} شحنة مسجلة • إجمالي المبيعات: ${totalSelling.toLocaleString()} ج.م • صافي الأرباح: ${totalNetProfit.toLocaleString()} ج.م`
+                  ? `عرض ${filteredShipments.length} شحنة مسجلة • إجمالي المبيعات: ${totalSelling.toLocaleString()} EGP • صافي الأرباح: ${totalNetProfit.toLocaleString()} EGP`
                   : `Displaying ${filteredShipments.length} AWBs • Sales: ${totalSelling.toLocaleString()} EGP • Net Profit: ${totalNetProfit.toLocaleString()} EGP`}
               </p>
             </div>
@@ -1263,34 +1381,35 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
       {/* ─── 4. MAIN OPERATIONAL TABLE ─── */}
       <Card className="shadow-2xs overflow-hidden border border-gray-200/90 rounded-2xl bg-white">
         <div className="overflow-x-auto w-full">
-          <Table className="min-w-[1650px] w-full text-xs">
+          <Table className="min-w-[1750px] w-full text-xs">
             <TableHeader>
               <TableRow className="bg-gray-50/95 hover:bg-gray-50/95 text-xs font-black text-gray-700 whitespace-nowrap border-b border-gray-200 select-none">
-                <TableHead className="w-[9%] py-3.5 px-3 text-start font-black text-gray-700">{t("admin.shipments.table.date")}</TableHead>
-                <TableHead className="w-[12%] py-3.5 px-3 text-start font-black text-gray-700">{t("admin.shipments.table.status")}</TableHead>
-                <TableHead className="w-[13%] py-3.5 px-3 text-start font-black text-gray-700">{t("admin.shipments.table.awb")}</TableHead>
-                <TableHead className="w-[11%] py-3.5 px-3 text-start font-black text-gray-700">{t("admin.shipments.table.account")}</TableHead>
-                <TableHead className="w-[10%] py-3.5 px-3 text-start font-black text-gray-700">{t("admin.shipments.table.consignee")}</TableHead>
-                <TableHead className="w-[9%] py-3.5 px-3 text-start font-black text-gray-700">{t("admin.shipments.table.contents")}</TableHead>
-                <TableHead className="w-[9%] py-3.5 px-3 text-start font-black text-gray-700">{t("admin.shipments.table.destination")}</TableHead>
-                <TableHead className="w-[8%] py-3.5 px-3 text-start font-black text-gray-700">{t("admin.shipments.table.carrier")}</TableHead>
-                <TableHead className="w-[6%] py-3.5 px-2 text-start font-black text-gray-700">{t("admin.shipments.table.broker")}</TableHead>
+                <TableHead className="w-[8%] py-3.5 px-3 text-start font-black text-gray-700">{t("admin.shipments.table.date")}</TableHead>
+                <TableHead className="w-[9%] py-3.5 px-3 text-start font-black text-gray-700">{t("admin.shipments.table.status")}</TableHead>
+                <TableHead className="w-[12%] py-3.5 px-3 text-start font-black text-gray-700">{isRTL ? "الموقع الحي والملاحظات" : "Live Location & Note"}</TableHead>
+                <TableHead className="w-[11%] py-3.5 px-3 text-start font-black text-gray-700">{t("admin.shipments.table.awb")}</TableHead>
+                <TableHead className="w-[10%] py-3.5 px-3 text-start font-black text-gray-700">{t("admin.shipments.table.account")}</TableHead>
+                <TableHead className="w-[9%] py-3.5 px-3 text-start font-black text-gray-700">{t("admin.shipments.table.consignee")}</TableHead>
+                <TableHead className="w-[8%] py-3.5 px-3 text-start font-black text-gray-700">{t("admin.shipments.table.contents")}</TableHead>
+                <TableHead className="w-[8%] py-3.5 px-3 text-start font-black text-gray-700">{t("admin.shipments.table.destination")}</TableHead>
+                <TableHead className="w-[7%] py-3.5 px-3 text-start font-black text-gray-700">{t("admin.shipments.table.carrier")}</TableHead>
+                <TableHead className="w-[5%] py-3.5 px-2 text-start font-black text-gray-700">{t("admin.shipments.table.broker")}</TableHead>
                 <TableHead className="w-[5%] py-3.5 px-2 text-center font-black text-gray-700">{t("admin.shipments.table.actualWt")}</TableHead>
-                <TableHead className="w-[7%] py-3.5 px-2 text-center font-black text-gray-700">{isRTL ? "الأبعاد (L×W×H)" : "Dim (cm)"}</TableHead>
+                <TableHead className="w-[6%] py-3.5 px-2 text-center font-black text-gray-700">{isRTL ? "الأبعاد (L×W×H)" : "Dim (cm)"}</TableHead>
                 <TableHead className="w-[5%] py-3.5 px-2 text-center font-black text-gray-700">{t("admin.shipments.table.volWt")}</TableHead>
-                <TableHead className="w-[6%] py-3.5 px-2 text-center font-black text-gray-700">{t("admin.shipments.table.finalWt")}</TableHead>
-                <TableHead className="w-[6%] py-3.5 px-2 text-center font-black text-gray-700">{t("admin.shipments.table.cost")}</TableHead>
-                <TableHead className="w-[6%] py-3.5 px-2 text-center font-black text-gray-700">{t("admin.shipments.table.sellingPrice")}</TableHead>
+                <TableHead className="w-[5%] py-3.5 px-2 text-center font-black text-gray-700">{t("admin.shipments.table.finalWt")}</TableHead>
+                <TableHead className="w-[5%] py-3.5 px-2 text-center font-black text-gray-700">{t("admin.shipments.table.cost")}</TableHead>
+                <TableHead className="w-[5%] py-3.5 px-2 text-center font-black text-gray-700">{t("admin.shipments.table.sellingPrice")}</TableHead>
                 <TableHead className="w-[5%] py-3.5 px-2 text-center font-black text-gray-700">{t("admin.shipments.table.transExp")}</TableHead>
-                <TableHead className="w-[7%] py-3.5 px-2 text-center font-black text-gray-700">{t("admin.shipments.table.netProfit")}</TableHead>
-                <TableHead className="w-[6%] py-3.5 px-2 text-center font-black text-gray-700">{t("admin.shipments.table.agent")}</TableHead>
-                <TableHead className="w-[6%] py-3.5 px-3 text-end font-black text-gray-700">{t("admin.shipments.table.actions")}</TableHead>
+                <TableHead className="w-[6%] py-3.5 px-2 text-center font-black text-gray-700">{t("admin.shipments.table.netProfit")}</TableHead>
+                <TableHead className="w-[5%] py-3.5 px-2 text-center font-black text-gray-700">{t("admin.shipments.table.agent")}</TableHead>
+                <TableHead className="w-[5%] py-3.5 px-3 text-end font-black text-gray-700">{t("admin.shipments.table.actions")}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredShipments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={19} className="text-center py-16 text-gray-500">
+                  <TableCell colSpan={20} className="text-center py-16 text-gray-500">
                     <div className="w-14 h-14 rounded-2xl bg-orange-50 text-[#C45B2A] flex items-center justify-center mx-auto mb-3 shadow-2xs">
                       <Package className="h-7 w-7" />
                     </div>
@@ -1333,35 +1452,83 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                         </span>
                       </TableCell>
 
-                      {/* 2. حالة الشحنة */}
-                      <TableCell className="py-3 px-3 text-start">
-                        <div className="space-y-1">
-                          <Badge
-                            variant={
-                              s.status === "Delivered" || (s.status as string) === "Deliverd"
-                                ? "success"
-                                : s.status === "Exception" || (s.status as string) === "RTO"
-                                ? "destructive"
-                                : "brand"
-                            }
-                            size="sm"
-                            className="font-bold text-[10px]"
-                          >
-                            {s.currentLocation || s.status}
-                          </Badge>
-                          {hasOpNote && (
-                            <span
-                              className="text-[10px] font-bold text-amber-900 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-flex items-center gap-1 max-w-[150px]"
-                              title={s.opNote}
+                      {/* 2. حالة الشحنة (تعديل فوري مباشر) */}
+                      <TableCell className="py-2.5 px-3 text-start whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          {/* Interactive Quick Status Dropdown */}
+                          <div className="relative inline-flex items-center group/status">
+                            <select
+                              value={s.status}
+                              onChange={(e) => handleQuickStatusChange(s, e.target.value)}
+                              disabled={savingStatusId === s.id}
+                              className={`text-[11px] font-extrabold rounded-lg border py-1 ps-2.5 pe-6 cursor-pointer shadow-2xs transition-all appearance-none outline-none ${
+                                s.status === "Delivered" || (s.status as string) === "Deliverd"
+                                  ? "bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100"
+                                  : s.status === "Exception" || (s.status as string) === "RTO" || (s.status as string) === "destroied"
+                                  ? "bg-rose-50 text-rose-800 border-rose-300 hover:bg-rose-100"
+                                  : s.status === "Delayed" || (s.status as string) === "Clearance Delay"
+                                  ? "bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100"
+                                  : "bg-blue-50 text-blue-800 border-blue-300 hover:bg-blue-100"
+                              }`}
+                              title={isRTL ? "انقر لتعديل حالة الشحنة فوراً" : "Click to change shipment status"}
                             >
-                              <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
-                              <span className="truncate">{s.opNote}</span>
+                              {uniqueStatuses.map((st) => (
+                                <option key={st} value={st}>
+                                  {st}
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown className="w-3 h-3 text-gray-500 absolute end-1.5 pointer-events-none group-hover/status:text-gray-900" />
+                          </div>
+
+                          {/* Saved Feedback Badge */}
+                          {statusSuccessBadgeId === s.id && (
+                            <span className="p-0.5 rounded-full bg-emerald-100 text-emerald-700 animate-pulse shrink-0" title={isRTL ? "تم الحفظ والتحديث بنجاح" : "Saved!"}>
+                              <Check className="w-3.5 h-3.5" />
                             </span>
                           )}
                         </div>
                       </TableCell>
 
-                      {/* 3. رقم البوليصة (AWB) */}
+                      {/* 3. الموقع الحي وملاحظات التنبيه */}
+                      <TableCell className="py-2.5 px-3 text-start">
+                        <div className="space-y-1 min-w-[150px] max-w-[210px]">
+                          <div className="flex items-center justify-between gap-1.5">
+                            {s.currentLocation ? (
+                              <span className="text-[11px] text-gray-800 font-semibold truncate flex items-center gap-1" title={s.currentLocation}>
+                                <MapPin className="w-3 h-3 text-[#C45B2A] shrink-0" />
+                                <span className="truncate">{s.currentLocation}</span>
+                              </span>
+                            ) : (
+                              <span className="text-gray-400 font-mono text-[11px]">—</span>
+                            )}
+
+                            {/* Edit Location / OpNote Quick Trigger */}
+                            <button
+                              type="button"
+                              onClick={() => handleOpenStatusModal(s)}
+                              className="h-6 w-6 rounded-md bg-gray-50 hover:bg-orange-100 text-gray-500 hover:text-[#C45B2A] border border-gray-200 flex items-center justify-center transition-all cursor-pointer shadow-2xs shrink-0"
+                              title={isRTL ? "تعديل الموقع الحالي وملاحظات التنبيه" : "Edit current location & operational note"}
+                            >
+                              <Edit3 className="w-3 h-3" />
+                            </button>
+                          </div>
+
+                          {hasOpNote && (
+                            <button
+                              type="button"
+                              onClick={() => handleOpenStatusModal(s)}
+                              className="w-full text-[10px] font-bold text-amber-900 bg-amber-50 hover:bg-amber-100 px-1.5 py-0.5 rounded border border-amber-200 flex items-center gap-1 transition-colors cursor-pointer text-start shadow-2xs"
+                              title={s.opNote}
+                            >
+                              <AlertTriangle className="w-3 h-3 text-amber-600 shrink-0" />
+                              <span className="truncate">{s.opNote}</span>
+                            </button>
+                          )}
+                        </div>
+                      </TableCell>
+
+                      {/* 4. رقم البوليصة (AWB) */}
                       <TableCell className="py-3 px-3 text-start whitespace-nowrap">
                         <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-50 hover:bg-orange-50 border border-gray-200 text-[#251516] font-mono text-[11px] font-bold transition-colors">
                           <span className="truncate max-w-[120px]" dir="ltr">{s.awb}</span>
@@ -1450,12 +1617,12 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
 
                       {/* 14. التكلفة */}
                       <TableCell className="py-3 px-2 text-center font-mono text-gray-600 whitespace-nowrap text-[11px]" dir="ltr">
-                        {s.costPrice || 0} {isRTL ? "ج.م" : "EGP"}
+                        {s.costPrice || 0} EGP
                       </TableCell>
 
                       {/* 15. سعر البيع */}
                       <TableCell className="py-3 px-2 text-center font-mono font-bold text-gray-900 whitespace-nowrap text-[11px]" dir="ltr">
-                        {s.sellingPrice || s.priceEgp} {isRTL ? "ج.م" : "EGP"}
+                        {s.sellingPrice || s.priceEgp} EGP
                       </TableCell>
 
                       {/* 16. مصاريف نقل (مع إمكانية التعديل السريع المباشر) */}
@@ -1492,7 +1659,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                             className="cursor-pointer hover:bg-orange-50 hover:text-[#C45B2A] px-1.5 py-0.5 rounded transition-colors group inline-flex items-center gap-1 text-gray-700 font-medium"
                             title={isRTL ? "انقر لتعديل مصاريف النقل" : "Click to edit trans expense"}
                           >
-                            <span>{s.transExpense || 0} {isRTL ? "ج.م" : "EGP"}</span>
+                            <span>{s.transExpense || 0} EGP</span>
                             <Edit3 className="w-2.5 h-2.5 opacity-0 group-hover:opacity-100 text-[#C45B2A]" />
                           </span>
                         )}
@@ -1510,7 +1677,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                           }`}
                           dir="ltr"
                         >
-                          {netProf >= 0 ? `+${netProf.toLocaleString()}` : netProf.toLocaleString()} {isRTL ? "ج.م" : "EGP"}
+                          {netProf >= 0 ? `+${netProf.toLocaleString()}` : netProf.toLocaleString()} EGP
                         </span>
                       </TableCell>
 
@@ -1706,7 +1873,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
       {/* ─── 5. CENTERED DIALOG MODAL: INSPECT SHIPMENT DETAILS ─── */}
       <Dialog open={!!inspectShipment} onOpenChange={(open) => !open && setInspectShipment(null)}>
         {inspectShipment && (
-          <DialogContent className="max-w-3xl space-y-4 sm:space-y-6 text-start p-4 sm:p-6">
+          <DialogContent className="max-w-3xl space-y-4 sm:space-y-6 text-start p-4 sm:p-6 max-h-[90vh] overflow-y-auto rounded-3xl">
             {/* Modal Header */}
             <div className="flex justify-between items-start border-b border-gray-100 pb-4">
               <div>
@@ -1808,48 +1975,146 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
               </div>
 
               {/* Card 3: Route & Registration Details */}
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200/80 space-y-2 shadow-2xs">
-                <span className="font-bold text-gray-400 uppercase text-[10px] flex items-center gap-1.5">
-                  <MapPin className="w-3.5 h-3.5 text-[#C45B2A]" />
-                  <span>{isRTL ? "بيانات القيد والتسجيل" : "Registration Details"}</span>
-                </span>
-                <div className="space-y-1.5 pt-1">
-                  <div className="flex justify-between items-center gap-2">
-                    <span className="text-gray-500 shrink-0">{isRTL ? "المسؤول / المسجل (Agent):" : "Operating Agent:"}</span>
+              <div className="bg-gray-50 p-4 rounded-xl border border-gray-200/80 space-y-2.5 shadow-2xs">
+                <div className="flex justify-between items-center">
+                  <span className="font-bold text-gray-700 uppercase text-[10px] flex items-center gap-1.5">
+                    <MapPin className="w-3.5 h-3.5 text-[#C45B2A]" />
+                    <span>{isRTL ? "الحالة التشغيلية ومسار التتبع" : "Operational Status & Timeline"}</span>
+                  </span>
+                  {!isEditingInspectStatus ? (
+                    <button
+                      type="button"
+                      onClick={() => handleStartEditInspectStatus(inspectShipment)}
+                      className="text-[11px] font-bold text-[#C45B2A] hover:text-[#A8481B] flex items-center gap-1 bg-white hover:bg-orange-50 px-2 py-0.5 rounded-lg border border-orange-200 transition-colors cursor-pointer shadow-2xs"
+                      title={isRTL ? "تعديل حالة الشحنة والموقع التشغيلي" : "Edit Status & Location"}
+                    >
+                      <Edit2 className="w-3 h-3" />
+                      <span>{isRTL ? "تعديل الحالة" : "Edit Status"}</span>
+                    </button>
+                  ) : (
                     <div className="flex items-center gap-1.5">
-                      <select
-                        value={uniqueAgents.includes(inspectShipment.agentName || "") ? (inspectShipment.agentName || "Admin") : "__other__"}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (val === "__other__") {
-                            const newAgent = prompt(isRTL ? "أدخل اسم المسجل الجديد:" : "Enter new agent name:", inspectShipment.agentName || "Admin");
-                            if (newAgent && newAgent.trim()) {
-                              handleSaveAgent(inspectShipment, newAgent.trim());
-                            }
-                          } else {
-                            handleSaveAgent(inspectShipment, val);
-                          }
-                        }}
-                        className="h-8 px-2 bg-white text-[#251516] text-xs font-bold rounded-lg border border-gray-300 focus:border-[#C45B2A] outline-none shadow-2xs cursor-pointer"
+                      <button
+                        type="button"
+                        onClick={() => handleSaveInspectStatus(inspectShipment)}
+                        className="text-[11px] font-bold text-white flex items-center gap-1 bg-emerald-600 hover:bg-emerald-700 px-2.5 py-0.5 rounded-lg transition-colors cursor-pointer shadow-xs"
                       >
-                        {uniqueAgents.map((ag) => (
-                          <option key={ag} value={ag}>
-                            {ag}
-                          </option>
-                        ))}
-                        <option value="__other__">{isRTL ? "✍️ + اسم مخصص..." : "✍️ + Custom..."}</option>
-                      </select>
+                        <Check className="w-3 h-3" />
+                        <span>{isRTL ? "حفظ" : "Save"}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingInspectStatus(false)}
+                        className="text-[11px] font-bold text-gray-600 hover:text-gray-900 bg-white px-2 py-0.5 rounded-lg border border-gray-200 transition-colors cursor-pointer"
+                      >
+                        {isRTL ? "إلغاء" : "Cancel"}
+                      </button>
+                    </div>
+                  )}
+                </div>
+
+                {!isEditingInspectStatus ? (
+                  <div className="space-y-2 pt-1 text-xs">
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500">{isRTL ? "حالة التسليم الحالية:" : "Delivery Status:"}</span>
+                      <span className="font-extrabold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-md border border-emerald-200">
+                        {inspectShipment.status}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500">{isRTL ? "الموقع / المحطة الحالية:" : "Current Location:"}</span>
+                      <span className="font-bold text-gray-800 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-[#C45B2A] shrink-0" />
+                        <span>{inspectShipment.currentLocation || "—"}</span>
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center gap-2">
+                      <span className="text-gray-500 shrink-0">{isRTL ? "المسؤول / المسجل:" : "Operating Agent:"}</span>
+                      <div className="flex items-center gap-1.5">
+                        <select
+                          value={uniqueAgents.includes(inspectShipment.agentName || "") ? (inspectShipment.agentName || "Admin") : "__other__"}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            if (val === "__other__") {
+                              const newAgent = prompt(isRTL ? "أدخل اسم المسجل الجديد:" : "Enter new agent name:", inspectShipment.agentName || "Admin");
+                              if (newAgent && newAgent.trim()) {
+                                handleSaveAgent(inspectShipment, newAgent.trim());
+                              }
+                            } else {
+                              handleSaveAgent(inspectShipment, val);
+                            }
+                          }}
+                          className="h-7 px-2 bg-white text-[#251516] text-xs font-bold rounded-lg border border-gray-300 focus:border-[#C45B2A] outline-none shadow-2xs cursor-pointer"
+                        >
+                          {uniqueAgents.map((ag) => (
+                            <option key={ag} value={ag}>
+                              {ag}
+                            </option>
+                          ))}
+                          <option value="__other__">{isRTL ? "✍️ + اسم مخصص..." : "✍️ + Custom..."}</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="text-gray-500">{isRTL ? "تاريخ ووقت القيد:" : "Recorded At:"}</span>
+                      <span className="font-mono text-gray-700" dir="ltr">{formatDateTime(inspectShipment.date) || inspectShipment.date}</span>
                     </div>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500">{isRTL ? "تاريخ ووقت القيد:" : "Recorded At:"}</span>
-                    <span className="font-mono text-gray-700" dir="ltr">{formatDateTime(inspectShipment.date) || inspectShipment.date}</span>
+                ) : (
+                  <div className="space-y-2 pt-1">
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 mb-0.5">
+                        {isRTL ? "تغيير حالة الشحنة:" : "Select Shipment Status:"}
+                      </label>
+                      <select
+                        value={inspectStatusValue}
+                        onChange={(e) => setInspectStatusValue(e.target.value)}
+                        className="w-full h-8 px-2 bg-white text-gray-900 text-xs font-bold rounded-lg border border-gray-300 focus:border-[#C45B2A] outline-none"
+                      >
+                        {MASTER_SHIPMENT_STATUSES.map((st) => (
+                          <option key={st} value={st}>
+                            {st}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 mb-0.5">
+                        {isRTL ? "الموقع الحالي / المحطة:" : "Current Location / Terminal:"}
+                      </label>
+                      <input
+                        type="text"
+                        value={inspectLocationValue}
+                        onChange={(e) => setInspectLocationValue(e.target.value)}
+                        placeholder="e.g. Cairo Gateway Terminal"
+                        className="w-full h-8 px-2 bg-white text-gray-900 text-xs font-bold rounded-lg border border-gray-300 focus:border-[#C45B2A] outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 mb-0.5">
+                        {isRTL ? "ملاحظة تشغيلية / تنبيه (Op Note):" : "Operational Alert Note:"}
+                      </label>
+                      <input
+                        type="text"
+                        value={inspectOpNoteValue}
+                        onChange={(e) => setInspectOpNoteValue(e.target.value)}
+                        placeholder="e.g. Matrial safety data sheet required"
+                        className="w-full h-8 px-2 bg-white text-gray-900 text-xs font-bold rounded-lg border border-gray-300 focus:border-[#C45B2A] outline-none"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-bold text-gray-600 mb-0.5">
+                        {isRTL ? "ملاحظة مسار تتبع جديدة (اختياري):" : "Add Milestone Note (Optional):"}
+                      </label>
+                      <input
+                        type="text"
+                        value={inspectMilestoneNote}
+                        onChange={(e) => setInspectMilestoneNote(e.target.value)}
+                        placeholder={isRTL ? "تفاصيل إضافية للمسار تظهر لليوزر..." : "Milestone detail for customer..."}
+                        className="w-full h-8 px-2 bg-white text-gray-900 text-xs font-bold rounded-lg border border-gray-300 focus:border-[#C45B2A] outline-none"
+                      />
+                    </div>
                   </div>
-                  <div className="flex justify-between items-center">
-                    <span className="text-gray-500">{isRTL ? "حالة التسليم الحالية:" : "Delivery Status:"}</span>
-                    <span className="font-bold text-emerald-700">{inspectShipment.status}</span>
-                  </div>
-                </div>
+                )}
               </div>
 
               {/* Card 4: Financial Ledger Breakdown */}
@@ -1895,25 +2160,25 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">{isRTL ? "سعر البيع للعميل:" : "Selling Price:"}</span>
                       <span className="font-mono font-bold text-gray-900" dir="ltr">
-                        {inspectShipment.sellingPrice || inspectShipment.priceEgp} {isRTL ? "ج.م" : "EGP"}
+                        {inspectShipment.sellingPrice || inspectShipment.priceEgp} EGP
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">{isRTL ? "تكلفة الشحن المباشرة:" : "Carrier Cost:"}</span>
                       <span className="font-mono font-bold text-gray-700" dir="ltr">
-                        {inspectShipment.costPrice || 0} {isRTL ? "ج.م" : "EGP"}
+                        {inspectShipment.costPrice || 0} EGP
                       </span>
                     </div>
                     <div className="flex justify-between items-center">
                       <span className="text-gray-600">{isRTL ? "مصاريف نقل (Trans):" : "Trans Expenses:"}</span>
                       <span className="font-mono font-bold text-[#C45B2A] bg-orange-50 px-2 py-0.5 rounded border border-orange-200" dir="ltr">
-                        {inspectShipment.transExpense || 0} {isRTL ? "ج.م" : "EGP"}
+                        {inspectShipment.transExpense || 0} EGP
                       </span>
                     </div>
                     <div className="flex justify-between items-center pt-2 border-t border-emerald-200 font-extrabold text-sm">
                       <span className="text-emerald-950">{isRTL ? "صافي الربح:" : "Net Profit:"}</span>
                       <span className="font-mono text-emerald-700" dir="ltr">
-                        +{(inspectShipment.netProfit ?? ((inspectShipment.sellingPrice || inspectShipment.priceEgp || 0) - (inspectShipment.costPrice || 0) - (inspectShipment.transExpense || 0))).toLocaleString()} {isRTL ? "ج.م" : "EGP"}
+                        +{(inspectShipment.netProfit ?? ((inspectShipment.sellingPrice || inspectShipment.priceEgp || 0) - (inspectShipment.costPrice || 0) - (inspectShipment.transExpense || 0))).toLocaleString()} EGP
                       </span>
                     </div>
                   </div>
@@ -1922,7 +2187,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       <div>
                         <label className="block text-[10px] font-bold text-gray-600 mb-0.5">
-                          {isRTL ? "سعر البيع (ج.م)" : "Selling Price"}
+                          {isRTL ? "سعر البيع (EGP)" : "Selling Price (EGP)"}
                         </label>
                         <input
                           type="number"
@@ -1934,7 +2199,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                       </div>
                       <div>
                         <label className="block text-[10px] font-bold text-gray-600 mb-0.5">
-                          {isRTL ? "تكلفة الناقل (ج.م)" : "Carrier Cost"}
+                          {isRTL ? "تكلفة الناقل (EGP)" : "Carrier Cost (EGP)"}
                         </label>
                         <input
                           type="number"
@@ -1946,7 +2211,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                       </div>
                       <div>
                         <label className="block text-[10px] font-bold text-gray-700 mb-0.5">
-                          {isRTL ? "مصاريف نقل (Trans)" : "Trans Expense"}
+                          {isRTL ? "مصاريف نقل (Trans)" : "Trans Expense (EGP)"}
                         </label>
                         <input
                           type="number"
@@ -1962,11 +2227,51 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                     <div className="flex justify-between items-center pt-2 border-t border-emerald-200 font-extrabold text-xs">
                       <span className="text-emerald-950">{isRTL ? "صافي الربح الجديد:" : "New Net Profit:"}</span>
                       <span className="font-mono text-emerald-700 font-black text-sm" dir="ltr">
-                        +{((parseFloat(inspectEditSelling) || 0) - (parseFloat(inspectEditCost) || 0) - (parseFloat(inspectEditTrans) || 0)).toLocaleString()} {isRTL ? "ج.م" : "EGP"}
+                        +{((parseFloat(inspectEditSelling) || 0) - (parseFloat(inspectEditCost) || 0) - (parseFloat(inspectEditTrans) || 0)).toLocaleString()} EGP
                       </span>
                     </div>
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Consignment Tracking Milestones & Events Timeline */}
+            <div className="bg-gray-50/70 p-4 rounded-2xl border border-gray-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="font-bold text-gray-800 text-xs flex items-center gap-2">
+                  <Truck className="w-4 h-4 text-[#C45B2A]" />
+                  <span>{isRTL ? "مراحل ومحطات تتبع الشحنة (Milestones Timeline)" : "Consignment Tracking Milestones"}</span>
+                </span>
+                <span className="text-[11px] font-mono text-gray-500">
+                  {inspectShipment.timeline?.length || 0} {isRTL ? "محطات مسجلة" : "milestones"}
+                </span>
+              </div>
+
+              <div className="space-y-2.5 max-h-48 overflow-y-auto pe-1">
+                {(inspectShipment.timeline || []).map((step, idx) => (
+                  <div key={idx} className="flex items-start gap-3 text-xs bg-white p-2.5 rounded-xl border border-gray-200 shadow-2xs">
+                    <div className={`w-5 h-5 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${
+                      step.completed ? "bg-[#C45B2A] text-white" : "bg-gray-200 text-gray-500"
+                    }`}>
+                      {step.completed ? <Check className="w-3 h-3 stroke-[2.5]" /> : <Clock className="w-3 h-3" />}
+                    </div>
+                    <div className="flex-1 space-y-0.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="font-bold text-gray-900">{step.status}</span>
+                        <span className="font-mono text-[10px] text-gray-400" dir="ltr">{step.timestamp}</span>
+                      </div>
+                      <p className="text-[11px] text-gray-500 flex items-center gap-1">
+                        <MapPin className="w-3 h-3 text-gray-400 shrink-0" />
+                        <span>{step.location}</span>
+                      </p>
+                      {step.note && (
+                        <p className="text-[10px] text-amber-800 font-semibold bg-amber-50 px-2 py-0.5 rounded inline-block mt-1">
+                          {step.note}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -1978,16 +2283,145 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                 onClick={() => setInspectShipment(null)}
                 className="w-full sm:w-auto h-10 px-6 rounded-xl font-bold border-gray-300 text-gray-800 hover:bg-gray-100 cursor-pointer shadow-2xs justify-center text-xs sm:text-sm"
               >
-                {isRTL ? "إلغاء" : "Close"}
+                {isRTL ? "إغلاق" : "Close"}
               </Button>
             </div>
           </DialogContent>
         )}
       </Dialog>
 
+      {/* ─── 5.1 QUICK STATUS & LOCATION EDIT MODAL ─── */}
+      <Dialog open={!!statusEditModalShipment} onOpenChange={(open) => !open && setStatusEditModalShipment(null)}>
+        {statusEditModalShipment && (
+          <DialogContent className="max-w-md text-start p-5 sm:p-6 rounded-3xl space-y-4">
+            <DialogHeader>
+              <div className="flex items-center gap-2">
+                <div>
+                  <DialogTitle className="text-start text-base font-bold text-gray-900">
+                    {isRTL ? "تعديل حالة الشحنة والموقع التشغيلي" : "Edit Shipment Status & Location"}
+                  </DialogTitle>
+                  <DialogDescription className="text-start text-xs text-gray-500 font-mono" dir="ltr">
+                    AWB: {statusEditModalShipment.awb} • {statusEditModalShipment.account || statusEditModalShipment.company}
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+
+            <div className="space-y-3.5 text-xs">
+              {/* Status Selection */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  {isRTL ? "حالة الشحنة (Status)" : "Shipment Status"}
+                </label>
+                <div className="relative flex items-center">
+                  <select
+                    value={statusForm.status}
+                    onChange={(e) => setStatusForm((prev) => ({ ...prev, status: e.target.value }))}
+                    className="w-full h-10 px-3 rounded-xl border border-gray-300 bg-white text-xs font-bold text-gray-900 focus:border-[#C45B2A] focus:ring-2 focus:ring-[#C45B2A]/20 outline-none cursor-pointer appearance-none pe-8 text-start"
+                  >
+                    {uniqueStatuses.map((st) => (
+                      <option key={st} value={st}>
+                        {st}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown className="w-4 h-4 text-gray-400 absolute end-2.5 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Current Location */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5">
+                  {isRTL ? "الموقع الحالي أو مركز الفرز (Current Location)" : "Current Location / Hub"}
+                </label>
+                <Input
+                  value={statusForm.currentLocation}
+                  onChange={(e) => setStatusForm((prev) => ({ ...prev, currentLocation: e.target.value }))}
+                  placeholder={isRTL ? "مثال: Cairo Gateway, Airport Cargo Hub, Regional Sorting..." : "e.g. Cairo Gateway Terminal, Airport Cargo Hub"}
+                  className="h-10 text-xs rounded-xl"
+                />
+                {/* Quick preset location chips */}
+                <div className="flex flex-wrap gap-1.5 pt-1.5">
+                  {["Cairo Gateway", "Cairo Airport", "Customs Terminal", "Regional Hub", `${statusEditModalShipment.country || "Consignee"} Hub`].map((loc) => (
+                    <button
+                      key={loc}
+                      type="button"
+                      onClick={() => setStatusForm((prev) => ({ ...prev, currentLocation: loc }))}
+                      className="text-[10px] font-semibold px-2 py-0.5 bg-gray-100 hover:bg-orange-100 hover:text-[#C45B2A] text-gray-700 rounded-md transition-colors cursor-pointer border border-gray-200"
+                    >
+                      + {loc}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Operational Note (opNote) */}
+              <div>
+                <label className="block text-xs font-bold text-gray-700 uppercase tracking-wider mb-1.5 flex items-center justify-between">
+                  <span>{isRTL ? "ملاحظة تشغيلية / تنبيه (Op Note)" : "Operational Alert Note"}</span>
+                  <span className="text-[10px] text-gray-400 font-normal">{isRTL ? "(تظهر كإشعار تحذيري)" : "(Visible as alert badge)"}</span>
+                </label>
+                <Input
+                  value={statusForm.opNote}
+                  onChange={(e) => setStatusForm((prev) => ({ ...prev, opNote: e.target.value }))}
+                  placeholder={isRTL ? "مثال: Matrial safety data sheet, Paperwork required..." : "e.g. Material safety data sheet, Customs clearance delay"}
+                  className="h-10 text-xs rounded-xl"
+                />
+                {/* Quick preset alert tags */}
+                <div className="flex flex-wrap gap-1.5 pt-1.5">
+                  {["Matrial safety data sheet", "Customs Hold", "Duty & Taxes required", "Converted from broker request"].map((note) => (
+                    <button
+                      key={note}
+                      type="button"
+                      onClick={() => setStatusForm((prev) => ({ ...prev, opNote: note }))}
+                      className="text-[10px] font-semibold px-2 py-0.5 bg-amber-50 hover:bg-amber-100 text-amber-800 rounded-md transition-colors cursor-pointer border border-amber-200"
+                    >
+                      + {note}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Auto Append to Timeline Milestone checkbox */}
+              <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="chk-milestone"
+                  checked={statusForm.addMilestone}
+                  onChange={(e) => setStatusForm((prev) => ({ ...prev, addMilestone: e.target.checked }))}
+                  className="w-4 h-4 rounded text-[#C45B2A] accent-[#C45B2A] cursor-pointer"
+                />
+                <label htmlFor="chk-milestone" className="text-xs font-bold text-gray-800 cursor-pointer select-none">
+                  {isRTL ? "إضافة هذه الخطوة فوراً في سجل ومسار التتبع (Tracking Timeline)" : "Add update to consignment tracking milestones"}
+                </label>
+              </div>
+            </div>
+
+            <DialogFooter className="gap-2 pt-2 border-t border-gray-100 flex   items-center justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setStatusEditModalShipment(null)}
+                className="h-10 px-4 text-xs font-bold rounded-xl cursor-pointer"
+              >
+                {isRTL ? "إلغاء" : "Cancel"}
+              </Button>
+              <Button
+                type="button"
+                onClick={handleSaveStatusModal}
+                className="h-10 px-5 text-xs font-extrabold bg-[#C45B2A] hover:bg-[#A8481B] text-white rounded-xl shadow-md cursor-pointer flex items-center gap-1.5"
+              >
+                <Check className="w-4 h-4 stroke-[2.5]" />
+                <span>{isRTL ? "حفظ وتحديث لملف العميل" : "Save & Sync to User"}</span>
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        )}
+      </Dialog>
+
       {/* ─── 6. MODAL: BOOK / REGISTER NEW OPERATIONAL SHIPMENT ─── */}
       <Dialog open={newModalOpen} onOpenChange={setNewModalOpen}>
-        <DialogContent className="max-w-2xl text-start p-4 sm:p-6" onClose={() => setNewModalOpen(false)}>
+        <DialogContent className="max-w-2xl text-start p-4 sm:p-6 max-h-[90vh] overflow-y-auto rounded-3xl" onClose={() => setNewModalOpen(false)}>
           <DialogHeader>
             <DialogTitle className="text-base font-bold text-gray-900">
               {t("admin.shipments.modal.createTitle")}
@@ -2008,9 +2442,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                   <select
                     value={selectedRequestId}
                     onChange={(e) => handleImportRequest(e.target.value)}
-                    className={`w-full h-10 rounded-xl border border-orange-300 bg-white text-xs font-bold text-gray-900 cursor-pointer shadow-2xs appearance-none ${
-                      isRTL ? "pr-3 pl-8 text-right" : "pl-3 pr-8 text-left"
-                    }`}
+                    className="w-full h-10 rounded-xl border border-orange-300 bg-white text-xs font-bold text-gray-900 cursor-pointer shadow-2xs appearance-none ps-3 pe-8 text-start"
                   >
                     <option value="">{t("admin.shipments.modal.prefillPlaceholder")}</option>
                     {pendingRequests.map((r) => (
@@ -2019,7 +2451,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+                  <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute end-2.5 pointer-events-none" />
                 </div>
                 <span className="text-[10px] text-gray-500 block">
                   {t("admin.shipments.modal.prefillHelp")}
@@ -2046,15 +2478,13 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                   <select
                     value={formAccount}
                     onChange={(e) => setFormAccount(e.target.value)}
-                    className={`w-full h-10 rounded-xl border border-gray-300 bg-white text-xs font-bold text-gray-800 cursor-pointer appearance-none ${
-                      isRTL ? "pr-3 pl-8 text-right" : "pl-3 pr-8 text-left"
-                    }`}
+                    className="w-full h-10 rounded-xl border border-gray-300 bg-white text-xs font-bold text-gray-800 cursor-pointer appearance-none ps-3 pe-8 text-start"
                   >
                     {uniqueAccounts.map((acc) => (
                       <option key={acc} value={acc}>{acc}</option>
                     ))}
                   </select>
-                  <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+                  <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute end-2.5 pointer-events-none" />
                 </div>
               </div>
               <div>
@@ -2063,15 +2493,13 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                   <select
                     value={formAgentName}
                     onChange={(e) => setFormAgentName(e.target.value)}
-                    className={`w-full h-10 rounded-xl border border-gray-300 bg-white text-xs font-bold text-gray-800 cursor-pointer appearance-none ${
-                      isRTL ? "pr-3 pl-8 text-right" : "pl-3 pr-8 text-left"
-                    }`}
+                    className="w-full h-10 rounded-xl border border-gray-300 bg-white text-xs font-bold text-gray-800 cursor-pointer appearance-none ps-3 pe-8 text-start"
                   >
                     {uniqueAgents.map((ag) => (
                       <option key={ag} value={ag}>{ag}</option>
                     ))}
                   </select>
-                  <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+                  <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute end-2.5 pointer-events-none" />
                 </div>
               </div>
             </div>
@@ -2094,15 +2522,13 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                   <select
                     value={formCountry}
                     onChange={(e) => setFormCountry(e.target.value)}
-                    className={`w-full h-10 rounded-xl border border-gray-300 bg-white text-xs font-bold text-gray-800 cursor-pointer appearance-none ${
-                      isRTL ? "pr-3 pl-8 text-right" : "pl-3 pr-8 text-left"
-                    }`}
+                    className="w-full h-10 rounded-xl border border-gray-300 bg-white text-xs font-bold text-gray-800 cursor-pointer appearance-none ps-3 pe-8 text-start"
                   >
                     {uniqueCountries.map((co) => (
                       <option key={co} value={co}>{co}</option>
                     ))}
                   </select>
-                  <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+                  <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute end-2.5 pointer-events-none" />
                 </div>
               </div>
               <div>
@@ -2124,9 +2550,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                   <select
                     value={formCarrier}
                     onChange={(e) => setFormCarrier(e.target.value as any)}
-                    className={`w-full h-10 rounded-xl border border-gray-300 bg-white text-xs font-bold text-gray-800 cursor-pointer appearance-none ${
-                      isRTL ? "pr-3 pl-8 text-right" : "pl-3 pr-8 text-left"
-                    }`}
+                    className="w-full h-10 rounded-xl border border-gray-300 bg-white text-xs font-bold text-gray-800 cursor-pointer appearance-none ps-3 pe-8 text-start"
                   >
                      <option value="Express">Express</option>
                     <option value="FEDEX">FedEx Priority</option>
@@ -2146,7 +2570,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                       </option>
                     ))}
                   </select>
-                  <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+                  <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute end-2.5 pointer-events-none" />
                 </div>
               </div>
               <div>
@@ -2155,15 +2579,13 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                   <select
                     value={formBroker}
                     onChange={(e) => setFormBroker(e.target.value)}
-                    className={`w-full h-10 rounded-xl border border-gray-300 bg-white text-xs font-bold text-gray-800 cursor-pointer appearance-none ${
-                      isRTL ? "pr-3 pl-8 text-right" : "pl-3 pr-8 text-left"
-                    }`}
+                    className="w-full h-10 rounded-xl border border-gray-300 bg-white text-xs font-bold text-gray-800 cursor-pointer appearance-none ps-3 pe-8 text-start"
                   >
                     {uniqueBrokers.map((b) => (
                       <option key={b} value={b}>{b}</option>
                     ))}
                   </select>
-                  <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+                  <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute end-2.5 pointer-events-none" />
                 </div>
               </div>
             </div>
@@ -2283,7 +2705,7 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
               <div className="flex items-center justify-between pt-2 border-t border-emerald-200 text-xs font-bold">
                 <span className="text-emerald-950">{t("admin.shipments.modal.netProfitResult")}</span>
                 <span className={`font-mono text-sm font-black inline-block ${netProfitNum < 0 ? "text-rose-600" : "text-emerald-700"}`} dir="ltr">
-                  {netProfitNum >= 0 ? `+${netProfitNum}` : netProfitNum} {isRTL ? "ج.م" : "EGP"}
+                  {netProfitNum >= 0 ? `+${netProfitNum}` : netProfitNum} EGP
                 </span>
               </div>
             </div>
@@ -2295,16 +2717,14 @@ export const ShipmentsView: React.FC<ShipmentsViewProps> = ({
                 <select
                   value={formOpNote}
                   onChange={(e) => setFormOpNote(e.target.value)}
-                  className={`w-full h-10 rounded-xl border border-gray-300 bg-white text-xs font-semibold text-gray-700 cursor-pointer appearance-none ${
-                    isRTL ? "pr-3 pl-8 text-right" : "pl-3 pr-8 text-left"
-                  }`}
+                  className="w-full h-10 rounded-xl border border-gray-300 bg-white text-xs font-semibold text-gray-700 cursor-pointer appearance-none ps-3 pe-8 text-start"
                 >
                   <option value="">{t("admin.shipments.modal.surchargePlaceholder")}</option>
                   {MASTER_EXTRA_EXPENSES.map((sur) => (
                     <option key={sur} value={sur}>{sur}</option>
                   ))}
                 </select>
-                <ChevronDown className={`w-3.5 h-3.5 text-gray-400 absolute ${isRTL ? "left-2.5" : "right-2.5"} pointer-events-none`} />
+                <ChevronDown className="w-3.5 h-3.5 text-gray-400 absolute end-2.5 pointer-events-none" />
               </div>
             </div>
 

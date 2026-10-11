@@ -80,11 +80,12 @@ export default function Navbar({ variant }: { variant?: "public" | "auth" }) {
     <header className="sticky top-0 z-50 bg-white/90 text-brand-dark border-b border-[#E2E8F0] backdrop-blur-md shadow-xs">
       <div className="max-w-[1400px] mx-auto px-4 md:px-6 h-[68px] flex items-center justify-between">
         <Link href={getLocalizedPath("/")} className="flex items-center group py-0.5">
-          <img
+          <Image
             src="/assets/xspeed_logo_earth_light.jpg"
-            alt="XSPEED - Fast & Secure"
+            alt="XSPEED Express Logistics"
             width={200}
             height={58}
+            priority
             className="h-11 sm:h-[52px] w-auto object-contain shrink-0 group-hover:scale-105 transition-transform"
           />
         </Link>

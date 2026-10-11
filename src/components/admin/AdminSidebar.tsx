@@ -244,7 +244,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         className={`w-full group relative transition-all duration-150 ${
           collapsed
             ? "h-11 w-11 mx-auto justify-center rounded-xl p-0"
-            : `h-10 px-3.5 rounded-xl justify-start ${isRTL ? "text-right" : "text-left"}`
+            : "h-10 px-3.5 rounded-xl justify-start text-start"
         } ${
           isActive
             ? "bg-brand-orange text-white font-bold shadow-md shadow-brand-orange/20 hover:bg-brand-orange-deep"
@@ -279,9 +279,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         {/* Collapsed notification dot */}
         {collapsed && item.badge !== undefined && item.badge > 0 && (
           <span
-            className={`absolute top-1.5 ${
-              isRTL ? "left-1.5" : "right-1.5"
-            } w-2 h-2 rounded-full bg-brand-orange ring-2 ring-brand-dark animate-pulse`}
+            className="absolute top-1.5 end-1.5 w-2 h-2 rounded-full bg-brand-orange ring-2 ring-brand-dark animate-pulse"
           />
         )}
       </Button>
@@ -293,7 +291,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       className={`${
         isMobileDrawer
           ? "relative h-full w-full"
-          : `fixed top-0 z-40 h-screen ${isRTL ? "right-0 border-l" : "left-0 border-r"} ${collapsed ? "w-20" : "w-64"}`
+          : `fixed top-0 z-40 h-screen start-0 border-e ${collapsed ? "w-20" : "w-64"}`
       } bg-brand-dark text-slate-200 border-brand-dark-border transition-all duration-300 flex flex-col select-none shadow-xl shadow-black/25`}
     >
       {/* Brand Header */}
@@ -327,9 +325,9 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           <button
             type="button"
             onClick={onCloseMobile}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-brand-dark-border transition-colors shrink-0 cursor-pointer"
-            title={isRTL ? "إغلاق القائمة" : "Close Sidebar"}
-            aria-label="Close Sidebar"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-brand-dark-border transition-colors shrink-0 cursor-pointer"
+            title={t("admin.sidebar.closeSidebar") || (isRTL ? "إغلاق القائمة" : "Close Sidebar")}
+            aria-label={t("admin.sidebar.closeSidebar") || (isRTL ? "إغلاق القائمة" : "Close Sidebar")}
           >
             <X className="h-5 w-5" />
           </button>
@@ -339,7 +337,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             onClick={() => setCollapsed(true)}
             className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-brand-dark-border transition-colors shrink-0 cursor-pointer"
             title={t("admin.sidebar.collapse") || (isRTL ? "طي القائمة" : "Collapse Sidebar")}
-            aria-label="Collapse Sidebar"
+            aria-label={t("admin.sidebar.collapse") || (isRTL ? "طي القائمة" : "Collapse Sidebar")}
           >
             {isRTL ? (
               <ChevronRight className="h-4 w-4" />
@@ -355,7 +353,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               isRTL ? "-left-3" : "-right-3"
             } top-5 z-50 p-1 rounded-full bg-brand-dark-border text-slate-300 hover:text-white hover:bg-slate-700 border border-brand-dark-border transition-all shadow-md cursor-pointer`}
             title={t("admin.sidebar.expand") || (isRTL ? "توسيع القائمة" : "Expand Sidebar")}
-            aria-label="Expand Sidebar"
+            aria-label={t("admin.sidebar.expand") || (isRTL ? "توسيع القائمة" : "Expand Sidebar")}
           >
             {isRTL ? (
               <ChevronLeft className="h-3.5 w-3.5" />
@@ -371,12 +369,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         {/* Group 1: Logistics Operations */}
         <div className="space-y-1">
           {!collapsed && (
-            <div
-              className={`px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-orange-200/90 ${
-                isRTL ? "text-right" : "text-left"
-              }`}
-            >
-              {isRTL ? "إدارة العمليات" : "Operations"}
+            <div className="px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-orange-200/90 text-start">
+              {t("admin.sidebar.groupOperations") || (isRTL ? "إدارة العمليات" : "Operations")}
             </div>
           )}
           {operationsItems.map(renderNavButton)}
@@ -385,12 +379,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         {/* Group 2: Financial & Ledgers */}
         <div className="space-y-1 pt-1 border-t border-brand-dark-border/80">
           {!collapsed && (
-            <div
-              className={`px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-orange-200/90 ${
-                isRTL ? "text-right" : "text-left"
-              }`}
-            >
-              {isRTL ? "الإدارة المالية والدفاتر" : "Financial & Ledgers"}
+            <div className="px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-orange-200/90 text-start">
+              {t("admin.sidebar.groupFinance") || (isRTL ? "الإدارة المالية والدفاتر" : "Financial & Ledgers")}
             </div>
           )}
           {financeItems.map(renderNavButton)}
@@ -399,12 +389,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         {/* Group 3: Analytics & Content */}
         <div className="space-y-1 pt-1 border-t border-brand-dark-border/80">
           {!collapsed && (
-            <div
-              className={`px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-orange-200/90 ${
-                isRTL ? "text-right" : "text-left"
-              }`}
-            >
-              {isRTL ? "التقارير والمحتوى" : "Analytics & SEO"}
+            <div className="px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-orange-200/90 text-start">
+              {t("admin.sidebar.groupAnalytics") || (isRTL ? "التقارير والمحتوى" : "Analytics & SEO")}
             </div>
           )}
           {analyticsItems.map(renderNavButton)}
@@ -413,11 +399,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         {/* Smart Tools / Google Apps Script */}
         <div className="pt-2 border-t border-brand-dark-border/80">
           {!collapsed && (
-            <div
-              className={`px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-orange-200/90 ${
-                isRTL ? "text-right" : "text-left"
-              }`}
-            >
+            <div className="px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-orange-200/90 text-start">
               {t("admin.sidebar.smartTools") ||
                 (isRTL ? "الأدوات الذكية والعمليات" : "Smart Tools")}
             </div>
@@ -443,11 +425,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             </div>
             {!collapsed && (
               <>
-                <div
-                  className={`flex flex-col min-w-0 flex-1 ${
-                    isRTL ? "text-right" : "text-left"
-                  }`}
-                >
+                <div className="flex flex-col min-w-0 flex-1 text-start">
                   <span className="truncate text-xs font-bold text-slate-200 group-hover:text-white">
                     {t("admin.sidebar.googleScript") ||
                       (isRTL ? "حاسبة الشحنات (الاسكريبت)" : "Rates Calculator (Script)")}
@@ -461,11 +439,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
               </>
             )}
             {collapsed && (
-              <span
-                className={`absolute top-1.5 ${
-                  isRTL ? "left-1.5" : "right-1.5"
-                } w-2 h-2 rounded-full bg-amber-400 ring-2 ring-brand-dark`}
-              />
+              <span className="absolute top-1.5 end-1.5 w-2 h-2 rounded-full bg-amber-400 ring-2 ring-brand-dark" />
             )}
           </a>
         </div>
@@ -473,12 +447,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         {/* Group 4: Account & System Actions (Scrolls naturally with content) */}
         <div className="pt-2 pb-6 border-t border-brand-dark-border/80 space-y-1">
           {!collapsed && (
-            <div
-              className={`px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-orange-200/90 ${
-                isRTL ? "text-right" : "text-left"
-              }`}
-            >
-              {isRTL ? "الحساب والنظام" : "Account & System"}
+            <div className="px-3 py-1 text-[11px] font-extrabold uppercase tracking-wider text-orange-200/90 text-start">
+              {t("admin.sidebar.groupAccount") || (isRTL ? "الحساب والنظام" : "Account & System")}
             </div>
           )}
 
@@ -497,7 +467,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             className={`w-full flex items-center transition-colors group rounded-xl text-slate-300 hover:bg-slate-800/80 hover:text-white ${
               collapsed
                 ? "h-11 w-11 mx-auto justify-center p-0"
-                : `h-10 px-3.5 gap-3 ${isRTL ? "text-right" : "text-left"}`
+                : "h-10 px-3.5 gap-3 text-start"
             }`}
           >
             <User className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-brand-orange transition-colors" />
@@ -521,7 +491,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             className={`w-full flex items-center transition-colors group rounded-xl text-slate-300 hover:bg-slate-800/80 hover:text-white ${
               collapsed
                 ? "h-11 w-11 mx-auto justify-center p-0"
-                : `h-10 px-3.5 gap-3 ${isRTL ? "text-right" : "text-left"}`
+                : "h-10 px-3.5 gap-3 text-start"
             }`}
           >
             <ExternalLink className="h-4 w-4 shrink-0 text-slate-400 group-hover:text-brand-orange transition-colors" />
@@ -542,7 +512,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
             className={`w-full group transition-colors rounded-xl text-red-400 hover:bg-red-500/10 hover:text-red-300 ${
               collapsed
                 ? "h-11 w-11 mx-auto justify-center p-0"
-                : `h-10 px-3.5 gap-3 justify-start ${isRTL ? "text-right" : "text-left"}`
+                : "h-10 px-3.5 gap-3 justify-start text-start"
             }`}
           >
             <LogOut className="h-4 w-4 shrink-0 transition-transform group-hover:scale-110" />

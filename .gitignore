@@ -45,10 +45,10 @@ next-env.d.ts
 
 # --- IDEs & Code Editors ---
 .vscode/*
-!.vscode/settings.json
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
+.vscode/settings.json
+.vscode/tasks.json
+.vscode/launch.json
+.vscode/extensions.json
 .idea/
 .kilo/
 .fleet/

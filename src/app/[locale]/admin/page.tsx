@@ -8,6 +8,7 @@ import { CommandPalette } from "@/components/admin/CommandPalette";
 import dynamic from "next/dynamic";
 import { useLanguage } from "@/context/LanguageContext";
 import { useAdminStore } from "@/stores/useAdminStore";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 const StatisticsView = dynamic(() => import("@/components/admin/StatisticsView").then((m) => m.StatisticsView), {
   ssr: false,
@@ -205,8 +206,8 @@ function AdminPageContent() {
             aria-hidden="true"
           />
           <div
-            className={`fixed top-0 bottom-0 z-50 w-72 max-w-[85vw] h-full shadow-2xl bg-brand-dark transition-transform duration-300 ease-out ${
-              isRTL ? "right-0" : "left-0"
+            className={`fixed top-0 bottom-0 z-50 w-72 max-w-[85vw] h-full shadow-2xl bg-brand-dark transition-transform duration-300 ease-out start-0 ${
+              isRTL ? "animate-drawer-right" : "animate-drawer-left"
             }`}
           >
             <AdminSidebar
@@ -246,13 +247,7 @@ function AdminPageContent() {
       {/* Main Content Area */}
       <div
         className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${
-          isRTL
-            ? sidebarCollapsed
-              ? "lg:pr-20 lg:pl-0"
-              : "lg:pr-64 lg:pl-0"
-            : sidebarCollapsed
-            ? "lg:pl-20 lg:pr-0"
-            : "lg:pl-64 lg:pr-0"
+          sidebarCollapsed ? "lg:ps-20 lg:pe-0" : "lg:ps-64 lg:pe-0"
         }`}
       >
         {/* Topbar */}
@@ -273,7 +268,8 @@ function AdminPageContent() {
 
         {/* View Workspace */}
         <main className="flex-1 min-w-0 max-w-full overflow-x-hidden p-3 sm:p-6 lg:p-8 w-full animate-fade-up">
-          {activeTab === "statistics" && (
+          <ErrorBoundary>
+            {activeTab === "statistics" && (
             <StatisticsView
               shipments={shipments}
               orders={orders}
@@ -424,6 +420,7 @@ function AdminPageContent() {
               onDeletePost={deletePost}
             />
           )}
+          </ErrorBoundary>
         </main>
       </div>
     </div>

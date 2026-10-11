@@ -99,7 +99,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
   };
 
   const insertCallout = () => {
-    const callout = `\n<div class="bg-gradient-to-r from-orange-50 to-orange-100/50 border-r-4 border-[#C45B2A] rounded-2xl p-5 my-6 text-gray-800 space-y-2">\n  <h4 class="font-bold text-[#C45B2A] text-sm">💡 توصية لوجستية هامة:</h4>\n  <p class="text-xs sm:text-sm leading-relaxed">احرص دائماً على استخراج رقم التسجيل المسبق للشحنات ACI قبل شحن الحاويات لتفادي غرامات الموانئ وتأخير الإفراج الجمركي.</p>\n</div>\n`;
+    const callout = `\n<div class="bg-gradient-to-r from-orange-50 to-orange-100/50 border-s-4 border-[#C45B2A] rounded-2xl p-5 my-6 text-gray-800 space-y-2">\n  <h4 class="font-bold text-[#C45B2A] text-sm">💡 توصية لوجستية هامة:</h4>\n  <p class="text-xs sm:text-sm leading-relaxed">احرص دائماً على استخراج رقم التسجيل المسبق للشحنات ACI قبل شحن الحاويات لتفادي غرامات الموانئ وتأخير الإفراج الجمركي.</p>\n</div>\n`;
     insertText(callout, "", "");
   };
 
@@ -245,7 +245,7 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
             type="button"
             onClick={() =>
               insertText(
-                '<blockquote class="border-r-4 border-[#C45B2A] pr-4 my-4 italic text-gray-700 bg-orange-50/40 p-3 rounded-l-xl">\n  "',
+                '<blockquote class="border-s-4 border-[#C45B2A] ps-4 my-4 italic text-gray-700 bg-orange-50/40 p-3 rounded-e-xl">\n  "',
                 '"\n</blockquote>',
                 isRTL ? "اقتباس قيادي أو رأي خبير..." : "Quote from industry expert..."
               )
@@ -313,28 +313,28 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
             placeholder={isRTL ? "نص الرابط (اختياري)..." : "Anchor text..."}
             value={linkText}
             onChange={(e) => setLinkText(e.target.value)}
-            className="bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-xs w-full sm:w-1/3"
+            className="bg-white border border-gray-300 rounded-xl px-3 py-1.5 text-xs w-full sm:w-1/3"
           />
           <input
             type="url"
             placeholder="https://exspeeds.com/services/air-freight"
             value={linkUrl}
             onChange={(e) => setLinkUrl(e.target.value)}
-            className="bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-xs w-full sm:flex-1 font-mono"
+            className="bg-white border border-gray-300 rounded-xl px-3 py-1.5 text-xs w-full sm:flex-1 font-mono"
             dir="ltr"
           />
           <div className="flex gap-1.5 w-full sm:w-auto">
             <button
               type="button"
               onClick={handleInsertLink}
-              className="bg-brand-orange text-white font-bold px-3 py-1.5 rounded-lg hover:bg-brand-orange-deep transition-colors text-xs"
+              className="bg-[#C45B2A] hover:bg-[#A34920] text-white font-bold px-3.5 py-1.5 rounded-xl transition-colors text-xs cursor-pointer shadow-2xs"
             >
               {isRTL ? "إدراج" : "Insert"}
             </button>
             <button
               type="button"
               onClick={() => setShowLinkModal(false)}
-              className="bg-gray-200 text-gray-700 font-bold px-3 py-1.5 rounded-lg hover:bg-gray-300 transition-colors text-xs"
+              className="bg-gray-200 text-gray-700 font-bold px-3.5 py-1.5 rounded-xl hover:bg-gray-300 transition-colors text-xs cursor-pointer"
             >
               {isRTL ? "إلغاء" : "Cancel"}
             </button>
@@ -350,28 +350,28 @@ export const RichPostEditor: React.FC<RichPostEditorProps> = ({
             placeholder={isRTL ? "وصف الصورة (Alt Text)..." : "Image caption / alt..."}
             value={imageAlt}
             onChange={(e) => setImageAlt(e.target.value)}
-            className="bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-xs w-full sm:w-1/3"
+            className="bg-white border border-gray-300 rounded-xl px-3 py-1.5 text-xs w-full sm:w-1/3"
           />
           <input
             type="url"
             placeholder="/assets/xspeed_plane.jpg or https://..."
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
-            className="bg-white border border-gray-300 rounded-lg px-3 py-1.5 text-xs w-full sm:flex-1 font-mono"
+            className="bg-white border border-gray-300 rounded-xl px-3 py-1.5 text-xs w-full sm:flex-1 font-mono"
             dir="ltr"
           />
           <div className="flex gap-1.5 w-full sm:w-auto">
             <button
               type="button"
               onClick={handleInsertImage}
-              className="bg-brand-orange text-white font-bold px-3 py-1.5 rounded-lg hover:bg-brand-orange-deep transition-colors text-xs"
+              className="bg-[#C45B2A] hover:bg-[#A34920] text-white font-bold px-3.5 py-1.5 rounded-xl transition-colors text-xs cursor-pointer shadow-2xs"
             >
               {isRTL ? "إدراج الصورة" : "Insert Image"}
             </button>
             <button
               type="button"
               onClick={() => setShowImageModal(false)}
-              className="bg-gray-200 text-gray-700 font-bold px-3 py-1.5 rounded-lg hover:bg-gray-300 transition-colors text-xs"
+              className="bg-gray-200 text-gray-700 font-bold px-3.5 py-1.5 rounded-xl hover:bg-gray-300 transition-colors text-xs cursor-pointer"
             >
               {isRTL ? "إلغاء" : "Cancel"}
             </button>

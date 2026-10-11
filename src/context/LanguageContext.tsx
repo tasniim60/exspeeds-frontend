@@ -208,34 +208,20 @@ export function LanguageProvider({
   const formatNumber = useCallback(
     (num: number): string => {
       try {
-        return new Intl.NumberFormat(locale === "ar" ? "ar-EG" : "en-US").format(num);
+        return new Intl.NumberFormat("en-US").format(num);
       } catch {
         return String(num);
       }
     },
-    [locale]
+    []
   );
 
   const formatCurrency = useCallback(
     (amount: number, currencyCode: string = "EGP"): string => {
-      if (locale === "ar") {
-        const currLabel =
-          currencyCode === "EGP"
-            ? "جنيه مصري"
-            : currencyCode === "USD"
-            ? "دولار"
-            : currencyCode === "EUR"
-            ? "يورو"
-            : currencyCode === "AED"
-            ? "درهم"
-            : currencyCode === "SAR"
-            ? "ريال"
-            : currencyCode;
-        return `${formatNumber(amount)} ${currLabel}`;
-      }
-      return `${formatNumber(amount)} ${currencyCode}`;
+      const code = (currencyCode || "EGP").toUpperCase();
+      return `${formatNumber(amount)} ${code}`;
     },
-    [locale, formatNumber]
+    [formatNumber]
   );
 
   const formatWeight = useCallback(

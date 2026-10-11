@@ -88,7 +88,24 @@ export const ServerStore = {
     let updatedItem: Shipment | null = null;
     const updated = current.map((s) => {
       if (s.id === id || s.awb === id) {
-        updatedItem = { ...s, ...patch };
+        const statusChanged = patch.status && patch.status !== s.status;
+        let timeline = patch.timeline || s.timeline || [];
+        if (statusChanged && !patch.timeline) {
+          const nowStr = new Date().toISOString().replace("T", " ").substring(0, 16);
+          const newMilestone = {
+            status: patch.status as string,
+            location: patch.currentLocation || s.currentLocation || "Transit Hub",
+            timestamp: nowStr,
+            completed: true,
+            current: true,
+            note: patch.opNote || s.opNote || undefined,
+          };
+          timeline = [
+            ...timeline.map((t) => ({ ...t, current: false })),
+            newMilestone,
+          ];
+        }
+        updatedItem = { ...s, ...patch, timeline };
         return updatedItem;
       }
       return s;

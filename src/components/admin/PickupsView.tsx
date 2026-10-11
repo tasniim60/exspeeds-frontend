@@ -81,7 +81,7 @@ export const PickupsView: React.FC<PickupsViewProps> = ({
   const [pickupAddress, setPickupAddress] = useState("");
   const [destination, setDestination] = useState("");
   const [courierName, setCourierName] = useState("");
-  const [agentName, setAgentName] = useState(MASTER_AGENTS[0] || "مصطفي");
+  const [agentName, setAgentName] = useState(MASTER_AGENTS[0] || "Admin");
   const [submitting, setSubmitting] = useState(false);
 
   // Modal State: WhatsApp Message Modal
@@ -437,12 +437,12 @@ export const PickupsView: React.FC<PickupsViewProps> = ({
         <CardContent className="p-4">
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <div className="relative flex-1 w-full">
-              <Search className={`w-4 h-4 text-gray-400 absolute top-1/2 -translate-y-1/2 ${isRTL ? "right-3" : "left-3"}`} />
+              <Search className="w-4 h-4 text-gray-400 absolute start-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <Input
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={isRTL ? "بحث باسم العميل، الهاتف، العنوان، أو رقم الإذن..." : "Search customer, phone, location..."}
-                className={`h-10 rounded-xl bg-gray-50/60 border-gray-200 text-xs sm:text-sm ${isRTL ? "pr-9 pl-3" : "pl-9 pr-3"}`}
+                className="h-10 rounded-xl bg-gray-50/60 border-gray-200 text-xs sm:text-sm ps-9 pe-3 text-start"
               />
             </div>
 
@@ -481,22 +481,22 @@ export const PickupsView: React.FC<PickupsViewProps> = ({
           <Table>
             <TableHeader className="bg-gray-50/90 border-b border-gray-200">
               <TableRow>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "رقم الإذن / التاريخ" : "Order ID / Date"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "العميل ورقم الهاتف" : "Customer & Phone"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "مكان الاستلام (منين)" : "Pickup Address"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "الوجهة ومحتوى الشحنة" : "Destination & Cargo"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "المسؤول / المسجل" : "Courier & Agent"}
                 </TableHead>
-                <TableHead className={`text-xs font-bold text-gray-700 ${isRTL ? "text-right" : "text-left"}`}>
+                <TableHead className="text-xs font-bold text-gray-700 text-start">
                   {isRTL ? "الحالة" : "Status"}
                 </TableHead>
                 <TableHead className="text-center text-xs font-bold text-gray-700">
@@ -618,7 +618,7 @@ export const PickupsView: React.FC<PickupsViewProps> = ({
                                 pickupAddress: p.pickupAddress || p.address || "",
                                 destination: p.deliveryAddress || p.deliveryCity || "",
                                 courierName: p.internalNotes?.split("|")[1]?.replace("المسؤول:", "").trim() || "",
-                                agentName: p.internalNotes?.split("|")[2]?.replace("المسجل:", "").trim() || "مصطفي",
+                                agentName: p.internalNotes?.split("|")[2]?.replace("المسجل:", "").trim() || "Admin",
                                 date: reqDate,
                               });
                               setWaMessage(wa);
@@ -654,7 +654,7 @@ export const PickupsView: React.FC<PickupsViewProps> = ({
 
       {/* Modal: Create Pickup Form */}
       <Dialog open={createModalOpen} onOpenChange={setCreateModalOpen}>
-        <DialogContent className="sm:max-w-lg rounded-3xl p-6">
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl p-6 text-start">
           <DialogHeader>
             <DialogTitle className="text-xl font-black text-gray-900 flex items-center gap-2">
               <div className="w-8 h-8 rounded-xl bg-teal-50 text-[#16A085] flex items-center justify-center">
@@ -804,7 +804,7 @@ export const PickupsView: React.FC<PickupsViewProps> = ({
 
       {/* Modal: WhatsApp Copy Message & Open Group */}
       <Dialog open={waModalOpen} onOpenChange={setWaModalOpen}>
-        <DialogContent className="sm:max-w-md rounded-3xl p-6 text-center">
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto rounded-3xl p-6 text-center">
           <DialogHeader>
             <div className="w-12 h-12 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center mx-auto mb-2">
               <CheckCircle2 className="w-6 h-6" />

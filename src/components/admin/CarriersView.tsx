@@ -85,7 +85,7 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
   const [customCarrierInput, setCustomCarrierInput] = useState("");
   const [paymentAmount, setPaymentAmount] = useState("");
   const [payingAccount, setPayingAccount] = useState<string>(MASTER_FINANCIAL_ACCOUNTS[0] || "CIB account");
-  const [recordedBy, setRecordedBy] = useState<string>(MASTER_AGENTS[0] || "مصطفي");
+  const [recordedBy, setRecordedBy] = useState<string>(MASTER_AGENTS[0] || "Admin");
   const [paymentDate, setPaymentDate] = useState<string>(new Date().toISOString().split("T")[0]);
   const [paymentMethod, setPaymentMethod] = useState("تحويل بنكي");
   const [referenceNumber, setReferenceNumber] = useState("");
@@ -403,21 +403,21 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
         <Card className="border border-slate-200 shadow-2xs bg-white rounded-2xl">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="text-start">
                 <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                   {isRTL ? "صافي مستحقات الناقلين" : "Net Linehaul Costs"}
                 </p>
-                <h3 className="text-2xl sm:text-3xl font-black text-slate-950 mt-1 font-mono">
-                  {formatCurrency(summary.totalNetCost, "EGP")}
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-950 mt-1 font-mono flex items-baseline gap-1.5" dir="ltr">
+                  <span>{formatCurrency(summary.totalNetCost, "EGP")}</span>
                 </h3>
                 <p className="text-[11px] text-slate-600 font-medium mt-0.5 flex items-center gap-1">
                   <span>{isRTL ? "بعد استبعاد المرتجعات:" : "Excluded RTO:"}</span>
-                  <span className="font-semibold text-rose-600 font-mono">
+                  <span className="font-semibold text-rose-600 font-mono" dir="ltr">
                     {formatCurrency(summary.totalRtoCost, "EGP")}
                   </span>
                 </p>
               </div>
-              <div className="p-3 rounded-2xl bg-blue-50 text-blue-700 border border-blue-200">
+              <div className="p-3 rounded-2xl bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
                 <Truck className="h-6 w-6" />
               </div>
             </div>
@@ -428,18 +428,18 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
         <Card className="border border-slate-200 shadow-2xs bg-white rounded-2xl">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="text-start">
                 <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                   {isRTL ? "إجمالي المسدد للناقلين" : "Total Paid to Carriers"}
                 </p>
-                <h3 className="text-2xl sm:text-3xl font-black text-emerald-600 mt-1 font-mono">
-                  {formatCurrency(summary.totalPaid, "EGP")}
+                <h3 className="text-2xl sm:text-3xl font-black text-emerald-600 mt-1 font-mono flex items-baseline gap-1.5" dir="ltr">
+                  <span>{formatCurrency(summary.totalPaid, "EGP")}</span>
                 </h3>
                 <p className="text-[11px] text-slate-600 font-medium mt-0.5">
                   {isRTL ? "عبر سندات التحويل البنكي والخزائن" : "Via recorded transfers & treasury"}
                 </p>
               </div>
-              <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200">
+              <div className="p-3 rounded-2xl bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">
                 <ArrowUpRight className="h-6 w-6" />
               </div>
             </div>
@@ -456,7 +456,7 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
         >
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="text-start">
                 <p
                   className={`text-xs font-bold uppercase tracking-wider ${
                     summary.totalNetDue > 0 ? "text-amber-900" : "text-emerald-900"
@@ -465,11 +465,12 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
                   {isRTL ? "المتبقي المستحق للناقلين" : "Outstanding Due"}
                 </p>
                 <h3
-                  className={`text-2xl sm:text-3xl font-black mt-1 font-mono ${
+                  className={`text-2xl sm:text-3xl font-black mt-1 font-mono flex items-baseline gap-1.5 ${
                     summary.totalNetDue > 0 ? "text-amber-700" : "text-emerald-700"
                   }`}
+                  dir="ltr"
                 >
-                  {formatCurrency(summary.totalNetDue, "EGP")}
+                  <span>{formatCurrency(summary.totalNetDue, "EGP")}</span>
                 </h3>
                 <p className="text-[11px] text-slate-700 font-medium mt-0.5">
                   {summary.totalNetDue > 0
@@ -482,7 +483,7 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
                 </p>
               </div>
               <div
-                className={`p-3 rounded-2xl border ${
+                className={`p-3 rounded-2xl border shrink-0 ${
                   summary.totalNetDue > 0
                     ? "bg-amber-100 text-amber-800 border-amber-300"
                     : "bg-emerald-100 text-emerald-800 border-emerald-300"
@@ -498,18 +499,18 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
         <Card className="border border-slate-200 shadow-2xs bg-white rounded-2xl">
           <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <div>
+              <div className="text-start">
                 <p className="text-xs font-bold text-slate-600 uppercase tracking-wider">
                   {isRTL ? "الشركات والوسطاء النشطة" : "Active Partners"}
                 </p>
-                <h3 className="text-2xl sm:text-3xl font-black text-slate-950 mt-1 font-mono">
+                <h3 className="text-2xl sm:text-3xl font-black text-slate-950 mt-1 font-mono" dir="ltr">
                   {summary.carrierCount}
                 </h3>
                 <p className="text-[11px] text-slate-600 font-medium mt-0.5">
                   {isRTL ? "شركات شحن دولية ووسطاء مسجلين" : "Registered linehaul carriers & brokers"}
                 </p>
               </div>
-              <div className="p-3 rounded-2xl bg-orange-50 text-[#C45B2A] border border-orange-200">
+              <div className="p-3 rounded-2xl bg-orange-50 text-[#C45B2A] border border-orange-200 shrink-0">
                 <Building2 className="h-6 w-6" />
               </div>
             </div>
@@ -523,7 +524,7 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
             {/* Search Input */}
             <div className="relative flex-1">
-              <Search className={`absolute top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 ${isRTL ? "right-3" : "left-3"}`} />
+              <Search className="absolute start-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
                 type="text"
                 value={search}
@@ -533,13 +534,13 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
                     ? "بحث باسم شركة الشحن، الوسيط (DHL, Aramex, SMSA, etc.)..."
                     : "Search by carrier name, broker, courier..."
                 }
-                className={`${isRTL ? "pr-10 text-right" : "pl-10 text-left"} h-10 text-xs sm:text-sm bg-[#FAF8F5] border-slate-300 focus:bg-white`}
+                className="ps-10 pe-10 text-start h-10 text-xs sm:text-sm bg-[#FAF8F5] border-slate-300 focus:bg-white rounded-xl shadow-2xs"
               />
               {search && (
                 <button
                   type="button"
                   onClick={() => setSearch("")}
-                  className={`absolute top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 ${isRTL ? "left-3" : "right-3"}`}
+                  className="absolute end-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -1427,25 +1428,25 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
 
       {/* ─── 6. Add Partner Modal ─── */}
       <Dialog open={partnerModalOpen} onOpenChange={setPartnerModalOpen}>
-        <DialogContent className="sm:max-w-lg bg-white">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto bg-white rounded-3xl p-6 text-start" onClose={() => setPartnerModalOpen(false)}>
+          <DialogHeader className="text-start">
             <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-orange-100 text-[#C45B2A]">
-                <Building2 className="h-4 w-4" />
+              <div className="p-2 rounded-xl bg-orange-50 text-[#C45B2A] shrink-0">
+                <Building2 className="h-5 w-5" />
               </div>
               <span>{isRTL ? "إضافة شركة شحن أو وسيط جديد" : "Add New Carrier / Broker Partner"}</span>
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-500">
+            <DialogDescription className="text-xs text-slate-500 text-start">
               {isRTL
                 ? "تسجيل شريك شحن دولي أو وسيط خطوط لإدراج بوالصه وسندات سداده في الحسابات"
                 : "Register a new carrier or broker to track in financial ledgers"}
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmitPartner} className="space-y-4 pt-2">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <form onSubmit={handleSubmitPartner} className="space-y-4 py-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-start">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">
+                <label className="text-xs font-bold text-slate-800">
                   {isRTL ? "اسم الشركة / الوسيط *" : "Partner Name *"}
                 </label>
                 <Input
@@ -1454,18 +1455,18 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
                   value={partnerName}
                   onChange={(e) => setPartnerName(e.target.value)}
                   placeholder="e.g. DHL Express, RedBox, SMSA"
-                  className="h-9 text-xs"
+                  className="h-9 text-xs text-start focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">
+                <label className="text-xs font-bold text-slate-800">
                   {isRTL ? "نوع الشريك *" : "Partner Type *"}
                 </label>
                 <select
                   value={partnerType}
                   onChange={(e) => setPartnerType(e.target.value as "Carrier" | "Broker")}
-                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C45B2A]"
+                  className="w-full h-9 px-3 rounded-lg border border-slate-300 text-xs bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-[#C45B2A]/20 focus:border-[#C45B2A] text-start cursor-pointer"
                 >
                   <option value="Carrier">{isRTL ? "شركة شحن دولية / محلية" : "Carrier"}</option>
                   <option value="Broker">{isRTL ? "وسيط شحن معتمد (Broker)" : "Linehaul Broker"}</option>
@@ -1473,9 +1474,9 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-start">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">
+                <label className="text-xs font-bold text-slate-800">
                   {isRTL ? "المسؤول / جهة الاتصال" : "Contact Person"}
                 </label>
                 <Input
@@ -1483,12 +1484,12 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
                   value={partnerContact}
                   onChange={(e) => setPartnerContact(e.target.value)}
                   placeholder="e.g. أ / أحمد عبد الله"
-                  className="h-9 text-xs"
+                  className="h-9 text-xs text-start focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">
+                <label className="text-xs font-bold text-slate-800">
                   {isRTL ? "رقم الهاتف / الواتساب" : "Phone / Mobile"}
                 </label>
                 <Input
@@ -1496,14 +1497,15 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
                   value={partnerPhone}
                   onChange={(e) => setPartnerPhone(e.target.value)}
                   placeholder="01012345678"
-                  className="h-9 text-xs font-mono"
+                  className="h-9 text-xs font-mono text-start focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
+                  dir="ltr"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-start">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">
+                <label className="text-xs font-bold text-slate-800">
                   {isRTL ? "البريد الإلكتروني" : "Email Address"}
                 </label>
                 <Input
@@ -1511,18 +1513,19 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
                   value={partnerEmail}
                   onChange={(e) => setPartnerEmail(e.target.value)}
                   placeholder="partner@carrier.com"
-                  className="h-9 text-xs"
+                  className="h-9 text-xs font-mono text-start focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
+                  dir="ltr"
                 />
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">
+                <label className="text-xs font-bold text-slate-800">
                   {isRTL ? "العملة الأساسية" : "Default Currency"}
                 </label>
                 <select
                   value={partnerCurrency}
                   onChange={(e) => setPartnerCurrency(e.target.value)}
-                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C45B2A]"
+                  className="w-full h-9 px-3 rounded-lg border border-slate-300 text-xs bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-[#C45B2A]/20 focus:border-[#C45B2A] text-start cursor-pointer"
                 >
                   <option value="EGP">EGP (جنيه مصري)</option>
                   <option value="USD">USD (دولار أمريكي)</option>
@@ -1532,8 +1535,8 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
               </div>
             </div>
 
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">
+            <div className="space-y-1 text-start">
+              <label className="text-xs font-bold text-slate-800">
                 {isRTL ? "ملاحظات أو شروط السداد" : "Notes / Terms"}
               </label>
               <Input
@@ -1541,16 +1544,16 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
                 value={partnerNotes}
                 onChange={(e) => setPartnerNotes(e.target.value)}
                 placeholder={isRTL ? "سداد أسبوعي، حساب بنكي رقم..." : "Weekly settlement terms..."}
-                className="h-9 text-xs"
+                className="h-9 text-xs text-start focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
               />
             </div>
 
-            <DialogFooter className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+            <DialogFooter className="pt-2 gap-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setPartnerModalOpen(false)}
-                className="text-xs font-semibold cursor-pointer"
+                className="text-xs font-bold border-slate-300 cursor-pointer"
               >
                 {isRTL ? "إلغاء" : "Cancel"}
               </Button>
@@ -1567,26 +1570,26 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
 
       {/* ─── 7. Record Carrier Payment Modal ─── */}
       <Dialog open={transferModalOpen} onOpenChange={setTransferModalOpen}>
-        <DialogContent className="sm:max-w-lg bg-white">
-          <DialogHeader>
+        <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto bg-white rounded-3xl p-6 text-start" onClose={() => setTransferModalOpen(false)}>
+          <DialogHeader className="text-start">
             <DialogTitle className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700">
-                <CreditCard className="h-4 w-4" />
+              <div className="p-2 rounded-xl bg-emerald-50 text-emerald-700 shrink-0">
+                <CreditCard className="h-5 w-5" />
               </div>
               <span>{isRTL ? "تسجيل سداد لشركة شحن أو وسيط" : "Record Carrier Settlement Transfer"}</span>
             </DialogTitle>
-            <DialogDescription className="text-xs text-slate-500">
+            <DialogDescription className="text-xs text-slate-500 text-start">
               {isRTL
                 ? "توثيق دفعة مسددة لشركة الشحن أو الوسيط وخصمها من الخزينة المحددة وإدراجها فوراً بالحسابات"
                 : "Record payment to carrier/broker and deduct from treasury vault"}
             </DialogDescription>
           </DialogHeader>
 
-          <form onSubmit={handleSubmitPayment} className="space-y-4 pt-2">
+          <form onSubmit={handleSubmitPayment} className="space-y-4 py-2">
             {/* Carrier Selection */}
-            <div className="space-y-1">
+            <div className="space-y-1 text-start">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-bold text-slate-700">
+                <label className="text-xs font-bold text-slate-800">
                   {isRTL ? "شركة الشحن / الوسيط *" : "Carrier / Broker *"}
                 </label>
                 <button
@@ -1609,7 +1612,7 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
                   required
                   value={targetCarrierName}
                   onChange={(e) => setTargetCarrierName(e.target.value)}
-                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C45B2A] font-bold text-slate-900"
+                  className="w-full h-9 px-3 rounded-lg border border-slate-300 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-[#C45B2A]/20 focus:border-[#C45B2A] font-bold text-slate-900 text-start cursor-pointer"
                 >
                   {availableCarriersList.map((c) => (
                     <option key={c} value={c}>
@@ -1624,15 +1627,15 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
                   value={customCarrierInput}
                   onChange={(e) => setCustomCarrierInput(e.target.value)}
                   placeholder={isRTL ? "أدخل اسم شركة الشحن أو الوسيط..." : "Enter carrier or broker name..."}
-                  className="h-9 text-xs font-bold text-slate-900"
+                  className="h-9 text-xs font-bold text-slate-900 text-start focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
                 />
               )}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-start">
               {/* Amount */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">
+                <label className="text-xs font-bold text-slate-800">
                   {isRTL ? "المبلغ المسدد (EGP) *" : "Amount Paid (EGP) *"}
                 </label>
                 <Input
@@ -1642,34 +1645,35 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
                   value={paymentAmount}
                   onChange={(e) => setPaymentAmount(e.target.value)}
                   placeholder="0.00"
-                  className="h-9 text-xs font-mono font-bold"
+                  className="h-9 text-xs font-mono font-bold text-start focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
+                  dir="ltr"
                 />
               </div>
 
               {/* Date */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">
+                <label className="text-xs font-bold text-slate-800">
                   {isRTL ? "تاريخ السداد" : "Payment Date"}
                 </label>
                 <Input
                   type="date"
                   value={paymentDate}
                   onChange={(e) => setPaymentDate(e.target.value)}
-                  className="h-9 text-xs"
+                  className="h-9 text-xs text-start focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-start">
               {/* Paying Account */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">
+                <label className="text-xs font-bold text-slate-800">
                   {isRTL ? "الخزينة المخصوم منها *" : "Paying Vault *"}
                 </label>
                 <select
                   value={payingAccount}
                   onChange={(e) => setPayingAccount(e.target.value)}
-                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C45B2A]"
+                  className="w-full h-9 px-3 rounded-lg border border-slate-300 text-xs bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-[#C45B2A]/20 focus:border-[#C45B2A] text-start cursor-pointer"
                 >
                   {MASTER_FINANCIAL_ACCOUNTS.map((acc) => (
                     <option key={acc} value={acc}>
@@ -1681,13 +1685,13 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
 
               {/* Recorder */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">
+                <label className="text-xs font-bold text-slate-800">
                   {isRTL ? "المسؤول عن الصرف *" : "Recorded By *"}
                 </label>
                 <select
                   value={recordedBy}
                   onChange={(e) => setRecordedBy(e.target.value)}
-                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C45B2A]"
+                  className="w-full h-9 px-3 rounded-lg border border-slate-300 text-xs bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-[#C45B2A]/20 focus:border-[#C45B2A] text-start cursor-pointer"
                 >
                   {MASTER_AGENTS.map((ag) => (
                     <option key={ag} value={ag}>
@@ -1698,16 +1702,16 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-start">
               {/* Payment Method */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">
+                <label className="text-xs font-bold text-slate-800">
                   {isRTL ? "طريقة السداد" : "Payment Method"}
                 </label>
                 <select
                   value={paymentMethod}
                   onChange={(e) => setPaymentMethod(e.target.value)}
-                  className="w-full h-9 px-3 rounded-md border border-slate-300 text-xs bg-white focus:outline-none focus:ring-1 focus:ring-[#C45B2A]"
+                  className="w-full h-9 px-3 rounded-lg border border-slate-300 text-xs bg-white text-slate-800 font-medium focus:outline-none focus:ring-2 focus:ring-[#C45B2A]/20 focus:border-[#C45B2A] text-start cursor-pointer"
                 >
                   <option value="تحويل بنكي">{isRTL ? "تحويل بنكي" : "Bank Transfer"}</option>
                   <option value="نقدي (كاش)">{isRTL ? "نقدي (كاش)" : "Cash"}</option>
@@ -1718,7 +1722,7 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
 
               {/* Reference / Cheque Number */}
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-700">
+                <label className="text-xs font-bold text-slate-800">
                   {isRTL ? "رقم المرجع / الإشعار" : "Ref / Receipt No"}
                 </label>
                 <Input
@@ -1726,14 +1730,15 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
                   value={referenceNumber}
                   onChange={(e) => setReferenceNumber(e.target.value)}
                   placeholder="TRX-102938"
-                  className="h-9 text-xs font-mono"
+                  className="h-9 text-xs font-mono text-start focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
+                  dir="ltr"
                 />
               </div>
             </div>
 
             {/* Notes */}
-            <div className="space-y-1">
-              <label className="text-xs font-bold text-slate-700">
+            <div className="space-y-1 text-start">
+              <label className="text-xs font-bold text-slate-800">
                 {isRTL ? "ملاحظات السداد" : "Notes"}
               </label>
               <Input
@@ -1741,16 +1746,16 @@ export const CarriersView: React.FC<CarriersViewProps> = ({
                 value={paymentNotes}
                 onChange={(e) => setPaymentNotes(e.target.value)}
                 placeholder={isRTL ? "سداد دفعة فواتير شهر يناير..." : "Payment notes..."}
-                className="h-9 text-xs"
+                className="h-9 text-xs text-start focus:border-[#C45B2A] focus:ring-[#C45B2A]/20"
               />
             </div>
 
-            <DialogFooter className="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+            <DialogFooter className="pt-2 gap-2">
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => setTransferModalOpen(false)}
-                className="text-xs font-semibold cursor-pointer"
+                className="text-xs font-bold border-slate-300 cursor-pointer"
               >
                 {isRTL ? "إلغاء" : "Cancel"}
               </Button>
